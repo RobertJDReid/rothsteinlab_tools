@@ -1,0 +1,30 @@
+= stylesheet_link_tag 'bootstrap-min'
+= javascript_include_tag 'bootstrap.min', async: true
+= render partial: "layouts/top"
+
+.explanation
+  p.lead In CLIK graphs contiguous significant (i.e. colored) points form distinct areas that we term ‘CLIK groups’ (see Figure 1).
+  div[style="float:left;margin:10px;"]
+    =image_tag "clik/2015-04-29 BioGRID v3.2.120 4nM Rapamycin.png"
+    .legend
+      b Figure 1. Example CLIK graph.&nbsp;
+      | This CLIK graph is of the 4nM rapamycin screen reported in the <a href="http://www.ncbi.nlm.nih.gov/pubmed/23589890" class="ext_link" >original PNAS CLIK article</a>. This graph was created on 2015-04-29 using version 3.2.120 of the BioGRID interaction database. It contains a single CLIK group in the lower-left corner.
+  p.lead CLIK groups are numbered on the CLIK graph and the corresponding details about each CLIK group (e.g., the genes that make up the CLIK group, the mean and maximum interaction densities, etc) are outputted below the CLIK graph (see Figure 2 for an example). The text of individual genes within the CLIK group is colored according to the corresponding color on the diagonal of the CLIK graph to easily ascertain the CLIK determined cutoff position (i.e., transitions from color to gray).
+  div[style="float:left;margin:10px;"]
+    =image_tag "clik/2015-04-29 BioGRID v3.2.120 4nM Rapamycin clik group output.png"
+    .legend
+      b Figure 2. CLIK group details of the single CLIK group displayed in Figure 1. A.&nbsp;
+      | CLIK group number and expansion control. By default CLIK group details are collapsed. Clicking on the '+' icon on the left of the CLIK group number the details may be expanded. The group number indicated map to the numbers displayed in the CLIK graph.&nbsp;
+      b B.&nbsp;
+      | X and Y ranges of the CLIK group. These values indicate the rank position ranges on the axes on the CLIK graph that define the CLIK group.&nbsp;
+      b C.&nbsp;
+      | Button to run CLIK group bootstrapping, complex enrichment and other various statistics. Clicking this button will provide more information about the genes and network that define the CLIK group. Additional details can be found in Figure 3, below.&nbsp;
+      b D.&nbsp;
+      | Link to download JSON representation of the genes and network of the CLIK group.&nbsp;
+      b E.&nbsp;
+      | Indication of where the significant interaction enrichment ends for this CLIK group. The text of individual genes within the CLIK group is colored according to the corresponding color on the diagonal of the CLIK graph. The point where the gene names transition from colored to gray is considered to be the border of the CLIK group.
+  div[style="float:left;margin:10px;"]
+    =image_tag "clik/2015-04-29 BioGRID v3.2.120 4nM Rapamycin clik group output network details.png"
+    .legend
+      b Figure 3. Explanation of additional CLIK group details.&nbsp;
+      | Clicking the button indicated in Figure 2, above, generates the output indicated in this Figure.

@@ -1,0 +1,32 @@
+<div class="overlay" id="restore_div2">
+<h2><u>Choose a session from below:</u></h2>
+<div class="close_box" onclick="$('#restore_div').hide();">Close this box</div>
+<ul style="list-style-type:none;font-weight:bold;">
+<TMPL_LOOP NAME="dir_loop">
+	<div class="floatleft" id="<TMPL_VAR NAME="form_name">_div" style="padding:10px 10px 10px 0px;margin:5px;border:1px solid black;width:48%;">
+		<form action="<TMPL_VAR NAME="root_dir">/cgi-bin/dr_engine/restore_session.cgi" name="<TMPL_VAR NAME="form_name">" method = "post" target='session_target'>
+			<input type="hidden" name="directory" value="<TMPL_VAR NAME="directory">" />
+			<input type="hidden" name="at" value="<TMPL_VAR NAME="at">" />
+		</form>
+		<div class="close_box" style="top:10px;right:10px;" onclick='setupFlash(true, "Loading Session...", "<TMPL_VAR NAME="info">"); document.<TMPL_VAR NAME="form_name">.submit();'>Restore this session</div>
+		<div class="close_box" style="top:40px;right:10px;background:#DF7D7D;" onclick="if(confirm('Are you sure you would like to delete this session?')){ <TMPL_VAR NAME="form_name">_delete.submit(); $('#<TMPL_VAR NAME="form_name">_div').remove();}">Delete this session</div>
+		<li style="margin-left:10px;margin-bottom: 7px;">Date Saved:  <TMPL_VAR NAME="date_saved"></li>
+		<li style="margin-left:10px;margin-bottom: 7px;">Density:  <TMPL_VAR NAME="density"></li>
+		<li style="margin-left:10px;margin-bottom: 7px;">Replicates:  <TMPL_VAR NAME="replicates"></li>
+		<li style="margin-left:10px;margin-bottom: 7px;">Description:  <TMPL_VAR NAME="info"></li>
+		<li style="margin-left:10px;margin-bottom: 5px;">Conditions Screened:  <TMPL_VAR NAME="queries"></li>
+		<li style="margin-left:10px;" class="floatleft" >
+			<div class="graph" style="margin: 5px 5px 0px 0px;"><strong class="bar <TMPL_VAR NAME="extra_class">" style="width:<TMPL_VAR NAME="percent_done">%;"><TMPL_VAR NAME="percent_done_disp">%</strong></div>
+			<strong style="height: 2em; line-height: 2em;text-align:center;">
+				&rArr;<TMPL_VAR NAME="num_screened"> plates out of <TMPL_VAR NAME="total_number_of_plates"> plates analyzed.
+			</strong>
+		</li>
+		<form name="<TMPL_VAR NAME="form_name">_delete" target="session_target" action="<TMPL_VAR NAME="root_dir">/cgi-bin/dr_engine/delete_session.cgi" method = "post" >
+			<input type="hidden" name="directory" value="<TMPL_VAR NAME="directory">" />
+		</form>
+	</div>
+</TMPL_LOOP>
+<TMPL_VAR NAME="no_sessions">
+</ul>
+<iframe name="session_target" style="display:none;"></iframe>
+</div>

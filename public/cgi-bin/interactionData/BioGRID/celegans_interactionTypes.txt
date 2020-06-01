@@ -1,0 +1,15 @@
+genetic:Negative Genetic
+genetic:Phenotypic Enhancement
+genetic:Phenotypic Suppression
+genetic:Synthetic Rescue
+physical:Affinity Capture-MS
+physical:Affinity Capture-Western
+physical:Biochemical Activity
+physical:Co-crystal Structure
+physical:Co-localization
+physical:Co-purification
+physical:Far Western
+physical:PCA
+physical:Protein-RNA
+physical:Reconstituted Complex
+physical:Two-hybrid

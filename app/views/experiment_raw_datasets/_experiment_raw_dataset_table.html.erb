@@ -1,0 +1,33 @@
+<%links = true %>
+<% if !@experiment_raw_datasets %><%@experiment_raw_datasets = [@experiment_raw_dataset] %><%links=false%><%end%>
+
+<table id="experiment_raw_datasets" style="display:none;">
+  <thead>
+    <tr>
+      <th>ID / view data<%if links%><span class="question" id="clickToEdit" title="Click to edit.">?</span><%end%></th>
+      <th class="nowrap">Batch Date<span class="question" id="batchDate" title="This is the date that this screen was performed. For consistancy, it should corrispond to the date the mating was performed.">?</span></th>
+      <th>pWJ Plasmid</th>
+      <th>Condition</th>
+      <th># plates</th>
+      <th>Density</th>
+      <th>Uploaded by</th>
+      <th>Last Updated</th>
+      <%if links%><th>Delete?</th><%end%>
+    </tr>
+  </thead>
+  <tbody>
+    <% @experiment_raw_datasets.each do |experiment_raw_dataset| %>
+      <tr>
+        <td><%if links%><%= link_to experiment_raw_dataset.id, experiment_raw_dataset %><%else%><%=experiment_raw_dataset.id%><%end%></td>
+        <td><%=experiment_raw_dataset.batch_date%></td>
+        <td><%=experiment_raw_dataset.pwj_plasmid.number%> (<%=experiment_raw_dataset.pwj_plasmid.promoter%> - <%=experiment_raw_dataset.pwj_plasmid.gene%>)</td>
+        <td><%=experiment_raw_dataset.condition%></td>
+        <td><%=experiment_raw_dataset.number_of_plates%></td>
+        <td><%=experiment_raw_dataset.density.density%></td>
+        <td><%=experiment_raw_dataset.updated_by%></td>
+        <td><%=experiment_raw_dataset.updated_at%></td>
+        <%if links%><td><%= link_to 'Destroy', experiment_raw_dataset, method: :delete, data: { confirm: 'Are you sure?' } %></td><%end%>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

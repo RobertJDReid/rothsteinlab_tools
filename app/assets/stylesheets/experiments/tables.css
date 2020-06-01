@@ -1,0 +1,30 @@
+table.exp{
+	border-collapse: collapse;
+	margin:5px 5px 5px 15px;
+}
+
+table.exp tr th{
+	font-weight: bold;
+	color: white;
+	background: #3E83C9;
+}
+table.exp tr td, table.exp tr th{
+	text-align: center;
+	border:1px solid #95BCE2;
+	padding:3px;
+	vertical-align: middle;
+}
+
+table.exp tr.toggleRow td.toggleTD{padding:0px;background-color: yellow;}
+
+table.exp tr td.alt{background-color: #ECF6FC;}
+
+table.exp tr td.fileNameRow, table.exp tr td.bottomRow{ border-bottom-width: 3px; }
+
+div.toggleRowDiv table.exp tr th{
+	background-color: #e6e6e6;
+	color:black;
+}
+
+table.exp tr td.match, table.exp tr td.badData{	background-color: #FC7373; }
+table.exp tr td.badData{	font-weight: bold;}

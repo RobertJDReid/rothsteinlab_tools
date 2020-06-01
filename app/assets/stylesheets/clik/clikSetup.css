@@ -1,0 +1,80 @@
+hr{clear:both;}
+#trough {
+ border: 1px solid #000000;
+ height: 16px;
+ display: block;
+ background-color: #DDDDDD;
+ -webkit-border-radius: 8px;
+ -moz-border-radius: 8px;
+ border-radius: 8px;
+}
+#bar {
+ background-color: #0000FF;
+ height: 16px;
+ -webkit-border-radius: 8px;
+ -moz-border-radius: 8px;
+ border-radius: 8px;
+ margin-right: -1px;
+}
+
+#spinner{border-width:0px;float:left;}
+.legend{float:left;width:200px;margin-right:40px;}
+.resultDiv{clear:left;}
+
+.loading{
+	font-size:1.3em;
+	margin-left:15px;
+	float:left;
+}
+#error{
+	width: auto;
+	float:left;
+  margin-top: 10px;
+	font-size:1.3em;
+	font-weight:bold;
+}
+
+.commit{float:left;}
+
+fieldset{
+	border: 3px solid #AAAAAA;
+	height:auto;
+	padding:5px;
+	float:left;
+}
+form fieldset legend, legend{
+	color: black;
+	font-weight: bold;
+	font-size:1.5em;
+	font-variant: small-caps;
+	padding: 2px 8px;
+}
+textarea{
+	font-size:1.5em;
+	font-family: 'Lucida Grande';
+}
+
+label{
+	font-weight:bold;
+	font-size:1.2em;
+}
+
+fieldset div input{
+	display:inline;
+	margin-right:5px;
+}
+.controller{
+	font-size:0.8em;
+	text-decoration: underline;
+	font-style: italic; 
+	cursor:pointer;
+}
+
+.radio_button, .radio_button_label{float:left;padding:0px 10px 0px 4px;}
+.radio_button{margin-top:5px;}
+.radioLabel{
+	font-weight:bold;
+	margin-right:15px;
+}
+.field-hint{display:inline;}
+input.formInputText{width:40px;margin-left:5px;}

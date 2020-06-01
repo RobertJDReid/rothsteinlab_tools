@@ -1,0 +1,71 @@
+== README
+
+TO DO:
+	Check to make sure emails are properly sent in production
+		when user requests a password reset
+		when an exception is raised
+		when a user submits a new ortholog
+		when a feature request is made
+
+	write specs for network
+	write specs for model/scerevisiae_bio_grid_interactions
+	write specs for model/spombe_bio_grid_interactions
+	write specs for experiments, donors, pwj_plasmids, reps, strain_libraries, etc.
+
+write specs for model/getScreenFileInfo → done
+write specs for scerevisiae_genes → DONE!
+write specs for hsapien_ensembl_genes → DONE!
+write cbio spec → DONE!
+
+Use copycopter to allow other people to edit pages
+Stage in heroku? will cgi-scripts work?
+Add verify_recaptcha(params) to password-reset request
+Verify recaptcha works
+verify SGD users see proper message in ScreenTroll.
+
+
+
+
+To deploy to a subdirectory while having the base uri still work, the apache setting should looking something like:
+NameVirtualHost *:80
+
+<VirtualHost *:80>
+  PassengerEnabled on
+  LogLevel warn
+  ServerName "rails4.local"
+  ServerAdmin jdittmar@gmail.com
+  ErrorLog "/Library/WebServer/apacheLogs/rails4-errorLog"
+  CustomLog "/Library/WebServer/apacheLogs/rails4-accessLog" common
+  DocumentRoot "/Library/WebServer/Documents/rothstein/html/trunk"
+  PassengerDebugLogFile "/Library/WebServer/Documents/rothstein/rails4-repo/log/passenger.log"
+  <Directory /Library/WebServer/Documents/rothstein/html/trunk>
+      Allow from all
+  </Directory>
+
+
+  Alias /new_tools /Library/WebServer/Documents/rothstein/rails4-repo/public
+  <Location /new_tools>
+	  RailsEnv development
+    #SetEnv RAILS_RELATIVE_URL_ROOT "/new_tools"
+    PassengerBaseURI /new_tools
+    PassengerAppRoot /Library/WebServer/Documents/rothstein/rails4-repo
+  </Location>
+  <Directory /Library/WebServer/Documents/rothstein/rails4-repo/public>
+      Allow from all
+      Options -MultiViews
+  </Directory>
+</VirtualHost>
+
+
+
+
+Also check out this:
+http://stackoverflow.com/questions/7295744/how-to-deploy-rails-3-1-app-in-a-subdirectory
+and this:
+https://www.site5.com/blog/programming/ruby-rails/how-to-deploy-phusion-passenger-to-a-subdirectory-routing-errors-and-restarting/20090414/
+
+to deploy to subdirectory:
+http://www.modrails.com/documentation/Users%20guide%20Apache.html#deploying_rails_to_sub_uri
+to fix broken assets:
+http://www.modrails.com/documentation/Users%20guide%20Apache.html#sub_uri_deployment_uri_fix
+

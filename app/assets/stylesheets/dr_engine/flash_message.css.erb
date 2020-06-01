@@ -1,0 +1,151 @@
+/* ----- FLASH NOTICE ----- */
+
+#flash_message_dialog {
+    margin:0px;
+    display:block;
+    padding:10px;
+    width:100%;
+}
+#flash_message_dialog h2 {
+  font-size:24px;
+  margin:3px 0px;
+  font-weight:normal;
+  color:#666;
+}
+#flash_message_dialog.warning {
+  color:#000;
+  border: 2px solid #FF6600;
+  background-color: #FDB568;
+}
+#flash_message_dialog.confirmation {
+  color:#000;
+  border: 2px solid #339933;
+}
+#flash_message_dialog.notice {
+  color:#000;
+  border: 0px solid #7E7E7F;
+  background: #fff url(<%=asset_path "css/window_background_light.png" %>) repeat-x;
+_filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true, sizingMethod='scale', src=<%=asset_path "css/window_background_light.png" %>);
+}
+#flash_message_dialog.error {
+  color:#000;
+  font-weight:bold;
+  border: 2px solid #CC0000;
+  background-color: #FC7373;
+}
+#flash_message_dialog_buttons {
+  float:right;
+  margin:5px;
+}
+#flash_message_dialog_buttons a {
+  padding-right:10px;
+}
+
+#flash_message_overlay {
+  background: transparent url(<%=asset_path "css/window_background_light.png" %>) !important;
+  background:transparent;
+	_filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true, sizingMethod='scale', src=<%=asset_path "css/window_background_light.png" %>);
+}
+
+#flashMessageBackground {
+	margin:0;
+	padding:0;
+	width:100%;
+	height:100%;
+	top:0px;
+	left:0px;
+	position:absolute;
+	background: transparent url(<%=asset_path "css/window_background_light.png" %>) !important;
+  background:transparent;
+  _filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true, sizingMethod='scale', src=<%=asset_path "css/window_background_light.png" %>);
+	z-index:100;
+}
+
+.flashError>#flashTitle, .flashDone>#flashTitle, .flashGood>#flashTitle, .flashInteractive>#flashTitle{
+	float:left;
+	width:100%;
+	display:inline;
+	font-size:1.7em;
+	text-align:center;
+}
+
+.flashGood, .flashError, .flashDone, .flashInteractive{
+	top:45%;
+	border:1px solid #000;
+	width:50%;
+	position:relative;
+	color:#000;
+	margin-left:auto;
+	margin-right:auto;
+	padding: 5px 5px 38px 5px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+#flashMessageText span, #flashMessageText span{display:inline;font-style:italic;}
+.flashGood{
+	background: #fff url(<%=asset_path "spinner-big.gif" %>) no-repeat;
+	background-position: 50% 95%;
+}
+.flashDone{
+	background: #fff url(<%=asset_path "css/done.png" %>) no-repeat;
+	background-position: 50% 95%;
+}
+
+.flashGood,.flashDone, .flashInteractive{font-style:italic;}
+
+.flashError{
+	background: #fff url(<%=asset_path "exclamation.png" %>) no-repeat;
+	background-position: 50% 95%;
+	border:5px solid red;
+	font-weight:bold;
+}
+
+.flashInteractive{
+	background-color:#ffff99;
+	font-weight:bold;
+	padding-bottom:0px;
+}
+
+
+#flashMessageText{
+	clear:left;
+	display:table;
+	border:1px solid transparent;
+	margin: 5px auto 5px auto;
+}
+
+#closeFlash{
+	position:absolute;
+	padding-right:15px;
+	padding-top:5px;
+	top:0px;
+	right:0px;
+	cursor:pointer;
+}
+
+#flashMessageText br{padding:0px;margin:0px;width:0px;height:0px;}
+
+#tText{margin:0px;}
+
+.buttonContainer{
+	width:230px;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+.continueButton, .cancelButton{
+	float:left;
+	border-color:#669966 #336633 #336633 #669966;
+	border-style:solid;
+	border-width:1px;
+	color:white;
+	font-weight:bold;
+	margin:10px 15px 0px 15px;
+	padding:3px 6px;
+	font-size:1.3em;
+	cursor:pointer;
+}
+.continueButton{background-color:#009F33;}
+.cancelButton{background-color:#FF6F75;}

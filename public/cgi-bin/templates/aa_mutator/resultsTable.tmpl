@@ -1,0 +1,17 @@
+<br/><br/><strong>Your original input is the first row in the table below and is highlighted in green.</strong><br/>
+ 
+<table>
+	<tr><th>Codon Frequency</th><th>Modified Sequence</th><th>Restriction Enzymes</th></tr>
+	<tr style="background-color:#00FF3A;">
+		<td><TMPL_VAR NAME="o_yeastiness"></td>
+		<td><TMPL_VAR NAME="o_seq_string"></td>
+		<td><TMPL_VAR NAME="o_cut_list"></td>
+	</tr>
+	<TMPL_LOOP NAME="result_table_loop">
+	<tr>
+		<td><TMPL_VAR NAME="yeastiness"></td>
+		<td><TMPL_VAR NAME="seq_string"></td>
+		<td><TMPL_VAR NAME="cut_list"></td>
+	</tr>
+	</TMPL_LOOP>
+</table>

@@ -1,0 +1,16 @@
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'show' %>
+<%= render partial: "layouts/top" %>
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		$("#theForm").validate({ignoreTitle: true})
+	});
+</script>
+<% @buttonName = "Update!" %>
+ <%= render :partial => "form_fields"  %>
+
+<br/>
+<%= link_to 'Back to Listing', :action => 'list' %>
+<br/>
+</div>

@@ -1,0 +1,33 @@
+<h1>Listing excluded_colonies</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Experiment</th>
+      <th>Experiment raw dataset</th>
+      <th>Row</th>
+      <th>Column</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @excluded_colonies.each do |excluded_colony| %>
+      <tr>
+        <td><%= excluded_colony.experiment %></td>
+        <td><%= excluded_colony.experiment_raw_dataset %></td>
+        <td><%= excluded_colony.row %></td>
+        <td><%= excluded_colony.column %></td>
+        <td><%= link_to 'Show', excluded_colony %></td>
+        <td><%= link_to 'Edit', edit_excluded_colony_path(excluded_colony) %></td>
+        <td><%= link_to 'Destroy', excluded_colony, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Excluded colony', new_excluded_colony_path %>

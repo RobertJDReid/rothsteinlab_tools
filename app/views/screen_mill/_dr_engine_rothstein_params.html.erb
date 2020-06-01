@@ -1,0 +1,129 @@
+<fieldset id="screeninfo" class='wide'>
+	<div id='rothstein_sdl_head' class='sprite-minus'>
+		Incubation Times (Rothstein Lab SDL screens)
+	</div>
+	<div id='rothstein_sdl_body' style="">
+		<table class="formTable" >
+			<tr>
+				<td colspan="4">
+					<input type="checkbox" style="display:inline;margin-bottom:10px;" id="store" name="store" value="yes" checked="checked" />
+					<label for='store' style="display:inline;">Check this box to store additional information</label>
+				</td>
+			</tr>
+			<tr>
+				<td><label for="store_params_batch_date"  class="right required">Batch date:</label></td>
+				<td>
+					<input type="text" id="store_params_batch_date" name="store_params[batch_date]" class="field_associates" readonly="true" />
+				</td>
+				<td><label for="store_params_screen_purpose" class="required right">Screen purpose:</label></td>
+				<td>
+				<%= select("store_params", "screen_purpose", ScreenPurpose.all.collect {|p| [ p.purpose, p.purpose] }, {include_blank: "Please select:", :disabled => "Please select:"}, {class:"field_associates fieldHint" }) %>
+				
+			</tr>
+			<tr>
+				<td><label for="store_params_screen_type" class="right required">Screen type:</label></td>
+				<td><%= collection_select :store_params, :screen_type,  ScreenType.all, :screen_type, :screen_type, {include_blank: 'Please select:', :disabled => 'Please select:'}, {class:"field_associates fieldHint" }%></td>
+				<td><label class="required right" for="store_params_donor_strain_used">Donor strain:</label></td>
+				<td><%= collection_select :store_params, :donor_strain_used,  Donor.all, :wNumber, :number_and_type, {include_blank: 'Please select:', :disabled => 'Please select:'}, {class:"field_associates fieldHint" }%></td>
+			</tr>
+			<tr>
+				<td><label class="required right" for="store_params_incubation_temperature" class="required">Incubation temperature:</label></td>
+				<td><%= select :store_params, :incubation_temperature, ((10..60).step(1).map{|s| [raw("#{s}&deg;C"),s]} ), {include_blank: 'Please select:', :disabled => 'Please select:'}, {:class=>"field_associates fieldHint" }%></td>
+				<td><label for="store_params_lreps"  class="right required">Library Replicates: </label></td>
+				<td>
+					<div class="field-hint-inactive" id="lreps-H">
+						<div>Select the number of times you replicated the library on to fresh media from 4°C prior to mating.</div>
+					</div>
+					<select class="field_associates fieldHint" id="store_params_lreps" name="store_params[lreps]" >
+						<option disabled="disabled" selected="selected">Please select:</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td><label for="store_params_mating_time"  class="right required">Mating Time: </label></td>
+				<td>
+					<div class="field-hint-inactive" id="mate-H">
+						<div>Select amount of time you mated on YPD.</div>
+					</div>
+					<select  class="field_associates fieldHint" id="store_params_mating_time" name="store_params[mating_time]">
+						<option disabled="disabled" selected="selected">Please select:</option>
+						<option value="4">4 hours</option>
+						<option value="5">5 hours</option>
+						<option value="6">6 hours</option>
+						<option value="7">7 hours</option>
+						<option value="8">8 hours</option>
+						<option value="9">9 hours</option>
+						<option value="10">10 hours</option>
+						<option value="11">11 hours</option>
+						<option value="12">12 hours</option>
+						<option value="13">13 hours</option>
+						<option value="14">14 hours</option>
+						<option value="15">15 hours</option>
+						<option value="16">16 hours</option>
+					</select>
+				</td>
+				<td><label for="store_params_first_gl"  class="right required">1st Gal -Leu Incubation: </label></td>
+				<td>
+					<div class="field-hint-inactive" id="first_gl-H">
+						<div>Select the amount of time you incubated during the 1st round of Gal -Leu selection.</div>
+					</div>
+					<select class="field_associates fieldHint" id="store_params_first_gl" name="store_params[first_gl]">
+						<option disabled="disabled" selected="selected">Please select:</option>
+						<option value="n/a">n/a</option>
+						<option value="12">12 hours</option>
+						<option value="18">18 hours</option>
+						<option value="24">24 hours</option>
+						<option value="30">30 hours</option>
+						<option value="36">36 hours</option>
+						<option value="42">42 hours</option>
+						<option value="48">48 hours</option>
+					</select>
+				</td>
+				
+			</tr>
+			<tr>
+				<td><label for="store_params_second_gl"  class="right required">2nd Gal -Leu Incubation: </label></td>
+				<td>
+					<div class="field-hint-inactive" id="second_gl-H">
+						<div>Select the amount of time you incubated during the 2nd round of Gal -Leu selection.</div>
+					</div>
+					<select class="field_associates fieldHint" id="store_params_second_gl" name="store_params[second_gl]">
+						<option disabled="disabled" selected="selected">Please select:</option>
+						<option value="n/a">n/a</option>
+						<option value="12">12 hours</option>
+						<option value="18">18 hours</option>
+						<option value="24">24 hours</option>
+						<option value="30">30 hours</option>
+						<option value="36">36 hours</option>
+						<option value="42">42 hours</option>
+						<option value="48">48 hours</option>
+					</select>
+				</td>
+				
+				<td><label for="store_params_final_incubation"  class="right required">Final Incubation:</label></td>
+				<td>
+					<div class="field-hint-inactive" id="final-H">
+						<div>Select the amount of time your final selection plates were incubated.</div>
+					</div>
+					<select  class="field_associates fieldHint" id="store_params_final_incubation" name="store_params[final_incubation]">
+						<option disabled="disabled" selected="selected">Please select:</option>
+						<option value="24">24 hours</option>
+						<option value="30">30 hours</option>
+						<option value="36">36 hours</option>
+						<option value="42">42 hours</option>
+						<option value="48">48 hours</option>
+						<option value="54">54 hours</option>
+						<option value="60">60 hours</option>
+						<option value="66">66 hours</option>
+						<option value="72">72 hours</option>
+						<option value="78">78 hours</option>
+						<option value="84">84 hours</option>
+					</select>
+				</td>
+			</tr>
+		</table>
+	</div>
+</fieldset>

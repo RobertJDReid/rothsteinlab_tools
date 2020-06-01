@@ -1,0 +1,161 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function(){
+	$(function() {
+		$("#comment-view").dialog({
+			autoOpen: false,
+			height: 350,
+			width: 750,
+			modal: true,
+			position: { my: "center", at: "center", of: window },
+			buttons: {	"Close": function(){$( this ).dialog( "close" );}	},
+			close: function() {  $("#comment-view textarea").val( "" );},
+			open: function(event,ui){	
+				$("#comment-view textarea").html($("#comment-view").data('opener').val());	
+			}
+		})
+
+		tips = $( ".validateTips" );
+		$( "#comment-form" ).dialog({
+		  autoOpen: false,
+		  height: 400,
+		  width: 750,
+		  modal: true,
+		  position: { my: "center", at: "center", of: window },
+		  buttons: {
+		    "Update comments": function() {
+		      var bValid = true;
+		      el = $("#comments");
+		      el.removeClass( "ui-state-error" );
+		      var id = $('#comment-form').data('opener').attr('title');
+		      bValid = bValid && checkLength( el, "comments", 3, 50000 );
+		      if ( bValid ) {
+		      	$.ajax({
+		      		type		: 'POST',
+		      		url			: 'update_comments/'+id, 
+		      		data		: {  id: id, comments : el.val() }, 
+		      		dataType: 'json',
+		      		beforeSend: function(){},
+		      		success	: function(data){
+		      			if(data.success){
+		      				$( "#comment-form"  ).dialog( "close" );
+		      				$('#comment-form').data('opener').val( el.val() );
+		      				$('#comment-form').data('opener').parent().parent().effect('highlight', 1000);
+		      			}
+		      			else{
+		      				alert(data.error);
+		      			}
+		      		},
+		      		error : function(){alert("Error updating comments");}
+		      	});
+		      }
+		    },
+		    Cancel: function() {	$( this ).dialog( "close" );	}
+		  },
+		  close: function() {  $("#comments").val( "" ).removeClass( "ui-state-error" );	},
+		  open: function(event,ui){	$("#comments").val($("#comment-form").data('opener').val());	}
+		});
+
+		function checkLength( o, n, min, max ) {
+	    if ( o.val().length > max || o.val().length < min ) {
+	      o.addClass( "ui-state-error" );
+	      updateTips( "Length of " + n + " must be between " +
+	        min + " and " + max + "." );
+	      return false;
+	    } else {
+	      return true;
+	    }
+	  }
+	  function updateTips( t ) {
+	    tips.text( t ).addClass( "ui-state-highlight" );
+	    setTimeout(function() {
+	      tips.removeClass( "ui-state-highlight", 1500 );
+	    }, 500 );
+	  }
+
+	  // add event handler for module comment field
+	  $('.modifyComment, .viewComment').button();
+
+	  $(document).on('click', '.modifyComment', function() {
+	  	// open the dialog window, set 'opener' to the element containing the comments that 
+	  	// was clicked on to trigger this event
+	  	$( "#comment-form" ).data('opener', $(this).next()).dialog( "open" );
+	  });
+	  $(document).on('click', '.viewComment', function() {
+	  	// open the dialog window, set 'opener' to the element containing the comments that 
+	  	// was clicked on to trigger this event
+	  	$( "#comment-view" ).data('opener', $(this).next()).dialog( "open" );
+	  });
+	});
+
+	jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "title-numeric-pre": function ( a ) {
+      var x = a.match(/title="*(-?[0-9\.]+)/)[1];
+      return parseFloat( x );
+    },
+ 
+    "title-numeric-asc": function ( a, b ) {
+      return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+ 
+    "title-numeric-desc": function ( a, b ) {
+      return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+	});
+
+	var oTable = $("#experiments").dataTable({
+			"sPaginationType": "full_numbers",
+      "bFilter": true,
+      "bSort": true,
+      "bInfo": true, 
+      "bAutoWidth": true,
+      "bJQueryUI": true,
+      "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      "iDisplayLength" : 50,
+      "oLanguage": { "sSearch": "Filter (all columns):"	},
+      "aoColumnDefs": [{ "sType": "title-numeric", "aTargets": [0] }],
+      "fnDrawCallback": function () {  
+      	$( '.modifyComment, .viewComment' ).button(); 
+      	$("#experiments").fadeIn();
+      },
+	});
+	$('#data').fadeIn();
+
+});
+
+</script>
+
+<style type="text/css">
+	.ui-dialog .ui-state-error { padding: .3em; }
+	.validateTips { border: 1px solid transparent; padding: 0.3em; }
+	.ui-dialog fieldset { padding:0; border:0; }
+	.ui-dialog{ overflow: hidden;}
+	.ui-dialog textarea { width:100%; height:200px; overflow: auto;}
+	.ui-dialog p, .ui-dialog label { margin:0px;}
+	#main button span{font-size: 12px;}
+	#main span{font-size: 12px;}
+
+</style>
+<%= render partial: "layouts/top" %>
+<div id="data">
+<%= render :partial => 'experiment_table' %>
+<br/>
+</div>
+</div>
+
+<div id="comment-form" title="Modify Comments Field" style="display:none;">
+  <p class="validateTips">This field cannot be blank.</p>
+  <form>
+  <fieldset>
+    <label for="comments">Comments:</label>
+    <textarea name="comments" id="comments" class="text ui-widget-content ui-corner-all" /></textarea>
+  </fieldset>
+  </form>
+</div>
+
+
+<div id="comment-view" title="View Comment" style="display:none;">
+  <textarea disabled="disabled"></textarea>
+</div>

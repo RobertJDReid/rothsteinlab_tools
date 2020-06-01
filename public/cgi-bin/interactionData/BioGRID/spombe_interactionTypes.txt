@@ -1,0 +1,26 @@
+GENETIC:Dosage Growth Defect
+GENETIC:Dosage Lethality
+GENETIC:Dosage Rescue
+GENETIC:Negative Genetic
+GENETIC:Phenotypic Enhancement
+GENETIC:Phenotypic Suppression
+GENETIC:Positive Genetic
+GENETIC:Synthetic Growth Defect
+GENETIC:Synthetic Lethality
+GENETIC:Synthetic Rescue
+PHYSICAL:Affinity Capture-Luminescence
+PHYSICAL:Affinity Capture-MS
+PHYSICAL:Affinity Capture-RNA
+PHYSICAL:Affinity Capture-Western
+PHYSICAL:Biochemical Activity
+PHYSICAL:Co-crystal Structure
+PHYSICAL:Co-fractionation
+PHYSICAL:Co-localization
+PHYSICAL:Co-purification
+PHYSICAL:FRET
+PHYSICAL:Far Western
+PHYSICAL:PCA
+PHYSICAL:Protein-RNA
+PHYSICAL:Protein-peptide
+PHYSICAL:Reconstituted Complex
+PHYSICAL:Two-hybrid

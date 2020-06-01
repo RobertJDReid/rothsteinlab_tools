@@ -1,0 +1,21 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'validation' %>
+<%= javascript_include_tag 'validationJQ'%>
+
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		$("#theForm").validate({ignoreTitle: true})
+	});
+</script>
+<%= render partial: "layouts/top" %>
+<%= errors_for_helper(@replicate) %>
+<%= form_for @replicate, html: {style:"padding:0px;", id:"theForm"} do |f| %>  
+	<label for="replicate" class="required">Replicate Value:</label>
+	<%= f.text_field :reps, {:class=>"formInputText required number",:size=>20} %>
+  <br/>
+	<%= submit_tag 'Create!', :class=>"commit" %>
+<% end %>
+<br/>
+<%= link_to 'Back to listing', :action => 'list' %><br/></div>
+
+

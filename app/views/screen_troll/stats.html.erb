@@ -1,0 +1,54 @@
+<style type="text/css">
+fieldset{
+	border: 3px solid #AAAAAA;
+	border-radius: 4px;
+	height:auto;
+	margin-right:30px;
+	padding:5px;
+	float:left;
+	font-size:1.2em;
+}
+legend{
+	color: black;
+	font-weight: bold;
+	font-size:2em;
+	font-variant: small-caps;
+	padding: 2px 8px;
+}
+p{margin:0px;padding:4px;}
+img#stirling, img#hypergeometric{padding-left:30px;}
+</style>
+<%= render partial: "layouts/top" %>
+<fieldset style ="clear:left;float:left;margin:5px;padding-bottom:15px;" id="interactions">
+	<legend><b>Statistics used to calculate ScreenTroll Rank Score</b></legend>
+	
+	<p>ScreenTroll calculates a Rank Score based upon the significance of the overlap using the hypergeometric distribution. ScreenTroll calculates both a P value for the overlap of the two groups of genes and a P value for the exclusion of two groups of genes. The Rank score is the lower of these two P values. If the first score is used it means there was more overlap than expected at random, if the second P value is used (indicated by blue text in the output) it means that there was less overlap than expected at random. The Rank Score is calculated as follows:</p>
+	
+	<a href="http://en.wikipedia.org/wiki/Hypergeometric_distribution">
+		<%=image_tag "screen_troll/hyperg.png", :alt=> "hypergeometric distribution function", :id=>"hypergeometric", :name=>"hypergeometric",  :border=>0  %>
+	</a><br/>
+	
+	<p style="padding-left:30px;">The variables for ScreenTroll are as follows:<br/> p = hypergeometric
+	probability (Rank Score).<br/> N = total number of ORFs (fixed at
+	4800).<br/> n = number of ORFs in the query set.<br/> m = number of ORFs
+	in a the screen being compared.<br/> k = number of overlapping ORFs
+	between query set and the screen being compared.</p><br/><br/>
+
+	<p>ScreenTroll uses Stirling's approximation to calculate large
+	factorials:</p>
+	<a href="http://en.wikipedia.org/wiki/Stirling's_approximation">
+		<%=image_tag "screen_troll/stirling.png", :alt=> "stirling approximation", :id=>"stirling", :name=>"stirling", :width=>200, :border=>0 %>
+	</a><br/><br/><br/>
+	<p>This calculation of Rank Score makes a number of assumptions
+	about the query set and each of the screens in the database. Both the
+	query set and each set of screen data are assumed to be selected from a
+	group of 4800 ORFs (the non-essential deletion library), neither of
+	these assumptions are necessarily true. This is particularly a problem
+	for screens in the database which only examined a subset of the
+	non-essential deletion library or which included essential genes. The
+	Rank Score also does not take account of the number of screens being
+	compared. The more screens that are present in the ScreenTroll database,
+	the greater the chance of finding a match purely by chance. Should users 
+	wish to apply a simple Bonferroni adjustment for multiple hypothesis testing it is possible to generate a p-value by multiplying the Rank Score (hypergeometric p-value) by the number of screens compared (this value is shown on at the top of the ScreenTroll results page). However, users are advised to look closely at the screens being compared to ascertain a more accurate estimation of the p-value. For example, when screening for ORF deletions that give a particular phenotype it is assumed that each ORF in the collection has an equal chance of giving that phenotype; for technical reasons this may not be the case. For these and other reasons neither the Rank Score nor a p-value derived from it should not be considered a measure of statistical significance but rather a way to rank the matching results. The user can use ScreenTroll to identify overlaps between the query set and a screen but should then assess the statistical likelihood of this overlap using information derived from the two screens (such as how many genes were screened). Furthermore, the user may be less interested in the statistical probability of the overlap, than in whether the individual ORFs, which overlap between their query set and a given screen, help to explain their screen
+	results.</p>
+</fieldset><br/></div>

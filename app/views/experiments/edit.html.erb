@@ -1,0 +1,30 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'validation' %>
+<%= javascript_include_tag 'validationJQ'%>
+<%= render partial: "layouts/top" %>
+
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		$("#theForm").validate({ignoreTitle: true})
+	});
+
+  $(function() {
+    $( "#experiment_batch_date" ).datepicker({
+      showOn: "both",
+      buttonImage: "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/calendar.gif",
+      buttonImageOnly: true,
+      dateFormat: "yy-mm-dd",
+      defaultDate: new Date($("#experiment_date").val())
+    });
+  });
+</script>
+<style type="text/css">
+  select.formSelect{width:auto;}
+</style>
+<% @buttonLabel = 'Update!' %>
+<%= render partial: 'form' %>
+<br/><br/>
+<br/>
+<%= link_to 'Back to Listing', action: 'list' %>
+<br/>
+</div>

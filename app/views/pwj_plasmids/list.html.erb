@@ -1,0 +1,66 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<%= render partial: "layouts/top" %>
+
+<script type="text/javascript" charset="utf-8">
+
+$(document).ready(function(){
+	var oTable = $("#plasmids").dataTable({
+							"sPaginationType": "full_numbers",
+			        "bFilter": true,
+			        "bSort": true,
+			        "bInfo": true, 
+			        "bAutoWidth": true,
+			        "bJQueryUI": true,
+			        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+			        "iDisplayLength" : 50,
+			        "oLanguage": { "sSearch": "Filter (all columns):"	}
+						});
+});
+
+</script>
+
+<%= link_to 'Create New pWJ Plasmid', new_pwj_plasmid_path %><br/><br/>
+<table class=borders id="plasmids">
+	<thead>
+	  <tr>
+	    <th>Number</th>
+			<th>Promoter</th>
+			<th>Gene</th>
+			<th>Yeast Marker</th>
+			<th>Bacteria Marker</th>
+			<th>Parent</th>
+			<th>Is Vector?</th>
+			<th>Comments</th>
+			<th>Created By</th>
+			<th>Created On</th>
+			<th>Last Updated By</th>
+			<th>Updated On</th>
+	  </tr>
+  </thead>
+ 	<tbody>
+		<% for plasmid in @plasmids %>
+  	<tr>
+			<td style="text-align: left;">
+				<%= link_to "#{plasmid.number} (edit)", :action => 'edit', :id => plasmid %>
+			</td>
+			<td><%=plasmid.promoter%></td>
+			<td><%=plasmid.gene %></td>
+			<td><%=plasmid.yeast_selection%></td>
+			<td><%=plasmid.bacterial_selection%></td>
+			<td><%=plasmid.parent %></td>
+			<td><%=plasmid.empty_vector ? 'yes' : '' %></td>
+			<td><%=plasmid.comments %></td>
+			<td><%=plasmid.created_by%></td>
+			<td><%=plasmid.created_at%></td>
+			<td><%=plasmid.updated_by%></td>
+			<td><%=plasmid.updated_at %></td>
+	  </tr>
+		<% end %>
+	</tbody>
+</table><br/>
+<%= link_to 'Create New pWJ Plasmid', new_pwj_plasmid_path %>
+<br/>
+</div>

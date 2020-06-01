@@ -1,0 +1,22 @@
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= render partial: "layouts/top" %>
+<%= link_to 'Create New Screen Purpose', new_screen_purpose_path %><br/><br/>
+<table class=borders>
+  <tr>
+    <th>#</th>
+		<th>Density</th>
+  </tr>
+<%counter=1%>
+<% for purpose in @screen_purposes %>
+  <tr>
+  		<td><%=counter%></td>
+  		<%counter+=1%>
+			<td style="text-align: left;">
+				<%=purpose.purpose%>
+			</td>
+  </tr>
+<% end %>
+</table>
+<br/>
+</div>

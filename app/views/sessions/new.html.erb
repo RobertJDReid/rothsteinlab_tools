@@ -1,0 +1,24 @@
+<%= stylesheet_link_tag "show", media: "all", "data-turbolinks-track" => true %>
+<!--[if ie]><meta http-equiv="refresh" content="0;URL=/no_ie.html" /><![endif]-->
+<%= render :partial => "layouts/top" %>
+
+<%= form_tag sessions_path do %>
+<fieldset style="border:0px solid;">
+	<label for="user_login" style="width:100px;"><strong>Login:</strong></label>
+	<%= text_field "user", "login", :size => 20, :class=>"formInputText" %>
+	<label for="user_password" style="width:100px;"><strong>Password:</strong></label>
+	<%= password_field "user", "password", :size => 20, :class=>"formInputText" %>
+	<div>
+		<label for="remember_me" style= 'display:inline;'/>Remember me</label>
+  	<%= check_box_tag :remember_me, 1, params[:remember_me], {:style=>'display:inline;'} %>
+	</div>
+	<br/>
+	<em><%= link_to 'Forgot Password?  Click Here.', :forgot_password %></em><br/><br/>
+	<%= submit_tag "Log In", :class=>'commit'%>
+</fieldset>
+<br/>
+<em style="font-size:1.2em;font-weight:bold;"><%= link_to "Don't have a login? Click here to signup.", :signup %></em><br/><br/>
+
+<em>Please note: this website works best using Google Chrome and a screen resolution of at least 1280 x 800.</em>
+</div>
+<% end %>

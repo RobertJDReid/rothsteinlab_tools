@@ -1,0 +1,311 @@
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= javascript_include_tag 'dr_engine/setup', "data-turbolinks-track" => true %>
+
+<%= stylesheet_link_tag 'field_hints', "data-turbolinks-track" => true%>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'dr_engine/flash_message', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'dr_engine/setup', "data-turbolinks-track" => true %>
+<%if permit? :experiments, :dr_engine_file_upload %>
+	<%= stylesheet_link_tag 'experiments/tables', "data-turbolinks-track" => true %>
+	<%= javascript_include_tag 'dr_engine/experiment_check', "data-turbolinks-track" => true %>
+<%end%>
+
+<!--[if IE]>
+<style type="text/css">
+.flashGood, .flashError{ { text-align: center; }
+.flashGood, .flashError{ br { display: block; }
+.flashGood, .flashError{ * { text-align: left; }
+#flashMessageText{
+	zoom: 1;
+	display: inline;
+}
+</style>
+<![endif]-->
+
+<%= render partial: "layouts/top" %>
+
+<div id="restore_div">
+</div>
+<div id="attribution" style="margin-bottom:20px;">
+<h3>
+	For instructions for how to use <i>DR Engine</i> please see:<div style="padding:10px;"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20584323" class="ext_link" >Dittmar JC, Reid RJ, Rothstein R. "ScreenMill: a freely available software suite for growth measurement, analysis and visualization of high-throughput screen data." BMC BioInformatics. 2010.</a></div>This paper should also be referenced if you use any <i>ScreenMill</i> results in a publication.</h3>
+</div>
+
+<div class="noteContainer">
+	<div class="analysisNotes">
+		<div class="notes" style="width:100%;">
+			<h4>Notes</h4>
+			<div style="padding:5px;">
+			<p><strong><u>Log File</u></strong> - This is the file generated from the <i>ScreenMill <b>C</b>olony <b>M</b>easurement Engine</i>. If you have used an alternative method to quantify your results, please ensure that it fulfills the log file formatting requirements.<br/>
+			<b><%= link_to "Click here for information about properly formatting your own log file.", screen_mill_log_file_info_path, :class=>"ext_link", :title=>"Log File Notes" %></b></p>
+			<br/>
+			<p><strong><u>Comparer Query</u></strong> - Please be sure to enter this <b>exactly</b> as it appears in your log file.</p>
+			<br/>
+			<p><strong><u>Key File selection</u></strong> - select one of the already stored key files OR <i>select the <b>"Upload Your Own"</b> option to upload your own key file.</i><br/><b><%= link_to "Click here for information about properly formatting your own key file.", screen_mill_key_file_info_path, :class=>"ext_link", :title=>"Key File Notes" %></b></p>
+			<br/>
+			<p><strong><u>Download Stored Key Files:</u></strong></p>
+				<ul>
+					<li><%= link_to "Rothstein Deletion (MAT alpha, 96 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/rothstein_deletion_alpha.tab", class: 'ext_link' %></li>
+					<li><%= link_to "Rothstein HB Deletion (MAT alpha, 384 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/HB_alpha.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Rothstein MAT a Deletion (MAT a, 96 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/MATa_names.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Rothstein MAT a Deletion (MAT a, 384 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/MATaKEY.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Rothstein Temperature Sensitive Library (MAT a, 384 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/tsMATaKeyFile.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Damp Library (MAT a)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/dampLibKey.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Fluorescent Tag DPI Array", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/DPI_array.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Curie Institute Deletion (MAT alpha, 96 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/curie_deletion_alpha.tab", class: 'ext_link' %> </li>
+					<li><%= link_to "Lisby Lab Library (MAT a, 384 strains / plate)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/Lisby_mat_a.tab", class: 'ext_link' %></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="formContainer">
+<form action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/dr_engine/setup.cgi" enctype="multipart/form-data" id="drForm" method="post" name="drForm" style="float:left;" target="result_fake">
+<input type='hidden' name='authenticity_token' id='authenticity_token' value="<%= form_authenticity_token %>" />
+	<div style="margin-top:-15px;">
+		<fieldset class='wide' id='fileinfo'>
+		  <legend>File Information</legend>
+			<input type="hidden" name="justAnalysis" value="yes" />
+			<table class="formTable" id="formInput">
+				<tr>
+					<td><div class="required"><label class="right">Log File:</label></div></td>
+					<td><input id="Log_File" type="file" name="logFile" class="required field_associates" title="Please upload a file." /></td>
+					<td><div class="required"><label for="control1"  class="right">Comparer Query:</label></div></td>
+					<td>
+						<div class="field-hint-inactive" id="control1-H">
+							<div>Enter the query identifier to use as your comparer.  This must be the same as it appears in your log file.</div>
+						</div>
+						<input type="text" id="control1" name="control" class="required field_associates fieldHint" title="Please enter your comparer query." value=""/>
+					</td>
+				</tr>
+				<tr>
+					<td><div class="required"><label for="key" class="right">Key File: </label></div></td>
+					<td>
+						<div class="field-hint-inactive" id="key-H">
+							<div>Select the library screened.<br/>You may upload your own key file by selecting the "UPLOAD YOUR OWN" option.<br/>You may disconnect your data from a key file by selected the "NO KEY FILE" option.</div>
+						</div>
+						<select class="required field_associates fieldHint" id="key" name="key">
+						<!--	<option value="1536a">Boone-1536 (4 reps, MAT a)</option> -->
+							<option selected="selected" value="R1536">Rothstein HB-1536 (4 reps, MAT alpha)</option>
+							<option value="R1536a">Rothstein MAT a - 1536 (4 reps, MAT a)</option>
+							<option value="R96_1rep">Rothstein-96 (1 reps, MAT alpha)</option>
+							<option value="R96a_1rep">Rothstein MAT a - 96 (1 reps, MAT a)</option>
+							<option value="R1536ts_a">Rothstein ts library (4 reps, MAT a)</option>
+							<option value="DAmPa">Damp (MAT a - 1536 strains / plate)</option>
+							<option value="DPI">Rothstein Fluorescent Tag DPI Array</option>
+							<option value="C384">Curie Institute-384 (4 reps, MAT alpha)</option>
+							<option value="hieterMATa">Hieter Lab-1536 (1 reps, MAT a)</option>
+							<option value="lisby384">Lisby Lab-384 (1 reps, MAT a)</option>
+							<option value="lisby1536">Lisby Lab-1536 (4 reps, MAT a)</option>
+						<!--	<option value="DAmPa">DAmP Library-384 (4 reps, MAT a)</option> -->
+							<option value="custom">&#8658;&#8658; UPLOAD YOUR OWN &#8656;&#8656;</option>
+							<option value="none">&#8658;&#8658; NO KEY FILE &#8656;&#8656;</option>
+						</select>
+					</td>
+					<td><div class="required"><label class="right">Description:</label></div></td>
+					<td>
+						<div class="field-hint-inactive" id="log_description-H">
+							<div>Enter a description that you will be able to remember.  This will be used to help identify this analysis.  Acceptable characters include a-z, 0-9, and the following symbols ' " + - ( ) . , _ ? ! & ; : ~ @ # %</div>
+						</div>
+						<input id="log_description" type="text" style="width:auto;" name="log_description" class="validate-description field_associates fieldHint"/>
+					</td>
+				</tr>
+				<tr>
+					<td>&#32;</td>
+					<td colspan="3"><div class="small" style="margin-top:-5px;width:auto;" id="key_desc">...</div></td>
+				</tr>
+			</table>
+		</fieldset>
+		<br style="clear:left;" />
+		<fieldset id="statMethod" class='wide'>
+			<legend>Statistical Test (mouse-over for details)</legend>
+			<table class="formTable" style="">
+				<tr>
+					<td>
+						<div class="field-hint-inactive" id="normal-H">
+							<div>Data is assumed to form a normal distribution, from this z-scores and p-values are calculated.<br/><strong>This method should only be used if you analyzing a lot of data (e.g, a full screen) and you expect that the majority of strains you are screening are unaffected. If you choose this method it is STRONGLY recommended that you disable Bonferroni correction (below).</strong></div>
+						</div>
+						<div class="radioLabel fieldHint">
+							<input id="normal" type="radio" name="statMethod" value='normal' checked="checked" title="Normal Distribution" /> Normal Distribution</div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="tTest-H">
+							<div>An unpaired t-test, assuming unequal variance among samples is performed between a given set of replicates on a comparer plate to the corresponding replicates on a experimental plate. This method is useful when performing analysis on a small number of strains (e.g, a validation screen).</div>
+						</div>
+						<div class="radioLabel fieldHint">
+						<input id="tTest" type="radio" name="statMethod" value='t-test' title="Perform Unpaired T-Test." /> Unpaired T-Test
+						</div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="mann-H">
+							<div>The Mann-Whitney test, with continuity correction, will be performed. This test is a non-parametric test for assessing whether two samples of observations come from the same distribution. No assumptions about the distribution of data are made.</div>
+						</div>
+						<div class="fieldHint radioLabel">
+							<input id="mann" type="radio" name="statMethod" value='Mann-Whitney' title="Mann-Whitney Rank Sum" /> Mann-Whitney Test</div>
+					</td>
+				</tr>
+			</table>
+			<table class="formTable" id="errorCorrection">
+				<tr>
+					<td>
+						<div class="field-hint-inactive" id="nToPlateMedian-H">
+							<div>Bonferroni correction <i>WILL</i> be performed.</div>
+						</div>
+						<div class="fieldHint radioLabel required">
+							<input id="yesBonferroni" type="radio" name="bonferroni" value='1'  title="Bonferroni correct p-values" /> Bonferroni correct p-values</div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="nToControls-H">
+							<div>Bonferroni correction <i>WILL NOT</i> be performed.</div>
+						</div>
+						<div class="fieldHint radioLabel required">
+							<input id="noBonferroni" type="radio" name="bonferroni" value='0' checked="checked" title="DO NOT Bonferroni correct p-values" /> <i>DO NOT</i> Bonferroni correct p-values</div>
+					</td>
+					<td><a href="http://en.wikipedia.org/wiki/Bonferroni_correction" class="ext_link" title='Bonferroni correction'>What is Bonferroni correction?</a></td>
+				</tr>
+			</table>
+		</fieldset>
+		<br style="clear:both;" />
+		<fieldset id="normalizationMethod" class='wide'>
+			<legend>Data Normalization Method (mouse-over for details)</legend>
+			<table class="formTable" style="">
+				<tr>
+					<td>
+						<div class="field-hint-inactive" id="nToPlateMedian-H">
+							<div>Data on a given plate are divided by the median value on the plate to normalize. Unless changed in the advanced options, below, zero values are ignored</div>
+						</div>
+						<div class="fieldHint radioLabel required">
+							<input id="nToPlateMedian" type="radio" name="normalizationMethod" value='median' checked="checked" title="Normalize to Plate Median" /> Plate Median</div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="nToControls-H">
+							<div>Data on a plate are normalized to the median value of designated control data on the same plate. In your key file, rows with the phrase "Positive Control" in the ID column will be considered as control data.</div>
+						</div>
+						<div class="fieldHint radioLabel required" id="controlNormalLabel">
+							<input id="nToControls" type="radio" name="normalizationMethod" value='controls' title="Normalize to Designated Controls" /> Designated Controls</div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="krogan-H">
+							<div>Colonies normalized via the Collins et al method (see S. R. Collins, M. Schuldiner, N. J. Krogan, J. S. Weissman, Genome Biol 7, R63 (2006).)</div>
+						</div>
+						<div class="fieldHint radioLabel required" id="kroganLabel">
+							<input id="krogan" type="radio" name="normalizationMethod" value='krogan' title="Normalize via Collins et al." /> Collins <em>et al.</em></div>
+					</td>
+					<td>
+						<div class="field-hint-inactive" id="doNotNormalize-H">
+							<div>No data normalization is performed.</div>
+						</div>
+						<div class="fieldHint radioLabel required">
+							<input id="doNotNormalize" type="radio" name="normalizationMethod" value='nothing'  title="Do NOT normalize" /> Do NOT normalize</div>
+					</td>
+				</tr>
+			</table>
+		</fieldset>
+		<br style="clear:both;" />
+		<fieldset class="wide" id="advanced_options_fieldset">
+			<div id='advanced_options_head' class='sprite-plus'>	Advanced options	</div>
+			<div id='advanced_options_body' style="display:none;">
+				<br/>
+				<table class="formTable">
+					<tr>
+						<td><label for="gExclusion"  class="right required">Run Global Exclusion?</label></td>
+						<td>
+							<div class="field-hint-inactive" id="exclusion-H">
+								<div>Default value = "yes". Should global exclusion be run? Select "No" to disable Global Exclusion. Disabling this algorithm will prevent data from being highlighted for exclusion by the global exclusion algorithm although you may still manually exclude data.</div>
+							</div>
+							<select  class="field_associates fieldHint" id="gExclusion" name="gExclusion">
+								<option value="1" selected="selected">Yes</option>
+								<option value="0">No</option>
+							</select>
+						</td>
+						<td><label for="death"  class="right required">Yellow Highlight Cutoff:</label></td>
+						<td>
+							<div class="field-hint-inactive" id="death-H">
+								<div>Default = 25% of plate normalization value. Cutoff below which data will be highlighted in yellow in cartoon representations of plates. Modifying this parameter will affect the global exclusion algorithm. Increasing this value may increase the number of data highlighted in yellow and therefore may increase the number of data highlighted in red for exclusion. Decreasing it will have the opposite effect.</div>
+							</div>
+							<select class="field_associates fieldHint" id="death" name="death">
+								<option value="0">0%</option>
+								<option value="5">5%</option>
+								<option value="10">10%</option>
+								<option value="15">15%</option>
+								<option value="20">20%</option>
+								<option selected="selected" id="death_default" value="25">25%</option>
+								<option value="30">30%</option>
+								<option value="35">35%</option>
+								<option value="40">40%</option>
+								<option value="45">45%</option>
+								<option value="50">50%</option>
+								<option value="55">55%</option>
+								<option value="60">60%</option>
+								<option value="65">65%</option>
+								<option value="70">70%</option>
+								<option value="75">75%</option>
+								<option value="80">80%</option>
+								<option value="85">85%</option>
+								<option value="90">90%</option>
+								<option value="95">95%</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td><label for="replicateExclusion"  class="right required">Run Replicate Exclusion?</label></td>
+						<td>
+							<div class="field-hint-inactive" id="replicateExclusion-H">
+								<div>Default value = yes. Allows for the replicate exclusion algorithm to be disabled. This parameter only affects processing when analyzing data from a screen with 4 replicates (2 x 2). Disabling this algorithm prevents the exclusion of data based on the comparative growth within a set of 4 replicates.</div>
+							</div>
+							<select class="field_associates fieldHint" id="replicateExclusion" name="replicateExclusion">
+								<option value="1" selected="selected">Yes</option>
+								<option value="0">No</option>
+							</select>
+						</td>
+						<td><label for="ignoreZeros"  class="right required" style="padding:3px 0 0 20px;">Ignore Zero Values:</label></td>
+						<td>
+							<div class="field-hint-inactive" id="ignoreZeros-H">
+								<div>Default value = yes. This parameter affects the way data are normalized to the "Plate Median." Uncheck this box to include "zero" values in the plate median calculation. </div>
+							</div>
+							<select  class="field_associates fieldHint" id="ignoreZeros" name="ignoreZeros">
+								<option value="1" selected="selected">Yes</option>
+								<option value="0">No</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+		<br style="clear:left;" />
+		<%if permit? :experiments, :dr_engine_file_upload %>
+			<%= render partial: "dr_engine_rothstein_params" %>
+		<%end%>
+		<input type="hidden" value="0" name="generateHistogram" id="generateHistogram" />
+		<br style="clear:both;" />
+		<fieldset class="wide" id="submission" >
+			<center>
+			<div style="background-color:#A4EFAE;">
+				<center>
+					<input type="submit" class="commit" value="&raquo; Run DR Engine &laquo;" id="submitFormButton" />
+					<input type="reset" class="reset" value="&raquo; Reset Form &laquo;" id="resetButton" />
+				</center>
+			</div>
+			</center>
+			<center style="clear:left;">
+			<div style="background-color:#BFE7FB;margin-top:10px;">
+				<center>
+					<a href="javascript:{}" class="subdue" id="restoreSession"><u>Restore previous analysis</u></a>
+					<input type="submit" class="subdue" id="generateHistogramButton" value="Check data distribution" />
+				</center>
+			</div>
+			</center>
+		</fieldset>
+		<br />
+		<fieldset class="wide" id='privacyReminder'>
+			<div class="permanent_notice" style="float:left;">
+					<strong><u>Privacy Reminder</u> - The Rothstein lab
+					will NOT store any of the data you upload once you are finished analyzing it</strong>.
+			</div>
+		</fieldset>
+	</div>
+
+</form>
+</div>
+<iframe name="result_fake" id="result_fake" style="display:none;"></iframe>
+</div>

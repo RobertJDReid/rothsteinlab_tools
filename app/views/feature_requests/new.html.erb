@@ -1,0 +1,19 @@
+<%= render partial: "layouts/top" %>
+<table>
+	<tr>
+		<td>
+			<%= form_tag feature_requests_path do %>
+			<fieldset style="border:0px solid;">
+				<label for="request_reason"><strong>Please enter detailed feature request below</strong></label>
+				<textarea rows="5" cols="20" name="feature" id="request_reason" class="formInputText" style="width:400px;"><%=@data[:feature] %></textarea><br/>
+				<label for="email"><strong>Please enter your email address if you'd like us to get back to you (optional).</strong></label>
+				<input type="text" name="email" id="email" class="formInputText" value="<%=@data[:email] %>" /> <br/>
+				<label for="human_test"><strong>Human Test:</strong></label>
+				<%= recaptcha_tags %><br/>
+				
+				<%= submit_tag "Submit", :class=>'commit'%>
+			</fieldset>
+			<% end %>
+			</td>
+	</tr>
+</table>

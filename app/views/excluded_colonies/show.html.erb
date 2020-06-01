@@ -1,0 +1,24 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Experiment:</strong>
+  <%= @excluded_colony.experiment %>
+</p>
+
+<p>
+  <strong>Experiment raw dataset:</strong>
+  <%= @excluded_colony.experiment_raw_dataset %>
+</p>
+
+<p>
+  <strong>Row:</strong>
+  <%= @excluded_colony.row %>
+</p>
+
+<p>
+  <strong>Column:</strong>
+  <%= @excluded_colony.column %>
+</p>
+
+<%= link_to 'Edit', edit_excluded_colony_path(@excluded_colony) %> |
+<%= link_to 'Back', excluded_colonies_path %>

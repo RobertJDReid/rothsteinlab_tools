@@ -1,0 +1,65 @@
+body { background-color: #fff; color: #338; }
+
+#main p, #main ol, #main ul{
+  font-family: verdana, arial, helvetica, sans-serif;
+  font-size:   13px;
+  line-height: 18px;
+}
+
+#main table.borders {
+	/*border-collapse: separate;*/
+  padding: 0;
+	margin: 0 auto 1.5em 0;
+	border-left: 1px solid #C1DAD7;
+	border-collapse:collapse;
+}
+
+
+table#noBorders{
+  border:0px solid black;
+  border-spacing: 1px;
+}
+
+td.underline a{ text-decoration:underline; }
+
+#main span.question{
+  cursor: pointer;
+  display: inline-block;
+  font-size: 13px;
+  width: 16px;
+  height: 16px;
+  background-color: #3EB2C9;
+  line-height: 16px;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  margin:0px 5px;
+}
+
+#main span.question:hover{background-color: #403EC9;}
+
+#main span {font-family: verdana, arial, helvetica, sans-serif; font-size: 9px;}
+
+#main table.borders td.lt_gray { background-color: red; }
+#main table.borders td.dk_gray { background-color: #d6d7d6; }
+
+#main table.borders th { }
+#main a:visited { color: #666; }
+
+div.uploadStatus {  margin: 5px;	}
+div.progressBar {  margin: 5px;	}
+
+div.progressBar div.border {
+  background-color: #fff;
+  border: 1px solid grey;
+  width: 100%;
+}
+
+div.progressBar div.background {
+  background-color: #333;
+  height: 18px;
+  width: 0%;
+}
+

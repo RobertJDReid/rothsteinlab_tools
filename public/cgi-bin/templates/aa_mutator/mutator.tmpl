@@ -1,0 +1,41 @@
+<table>
+	<tr>
+		<td>Initial Sequence:</td><TMPL_LOOP NAME="initial_seq_loop"><td><TMPL_VAR NAME="codon"></td></TMPL_LOOP>
+	</tr>
+	<tr align=center>
+		<td align=left>Translation:</td><TMPL_LOOP NAME="aa_loop"><td><TMPL_VAR NAME="aa"></td></TMPL_LOOP>
+	</tr>
+</table>
+<form name="setup2">
+	Please enter the one-letter code for the amino acid that you want <TMPL_VAR NAME="variable_aa"> changed to:
+	<SELECT NAME="aa" id="aa_to_change">
+	<option value="A">Alanine | Ala | A</option>
+	<option value="R">Arginine | Arg | R</option>
+	<option value="N">Asparagine | Asn | N</option>
+	<option value="D">Aspartic Acid | Asp | D</option>
+	<option value="C">Cysteine | Cys | C</option>
+	<option value="E">Glutamic Acid | Glu | E</option>
+	<option value="Q">Glutamine | Gln | Q</option>
+	<option value="G">Glycine | Gly | G</option>
+	<option value="H">Histidine | His | H</option>
+	<option value="I">Isoleucine | Ile | I</option>
+	<option value="L">Leucine | Leu | L</option>
+	<option value="K">Lysine | Lys | K</option>
+	<option value="M">Methionine | Met | M</option>
+	<option value="F">Phenylalanine | Phe | F</option>
+	<option value="P">Proline | Pro | P</option>
+	<option value="S">Serine | Ser | S</option>
+	<option value="T">Threonine | Thr | T</option>
+	<option value="W">Tryptophan | Trp | W</option>
+	<option value="Y">Tyrosine | Tyr | Y</option>
+	<option value="V">Valine | Val | V</option>
+	</SELECT>
+	<input type="hidden" value=<TMPL_VAR NAME="sequence"> name="sequence">
+	<input type="hidden" value="doit" name="doIT"><br/>
+	<input type="button" style="display:inline;" value="Generate permutations" id="genPerms" class="commit" onclick='$("#result2").html("");submitAjax({"strURL":"<TMPL_VAR NAME='base'>/cgi-bin/changeAA1.cgi", "formName":"setup2", "whatToUpdate" :"result2", "loader": "loading1","method":"POST"});'>
+	<div id="loading1" class="loading" style="display:none;">
+		<img src="<TMPL_VAR NAME='asset_prefix'>/spinner-big.gif" alt="spinner" id="spinner1" name="spinner" /><div style="padding:5px;float
+		:left;"></div>
+	</div>
+</form>
+

@@ -1,0 +1,38 @@
+
+	<div style="float:right;width:250px;">
+	<fieldset style="padding:5px;border:2px solid green;margin:10px;" id='commonSet'>
+		<legend>Common Data</legend>
+		<% if @overLapCount.length > 0 %>
+			<table style="float:left;text-align:center">
+				<tr><th>Identifier</th><th># datasets present</th><th>Common Sets</th></tr>
+				<% @overLapCount.sort{|a,b| b[1].length<=>a[1].length}.each do |elem| %>
+					<%if elem[1].length > 1 %>
+					<tr><%= raw("<td>#{elem[0]}</td><td>#{elem[1].length}</td><td>#{elem[1].join(', ')}</td>") %></tr>
+					<%end%>
+				<%end%>
+			</table>
+		<%else%>
+			<div style="font-size:1.3em;padding:5px;">No overlap between sets found</div>
+		<%end%>
+	</fieldset>
+	</div>
+	<div style="margin-right:250px;">
+
+<div>
+	<fieldset style="padding:5px;border:2px solid green;margin:10px;" id='uniqueSet'>
+		<legend>Unique members of each dataset (no overlap with others)</legend>
+	<ul style="padding:5px;margin:5px;">
+	<% for dataset in Array(@uniques.keys).sort %>
+		<li><%=dataset %> (<%=@uniques[dataset].length %>)<% if @uniques[dataset].length > 0%><ul><li><%=@uniques[dataset].join(", ")%></li></ul><%else%><br/><br/><%end%></li>
+	<%end%>
+	</ul>
+	</fieldset>
+	<fieldset style="padding:5px;border:2px solid blue;margin:10px;" id='intersectionSet'>
+		<legend>Intersections:</legend>
+	<ul style="padding:5px;margin:5px;">
+	<% @comparisons.each_pair do |comparison, results| %>
+		<li><%=comparison%> (<%=results.length %>)<% if results.length > 0%><ul><li><%=results.join(", ")%></li></ul><%end%></li>
+	<%end%>
+	</ul>
+	</fieldset>
+</div>

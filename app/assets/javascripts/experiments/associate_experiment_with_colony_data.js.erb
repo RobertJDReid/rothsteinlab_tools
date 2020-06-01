@@ -1,0 +1,98 @@
+var script = 'link_data';
+var customModalMsg = 'Successfully linked';
+var customSuccessMsg = "<button onclick='inferExcludes(this);'>Success! - click here to infer excluded colonies</button>";
+$(document).ready(function(){
+	if($("#experiments_table tr").length > 1){
+		findGoodRows();
+		var oTable = $("#experiments_table").dataTable({
+			"sPaginationType": "full_numbers",
+	    "bFilter": true,
+	    "bSort": true,
+	    "bInfo": true,
+	    "bAutoWidth": true,
+	    "bJQueryUI": true,
+	    "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+	    "iDisplayLength" : 25,
+	    "oLanguage": { "sSearch": "Filter (all columns):"	},
+	    "fnDrawCallback": function () {
+	    	$("#experiments_table").fadeIn();
+	    },
+	    // "fnPreDrawCallback" : function () {  },
+		});
+
+
+	}
+	else{$('#experiments_container').append('<div class="no_data">There doesn\'t seem to be anything here.');}
+	if($("#associated_experiments_table tr").length > 1){
+		var oTable = $("#associated_experiments_table").dataTable({
+			"sPaginationType": "full_numbers",
+	    "bFilter": true,
+	    "bSort": true,
+	    "bInfo": true,
+	    "bAutoWidth": true,
+	    "bJQueryUI": true,
+	    "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+	    "iDisplayLength" : 25,
+	    "oLanguage": { "sSearch": "Filter (all columns):"	},
+	    "fnDrawCallback": function () {
+	    	$("#associated_experiments_table").fadeIn();
+	    },
+		});
+	}
+	else{$('#associated_experiments_container').append('<div class="no_data">There doesn\'t seem to be anything here.');}
+
+
+});
+
+function findGoodRows(){
+	$('#experiments_table tbody tr').each(function(rowNumber){
+		var first = $(this).find('td.querySelectTD select');
+		var second = $(this).find('td.comparerSelectTD select');
+		var go = false;
+		if(!first.val()){	disableSelect(first);	}
+		else{go=true;}
+		if(!second.val()){	disableSelect(second); go=false;	}
+
+		var td = $(this).find('td.link_data');
+		var txt = 'n.a';
+		if(go){
+			$(this).addClass('success');
+			txt = '<input type="checkbox" name="uploadMe" class="uploadBox" onchange="checkUploadButtons()"; value="'+$(this).prop('id')+'" />';
+		}
+		$(this).find('td.link_data').html(txt);
+	});
+	return false;
+}
+
+function disableSelect(elem){
+	elem
+		.prop('disabled','disabled')
+		.addClass('disabled')
+		.append('<option selected="selected" value="">No datasets found!</option>');
+	return false;
+}
+
+function buildData(rowNum){
+	var inputH = function(name,value){return "<input type='hidden' name='"+name+"' value ='"+value+"'/>";}
+	var newForm = document.createElement("form");
+	var expID = $('#id'+rowNum+' a').html().trim()
+	var inputs = inputH('id', expID);
+	inputs += inputH('rowNum', rowNum);
+	inputs += inputH('experiment[experiment_comparer_raw_dataset_id]', $('#experiment_comparer_raw_dataset_id'+rowNum+' :selected').val());
+	inputs += inputH('experiment[experiment_query_raw_dataset_id]', $('#experiment_query_raw_dataset_id'+rowNum+' :selected').val());
+	$(newForm).append(inputs);
+	return {form:newForm, setInfo: "Experiment id: "+expID};
+}
+
+function inferExcludes(elem){
+	var experiment_id = $(elem).closest('tr').prop('id');
+	$.ajax({
+		type		: 'POST',
+		url			: '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/experiments/inferExcludedColonies.cgi',
+		data		: {'experiment_id':experiment_id},
+		dataType: 'json',
+		beforeSend: function(){
+			$("#loading-message").html( "Now infering colony sizes for experiment id "+experiment_id );
+		}
+	});
+}

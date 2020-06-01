@@ -1,0 +1,121 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= stylesheet_link_tag 'validation' %>
+
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<%= javascript_include_tag 'fixedHeader-min'%>
+<%= javascript_include_tag 'validationJQ'%>
+<style type="text/css">
+.commit{float:left;}
+.submitButtons input.commit, .submitButtons input.reset, .submitButtons button{
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+}
+.submitButtons{
+	padding:10px 0px 5px 5px;
+	clear:left;
+	float:left;
+}
+input.disabled{color:gray;}
+</style>
+<script type="text/javascript" charset="utf-8">
+
+var splitPattern = new RegExp(/\r|,|\n|,\s+|\s+|\|/);
+$(document).ready(function(){
+	$("#search").submit(function(){
+		submitForm();
+		return false;
+	});
+});
+
+function submitForm(){
+	if($('#search').valid()){
+		$.ajax({
+			url: '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/findOrthologs.cgi',
+			dataType: "json",
+			type:"POST",
+			data: {	genes : $('textarea[name=genes]', '#search').val()},
+			beforeSend:function(){
+				$('#spinner').fadeIn();
+				resetResponse('fade');
+			},
+			success: function(data) {
+				resetResponse('clear');
+				if(!data){	$('#error').html("Server error, please contain the admin.").fadeIn();	}
+				else{
+					if(data.error){	$('#error').html(data.error).fadeIn();	}
+					else{
+						if(data.badGenes){$('#badGenes').html(data.badGenes).fadeIn();}
+						if(data.results && data.goodCount && data.goodCount > 0){
+							$('#results').html(data.results).fadeIn();
+							if(data.msg){$("#msg").html(data.msg).fadeIn();}
+
+							var oTable = $("#orthologs").dataTable({
+								"sPaginationType": "full_numbers",
+				        "bFilter": true,
+				        "bSort": true,
+				        //"bInfo": true,
+				        //"bAutoWidth": true,
+				        "bJQueryUI": true,
+				        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+				        "iDisplayLength" : 50,
+				        // "sDom": '<"H"l><"toolbar">frt<"F"ip>',
+				        "oLanguage": {
+			            "sSearch": "Filter (all columns):"
+			        	}
+							});
+						}
+					}
+				}
+			},
+			error:function(xhr,status,exception){
+				resetResponse('clear');
+				$('#error').html("Server error, please contain the admin.").fadeIn();//" Status:"+status+", Exception:"+exception+".");
+			},
+			complete:function(){
+				$('#spinner').fadeOut();
+			}
+		});
+	}
+	return false;
+}
+function resetResponse(arg){
+	if(arg == 'clear'){
+		return $('#results, #error, #badGenes, #msg').stop().hide().html('');
+	}
+	return $('#results, #error, #badGenes, #msg').fadeOut();
+}
+</script>
+<%= render :partial => "layouts/top" %>
+<ul>
+<li><%= link_to raw("View all <em>S. cerevisiae</em> / human ortholog pairs cataloged by the Rothstein lab"), scerevisiae_hsapien_orthologs_path, :class=>"ext_link" %></li>
+
+<%if permit? :scerevisiae_hsapien_orthologs, :new %>
+	<li><%= link_to 'Create a new ortholog pair', new_scerevisiae_hsapien_ortholog_path, 'id'=>'createLink' %></li>
+<%elsif permit? :scerevisiae_hsapien_orthologs, :submit%>
+	<li><%= link_to "Submit a new ortholog pair", scerevisiae_hsapien_ortholog_submit_path, 'id'=>'submitLink' %></li>
+<%end%>
+</ul>
+<form  id='search'>
+	<h2 style="padding:0px;margin:0px;">Type or Paste in your identifier list: </h2>
+	You may separate your identifiers with commas, spaces, or carriage returns.<br/>
+	<div style="float:left;clear:left;">
+	<textarea id="genes" name="genes" style="margin-right: 10px;margin-bottom: 10px;float:left;width:auto" wrap="off" rows="12" cols="50" class="required formInputText"></textarea>
+	</div>
+
+	<div class="submitButtons">
+		<input type="submit" value="Submit" id="submitForm" class="commit">
+		<input type="reset" class="reset" id="resetForm" value="Clear" style="float:left;margin-left:15px;" />
+		<%=image_tag "ajax-loader.gif", :alt=> "spinner", :style=>"display:none;padding-top:6px;margin-left:10px;border:0px solid black;", :id=>"spinner", :name=>"spinner"%>
+	</div>
+</form>
+
+<fieldset id="resultsContainer" style="clear:left;float:left;">
+	<div id="badGenes"></div>
+	<div id="error" style="display:none;"></div>
+	<div id="msg" ></div>
+	<div id="results"></div>
+</div>
+

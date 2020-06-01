@@ -1,0 +1,314 @@
+var numberOfPings = 0;
+var lastPingMsg='';
+function toggleSelected(elem,checkboxClass){
+	if(elem.hasClass('selected')){	$('.'+checkboxClass).prop('checked', false);	}
+	else{$('.'+checkboxClass).prop('checked', true);}
+	elem.toggleClass('selected');
+}
+
+function checkDensity(){
+	if($('#manualScale').prop('checked')){
+		$('#startScale').prop('disabled',false);
+		$('#endScale').prop('disabled',false);
+		$('#manualScaleInputArea').slideDown();
+	}
+	else{
+		$('#startScale').prop('disabled',false);
+		$('#endScale').prop('disabled',false);
+		$('#manualScaleInputArea').slideUp();
+	}
+}
+
+function checkBS(){
+	if($('#noNetworkBS').prop('checked')){
+		$('#numBootStrapping').prop('disabled',true);
+		$('#numBSArea').slideUp();
+	}
+	else{
+		$('#numBootStrapping').prop('disabled',false);
+		$('#numBSArea').slideDown();
+	}
+}
+
+function checkComplex(){
+	if($('#noComplexBS').prop('checked')){	$('#complexBSArea').slideUp();	}
+	else{	$('#complexBSArea').slideDown();	}
+}
+
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+
+function checkSourceData(){
+	var organismParts = $('#organism').val().split('_').splice(0,2);
+	var organism = capitalize(organismParts[0])+' '+organismParts[1].toLowerCase();
+
+	var last = $('#interactionDataOrganism').val();
+
+	var db = '';
+	if($('#organism').val().match(/biogrid/i)){	db = 'BioGRID';	}
+	else if($('#organism').val().match(/droiDB/i)){	db = 'droiDB';	}
+
+	if(db != ''){
+		if(organism != last || $('#interactions:contains("Error!")').length > 0){
+			$.ajax({
+				url: "clik/update_interactions/",
+				data    : "organism="+organismParts[0].charAt(0)+organismParts[1]+"&db="+db,
+				success: function(data) {
+					if(data.hasOwnProperty('error')){
+						$('#interactions').html('<div class="alert">Error! '+data.error+'</div>');
+					}
+					else{	$('#interactions').html(data);}
+				},
+				error:function(xhr,exception,status){
+					$('#interactions').html('<div class="alert">Error! could not load interaction data.</div>');
+				},
+				complete:function(){
+					if($('#interactions').is(':visible')){	$('#interactions').effect('highlight',{},1000);	}
+					else{	$('#interactions').slideDown();}
+				}
+			});
+			$('#interactionDataOrganism').val(organism);
+		}
+		else if(!$('#interactions').is(':visible')){
+			$('#interactions').slideDown();
+		}
+	}
+	else if($('#interactions').is(':visible')){	$('#interactions').slideUp();	}
+
+	var msg = '';
+	if(organism.match(/sapien/i)){
+		msg = '<div id="idSelector"><label for="idType" style="display:inline;">Gene ID type:</label><select name="idType" id="idType"><option value="ensembl">Ensembl Gene IDs</option><option value="geneName">Gene Names</option></select></div>';
+	}
+	else if(organism.match(/melanogaster/i)){
+		msg = '<div id="idSelector"><label for="idType" style="display:inline;">Gene ID type:</label>FlyBase IDs only!</div>';
+	}
+	else if(organism.match(/pombe/i)){
+		msg = '<div id="idSelector"><label for="idType" style="display:inline;">Gene ID type:</label>Pombe systematic IDs only (e.g. <em>SPBC11B10.09</em>)!</div>';
+	}
+
+	if(organism.match(/cerevisiae/i) ){
+		$('#complexSource').slideDown();
+		$('#screenMillFileContainer').slideDown();
+		$('#idSelector').remove();
+	}
+	else{
+		$('#screenMillFileContainer').slideUp(100,function(){
+			if($('#idSelector').length < 1){
+				$('#idsInputContainer').append(msg);
+			}
+		});
+		if($('#complexSource').is(':visible')){	$('#complexSource').slideUp();	}
+	}
+}
+
+function alltrim(str) {return str.replace(/^\s+|\s+$/g, '');}
+
+function validate(){
+	numberOfPings=0;
+	$('#results').hide();
+	$('#results')[0].src='';
+	$('.error').remove();
+	$('#dummyFrame').contents().find('body').html('');
+	if($('#dummyFrame').contents().find('title').length>0){
+		$('#dummyFrame').contents().find('title').html('');
+	}
+	$('#pingError').html('');
+	$('#pingError').fadeOut();
+	$('#sessionID').val(getRand());
+	if($('#rankError')){$('#rankError').remove();}
+	if($('#checkError')){$('#checkError').remove();}
+	if($('#numberIDsError')){$('#numberIDsError').remove();}
+	if($('#formError')){$('#formError').remove();}
+	if($('#ids').val() == '' && $('#millFile').val() == '' ){
+		var error = '<div class="validation-advice" id="rankError">You must enter some data to analyze...</div>';
+		$('#rankData').prepend(error);
+	}
+	else if($('#ids').val() != ''){
+		var count = $('#ids').val().split(/\r|,|\n|,\s+|\s+|\|/);
+		count = $.grep(count,function(n){ if(n && n != ''){return(n);} }).length;
+		if(count < 50){
+			var error = '<div class="validation-advice" id="numberIDsError">';
+			error+='You must enter more than 50 elements in order for this program to run...</div>';
+			$('#rankData').prepend(error);
+		}
+	}
+
+	if($('#manualScale').prop('checked')){
+		var start = alltrim($('#startScale').val());
+		var end = alltrim($('#endScale').val());
+		if(start == '' || end == '' || !/^[-+]?[0-9]+(\.[0-9]+)?$/.test(start) || !/^[-+]?[0-9]+(\.[0-9]+)?$/.test(end)){
+			var error = '<div class="validation-advice" id="numberIDsError">To use the manual scale you';
+			error +=  'must enter valid decimal numbers (e.g. 0.02, 1, 1.5)...</div>';
+			$('#manualScaleInputArea').prepend(error);
+		}
+		else if(start >= end){
+			var error = '<div class="validation-advice" id="numberIDsError">The start value must be less than the end value</div>';
+			$('#manualScaleInputArea').prepend(error);
+		}
+	}
+
+	if($('#clikForm :checkbox:checked').length < 1){
+		var error = '<div class="validation-advice" id="checkError">You must check at least one type of interaction...</div>';
+		$('#interactions').prepend(error);
+		window.scrollTo(0,0);
+	}
+	var errorCount = $('.validation-advice').length;
+	if(errorCount>0){
+		var temp = errorCount == 1 ? ["A error", 'error is'] : ["Errors",'errors are'];
+		var error = '<div class="validation-advice" style="float:left;clear:left;" id="formError">';
+		error+=temp[0]+' above prevented the form from being submitted. If the '+temp[1]+' not visible, please scroll up to view them.<br/></div>';
+		$('#submitContainer').prepend(error);
+		return false;
+	}
+	$('#loading').fadeIn();
+	$('#spinner').fadeIn();
+	$('#trough').fadeIn();
+	$('#message').html('');
+	$('#bar').width('0%');
+	$('#progress-div').css("display", "block");
+	setTimeout("ping()", 2000);
+	//$('#clikForm').submit();
+	return true;
+}
+
+// Make an ajax request to check up on the status of the upload
+function ping() {
+	if($('message').html()==lastPingMsg){numberOfPings+=1;}
+	else{numberOfPings=0;}
+	var ajax = new XMLHttpRequest();
+	var go=true;
+	ajax.onreadystatechange = function () {
+		if (ajax.readyState == 4) {
+			if(ajax.status != 200 ){
+				loadingError();
+				return false;
+			}
+			if(ajax.responseText != 'finished!'){parse(ajax.responseText);}
+			else{
+				$('#message').html('Done! (100%)');
+				$('#bar').width('100%');
+				go=false;
+			}
+		}
+	};
+	if(go){
+		ajax.open('GET', '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/pingScript.cgi?&sessionID=' + $('#sessionID').val(), true);
+		ajax.send(null);
+	}
+}
+
+function iFrameLoad(){
+	$('#conditionCombo').val('');
+	if($('#conditionCombo1').length < 1){
+		// Element.hide('loading');
+		if($('#results')[0].src.indexOf('images') > 0 || $('#results')[0].contentWindow.document.body.innerHTML.indexOf('clikError') > 0 ){
+			$('#results').show()
+			calcHeight();calcHeight();
+		}
+	}
+}
+
+// React to the returned value of our ping test
+function parse(txt) {
+	if(txt.indexOf(':hideMe') > 0){$('#message').html('');$('#loading').fadeOut();}
+	if(txt.indexOf('combos:') > 0){
+		$('#spinner').fadeOut();
+		$('#trough').fadeOut();
+		$('#loading').fadeIn();
+		var msg = 'Multiple query-condition combinations found in the file you uploaded. Please select the one you would like to analyze and then click the re-submit button.';
+		msg=msg+"<br/><select class='field_associates' name='conditionCombo1' id='conditionCombo1' style='padding:5px;'>";
+		var parts = txt.split(":");
+		for(i=2;i<parts.length;i++){
+			var myValue = parts[i].gsub(/\t/,'-');
+			myValue = parts[i].gsub(/\s/,'');
+			msg=msg+'<option value='+myValue+'>'+parts[i]+'</option>';
+		}
+		msg=msg+'</select><button onclick=\'reSubmitForm();\'  />Re-Submit</button>';
+		$('#message').html(msg);
+	}
+	else{
+		//$('#debug').innerHTML = 'received from server: ' + txt;
+		var parts = txt.split(":");
+		if(parts[0] == 'printToBrowserExit'){
+			document.getElementById('results').src = 'temp/images/'+parts[1]+'/'+$('#sessionID').val()+'.html';
+			$('#loading').fadeOut("fast", function(){
+				iFrameLoad('');
+			});
+		}
+		else if (parts.length == 2) {
+			if(parts[1].indexOf('error') == -1 && $('#loading').is(":visible")){
+				if($('#dummyFrame').contents().find('body:contains("500 error"),title:contains("500")').length > 0 || parts[1] == 'printGenericError'){
+					loadingError();
+					return false;
+				}
+				else{setupPing();}
+			}
+			$('#message').html(parts[1]);
+			$('#bar').width(parts[0] + '%');
+		}
+		else{	setupPing(); }
+
+		//else{alert('no longer pinging');alert($('#loading').visible());alert(parts[1].indexOf('error'));}
+	}
+	lastPingMsg=$('#message').html();
+	return true;
+}
+
+function loadingError() {
+	$('#loading').hide(0, function(){
+		var error = '<div class="error" style="margin-top:10px;color:red;float:left;clear:left;" id="error">';
+		error+='A error occurred when running CLIK. Please <a style=\'display:inline;\' href=\'mailto:admin@rothsteinlab.com\'>contact the administrator.</a><br/></div>';
+		$('#submitContainer').append(error);
+	});
+	return false;
+}
+
+function setupPing(){
+	if($('#results')[0].contentWindow.document.body.innerHTML.indexOf('clikError') > 0 || $('#results')[0].src.indexOf('images') > 0 && $('#results')[0].contentWindow.document.body.innerHTML.length > 5 && $('#results').is(":visible")){
+		$('#loading').fadeOut();
+	}
+	else if(numberOfPings>200){
+		$('#loading').fadeOut();
+		$('#pingError').html('CLIK Timeout Error! please try again later. If you receive this message repeatidly, please contact an administrator.');
+		$('#pingError').fadeIn();
+	}
+	else{setTimeout("ping()", 2000);};
+}
+
+function calcHeight(){
+	//find the height of the internal page & change the height of the iframe
+	if($('#results').length>0 && $('#results')[0].contentWindow.document.body){
+		$('#results').height($('#results')[0].contentWindow.document.body.scrollHeight);
+	}
+}
+
+function reSubmitForm(){
+	// base36 = [0-9A-Z]
+	$('#sessionID').val(getRand());
+	$('#conditionCombo').val( $('#conditionCombo1').val() );
+	setTimeout("doNothing()", 1000);
+	//$('#clikForm').submit();
+	$('#clikForm')[0].action = '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/clik.cgi';
+	return true;
+}
+function getRand(){return Math.random().toString(36).substring(2,7)+''+new Date().getTime();}
+function doNothing(){return true;}
+
+function checkDummyContentOnLoad(){
+	if($('#dummyFrame')[0].contentWindow.location.pathname.indexOf('clik.cgi') > 0){
+		// if we're good so far, keep pinging
+		if($('#dummyFrame').contents().find('body:contains("so far, so good")').length>0){return true;}
+		// else set flag so ping knows to stop and can display error msg
+		else{$('#dummyFrame').contents().find('body').html("500 error");}
+		return false;
+	}
+	return true
+}
+$(document).ready(function(){
+	checkDensity();
+	checkBS();
+	checkComplex();
+	checkSourceData();
+	$('#organism').change(function(){checkSourceData()});
+});

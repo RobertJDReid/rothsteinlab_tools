@@ -1,0 +1,65 @@
+<%links = true %>
+<% if !@experiments %><%@experiments = [@experiment] %><%links=false%><%end%>
+
+<table class="exp" id="experiments" style="display:none;">
+	<thead>
+  <tr>
+  	<th>ID</th>
+    <th>Batch Date</th>
+		<th>Query</th>
+		<th>Comparer</th>
+		<th>Condition</th>
+		<th>Strains / plate</th>
+		<th>Reps</th>
+		<th>Plates</th>
+		<th>Incubation Temp</th>
+		<th>Type</th>
+		<th>Purpose</th>
+		<th>Donor</th>
+		<th>Library</th>
+		<th>Performed By</th>
+		<%if links %><th>Comments</th>
+		<th>View</th><%end%>
+  </tr>
+  </thead>
+  <tbody>
+<% @experiments.each_with_index do |experiment, i| %>
+  <tr>
+			<td>
+			<span title="<%=i+1%>"> <%=experiment.id%> </span>
+			<%if links %>
+			<% if permit?(:experiments, :edit, experiment) %>
+				[
+				<%= link_to " edit ", edit_experiment_path(experiment)  %> 
+				<% if permit?(:experiments, :destroy, experiment) %>|
+					<%= link_to " delete ", experiment_path(experiment), method: :delete, data: {confirm: 'Are you sure? This is delete this experiment and all associated data.'} %>
+				<%end%>
+				]
+			<% elsif permit?(:experiments, :destroy, experiment) %>
+			[<%= link_to " delete ", experiment_path(experiment), method: :delete, data: {confirm: 'Are you sure? This is delete this experiment and all associated data.'} %>]
+			<%end%><%end%></td>
+			<td><%=experiment.batch_date%></td>
+			<td><%=experiment.query%></td>
+			<td><%=experiment.condition%></td>
+			<td><%=experiment.comparer %></td>
+			<td><%=experiment.density %></td>
+			<td><%=experiment.replicates %></td>
+			<td><%=experiment.number_of_plates %></td>
+			<td><%=experiment.incubation_temperature %></td>
+			<td><%=experiment.screen_type %></td>
+			<td><%=experiment.screen_purpose %></td>
+			<td><%=experiment.donor_strain_used %></td>
+			<td><%=experiment.library_used %></td>
+			<td><%=experiment.performed_by %></td>
+			<%if links%>
+			<td id="commentsTD<%=i+1%>">
+				<% if permit? :experiments, :update, experiment %>
+				<button class="modifyComment row<%=i+1%>Option" id="commentButton<%=i+1%>">Click me</button>
+				<%else%><button class="viewComment row<%=i+1%>Option" id="commentButton<%=i+1%>">Click me</button><%end%>
+				<textarea id="comments<%=i+1%>" title="<%=experiment.id%>" class="hidden"><%=experiment.comments %></textarea>
+			</td>
+			<td><%=link_to "View Data", experiments_associated_data_path(:id=>experiment.id) %></td><%end%>
+  </tr>
+<% end %>
+</tbody>
+</table>

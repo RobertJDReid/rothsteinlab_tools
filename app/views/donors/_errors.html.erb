@@ -1,0 +1,15 @@
+<% if(@donor).errors.any? %> 
+	<div class="error" >
+		<strong>The following errors occurred:</strong></br><br/>
+		<ul>
+	<% (@donor).errors.each do |field,msg| %> 
+		<% if msg =~ /already exists/i %>
+			<li><%=msg%></li>
+		<%else%>
+			<% field = "Strain Number" if field =~ /wNumber/ %>
+			<% field = "Mating Type" if field =~ /mating_type/ %>
+			<li><%= "#{field}: #{raw(msg)}" %></li> 
+		<%end%>
+	<% end %> 
+	</ul></div>
+<% end %>

@@ -1,0 +1,31 @@
+<style type="text/css">
+fieldset{
+	border: 3px solid #AAAAAA;
+	border-radius: 4px;
+	height:auto;
+	margin-right:30px;
+	padding:5px;
+	float:left;
+	font-size:1.2em;
+}
+legend{
+	color: black;
+	font-weight: bold;
+	font-size:2em;
+	font-variant: small-caps;
+	padding: 2px 8px;
+}
+p{margin:0px;padding:4px;}
+</style>
+<%= render partial: "layouts/top" %>
+<fieldset style ="clear:left;float:left;margin:5px;padding-bottom:15px;" id="interactions">
+	<legend><b>Data submission/correction</b></legend>
+<p>If you wish to submit a new dataset to ScreenTroll or wish to correct a dataset please e-mail <%=mail_to "dataSubmission@rothsteinlab.com" %> a text file (excel, word etc) containing the following:</p>
+<ol>
+<li>The screen name (e.g. "Elevated Rad52 foci").</li>
+<li>The reference (e.g. "Alvaro et al. 2007. PloS Genetics 3; e228.")</li>
+<li>The PubMed identification number (e.g. "18085829", this is available on the PubMed site).</li>
+<li>A list of the ORFs, separated by commas, tabs or carriage returns. Using systematic names is less ambiguous (e.g. "YOR023C, YML116W, ...").</li>
+</ol>
+</fieldset>
+</div>

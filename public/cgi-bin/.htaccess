@@ -1,0 +1,24 @@
+Options +FollowSymLinks +ExecCGI
+RewriteEngine On
+
+# Don't show .svn directories
+IndexIgnore .svn
+
+# Forbid access to .svn directories
+RewriteEngine On
+RewriteRule   \.svn     -       [F]
+
+# BEGIN GZIP...probably only need to compress the 'big 3' (HTML, CSS and Javascript)
+<ifmodule mod_deflate.c>  
+AddOutputFilterByType DEFLATE text/text text/html text/plain text/xml text/css application/x-javascript application/javascript  
+</ifmodule>  
+# END GZIP
+
+# General Apache options
+AddHandler fastcgi-script .fcgi
+AddHandler cgi-script .cgi
+Options +FollowSymLinks +ExecCGI
+
+ErrorDocument 500 /errors/500.html
+ErrorDocument 404 /errors/404.html
+ErrorDocument 413 /errors/413.html

@@ -1,0 +1,30 @@
+<%= stylesheet_link_tag 'dr_engine/flash_message' %>
+<%= stylesheet_link_tag 'dr_engine/plate_layout' %>
+<%= javascript_include_tag 'dr_engine/plate_review' %>
+<style type="text/css">
+	div.keys{margin:3px;}
+</style>
+<!--[if IE]>
+<style type="text/css">
+.flashGood, .flashError{ { text-align: center; }
+.flashGood, .flashError{ br { display: block; }
+.flashGood, .flashError{ * { text-align: left; }
+#flashMessageText{
+	zoom: 1;
+	display: inline;
+}
+</style>
+<![endif]-->
+<%= render partial: "layouts/top" %>
+<div id="key">
+	<div class="keys" style="border: 4px solid #FEFF49;"><em><strong>Yellow border = active </strong></em></div>
+	<div class="keys" style="background:blue;"><em><strong style="color:white;">Blue = user selected </strong></em></div>
+	<div class="keys" style="background:red;"><em><strong style="color:white;">Red = statistically significant </strong></em></div>
+	<div class="keys" style="background:green;"><em><strong style="color:white;">Green = excluded </strong></em></div>
+	<div class="keys" style="background:orange;"><em><strong style="color:white;">Orange = dead on both </strong></em></div>
+</div><br style="clear:both;"/>
+<iframe class="plateReview" name="plates_reviewed" id="plates_reviewed" onload="calcHeight(this);" src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/sv_engine/main.cgi"></iframe><br/><br/>
+
+<script type="text/javascript">
+$(document).ready(function(){	setupFlash(true, 'Generating Cartoon Renderings...');	});
+</script>

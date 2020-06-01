@@ -1,0 +1,451 @@
+
+$(document).ready(function(){
+	// Setup the dnd listeners.
+	var dropZone = document.getElementById('drop_zone');
+	dropZone.addEventListener('dragover', handleDragOver, false);
+	dropZone.addEventListener("dragleave", handleDragOver, false);
+	dropZone.addEventListener('drop', handleFileSelect, false);
+
+	// setup tooltip mouseovers
+	$("span.question").each(function () {
+		var id = $(this).prop('id');
+		$('#'+id).tooltip({
+			track:true,
+			fade:250,
+			delay:0
+		});
+	});
+
+});
+
+// Check for the various File API support.
+if (window.File && window.FileReader && window.FileList && window.Blob) {
+	// Great success! All the File APIs are supported.
+}
+else { alert('The File APIs are not fully supported in this browser.');}
+
+var processedCount=0;
+var totalFiles = 0;
+var files;
+
+// cancel filereader function
+// function cancelFileReader() {
+// 	// tell the filereader to abort
+// 	textReader.abort();
+// }
+
+// triggered filereader onloadstart handler
+// called in handleFileSelect
+function onLoadStartHandler(evt) {
+	$('#fileErrors').css('visibility','hidden');
+	var progress = $('#percent');
+	progress.css('width' , '0%');
+	progress.html = 'Loading Files: 0%';
+	$('#progress_bar').attr('class', 'fileLoading');
+	$('#progress_bar2').css('display', 'block');
+	$('#progress_bar2').attr('class', 'fileLoading');
+}
+
+// called in handleFileSelect and is a listener call for the dropzone
+function handleDragOver(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+	evt.target.className = (evt.type == "dragover" ? "hover" : "");
+}
+
+// progress handler for the filereader
+// called in handleFileSelect
+function updateProgress(evt) {
+	// evt is an ProgressEvent.
+	var progress = $('#percent');
+	if (evt.lengthComputable) {
+		var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+		// Increase the progress bar length.
+		if (percentLoaded < 100) {
+			progress.css('width',percentLoaded + '%');
+			progress.html('Loading Files: '+percentLoaded + '%');
+		}
+	}
+}
+
+// handle any abort of the filereader reading
+// called in handleFileSelect
+function onAbortHandler(evt) {	alert('File read canceled.');}
+
+// handle any error with the filereader
+// called in handleFileSelect
+function onErrorHandler(evt) {
+	switch(evt.target.error.code) {
+		case evt.target.error.NOT_FOUND_ERR:
+			alert('File Not Found!');
+			break;
+		case evt.target.error.SECURITY_ERR:
+			alert('File security error.');
+			break;
+		case evt.target.error.ABORT_ERR:
+			break;
+		case evt.target.error.NOT_READABLE_ERR:
+			alert('File is not readable.');
+			break;
+		case evt.target.error.ENCODING_ERR:
+			alert('File encoding error.');
+			break;
+		default:
+			alert('An error occurred reading the file.');
+	};
+}
+
+// called once a file is done loading
+// called in handleFileSelect
+function onLoadEndHandler(){
+	processedCount++;
+	$('#percent2').html("Processing File "+processedCount+" of "+totalFiles+"...");
+	var percentLoaded = Math.round((processedCount / totalFiles) * 100);
+	$('#percent2').css('width',percentLoaded+"%");
+	if(processedCount == totalFiles){
+		var numErrors = $('#fileErrors .fileFail').size();
+		if(numErrors > 0){
+			$('#numErrors').html(numErrors);
+			$('#fileErrors').css('visibility','visible');
+		}
+		else{	$('#fileErrors').css('visibility','hidden');}
+
+		if($('#badFileTable td').size()>0){	$('#badFiles').css('display','block');	}
+		else{	$('#badFiles').css('display','none');	}
+
+		if($('#goodFileTable td').size()>0){$('#goodFiles').css('display','block');}
+		else{	$('#goodFiles').css('display','none');	}
+		$('#main #badFileTable tr:even').addClass('alt');
+		$('#main #goodFileTable .goodRow:even td:not(.success):not(.badData):not(.fileNameRow)').addClass('alt');
+		$('#main #goodFileTable .goodRow .fileNameRow:even').addClass('alt');
+		//$('#main table tr td.fileNameRow:even').addClass('alt');
+		//$('#main table tr td.fileNameRow:odd').removeClass('alt');
+		//$('#goodFileTable tr:last td').removeClass('fileNameRow');
+		//$('#goodFileTable tr td.fileNameRow:last').removeClass('fileNameRow');
+		processedCount=0;
+		$('#progress_bar').attr('class', '');
+		$('#progress_bar2').css('display', 'none');
+	}
+	// proces the next file!
+	else{	processFile(files[processedCount]);	}
+}
+
+// is a listener call for the dropzone -- gets called when a file is actually 'dropped'
+function handleFileSelect(evt) {
+	start = new Date().getTime();
+	// cancel event and hover styling
+	handleDragOver(evt);
+	$("#badFileTable").find("tr:gt(0)").remove();
+	$('#fileErrorDetails').html("");
+	fileErrors = $('#fileErrorDetails');
+
+	evt.stopPropagation();
+	evt.preventDefault();
+	if(evt.dataTransfer){	files = evt.dataTransfer.files; }// FileList object.
+	else{	files = evt.target.files; }// FileList object
+	totalFiles = files.length;
+	// files is a FileList of File objects. List some properties.
+	processFile(files[0]);	// the rest of the files (if any exist) will be processed after onloadendhandler is called
+}
+
+function processFile(f){
+	var name = escape(f.name);
+	var type = f.type || 'n/a';
+	var txtMimeType = /text\/plain/;
+	if(!f.type.match(txtMimeType)){
+		fileErrors.append("<li class='fileFail'>Did not process "+f.name+" because it's not a text/plain file (i.e. does <em>not</em> have a .txt file extension). Found a file type of '"+type+"'.</li>");
+		return onLoadEndHandler();
+	}
+	else{
+		var size =(f.size/1024).toFixed(2);
+		var lastMod = f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a';
+		var id = name+size+lastMod+type;
+		id = id.replace(/[^\w]/g,'');
+		if($('#'+id).length>0){
+			fileErrors.append("<li class='fileFail'>Did not process "+f.name+" as you have already selected a file of the same name and size to upload.</li>");
+			return onLoadEndHandler();
+		}
+		else if(size > 51200){
+			fileErrors.append("<li class='fileFail'>Did not process "+f.name+" because it is too big ("+size+"KB). The max file upload size is 50MB.</li>");
+			return onLoadEndHandler();
+		}
+		else{
+			var textReader = new FileReader();
+			textReader.onerror     = onErrorHandler;
+			//textReader.onprogress  = updateProgress;
+			textReader.onabort     = onAbortHandler;
+			textReader.onloadstart = onLoadStartHandler;
+			textReader.onload      = (function(theFile){return function(){
+				//if(onLoadHandler(this,theFile)){dataArray.push({name : theFile.name, value : this.result});}
+				onLoadHandler(this,theFile, function(){onLoadEndHandler()});
+			};})(f);
+			//textReader.onloadend	 = onLoadEndHandler();
+			textReader.readAsText(f);
+
+		}
+	}
+}
+
+// to the see if the input has a date in the format of mm-dd-yy(or yyyy) OR yy(or yyyy)-mm-dd format at the beginning of the string
+function checkDate(input){
+
+	var formatRegex1=/(^\d{1,2}[\/|\-|\.|_]\d{1,2}[\/|\-|\.|_](?:\d{2}|\d{4}))/ // mm-dd-yy(or yyyy)
+	var formatRegex2=/(^(?:\d{2}|\d{4})[\/|\-|\.|_]\d{1,2}[\/|\-|\.|_]\d{1,2})/ // yy(or yyyy)-mm-dd
+
+	var matchFunction = function(inputData, formatRegex, monthIndex, yearIndex, dayIndex){
+		var match = formatRegex.exec(inputData);
+		if (match == null){	return false;	}
+		else{inputData = match[0];}
+		inputData = inputData.replace(/[\/|\.|_]/g, "-");
+		temp = inputData.split("-");
+		var monthfield=temp[monthIndex];
+		var dayfield=temp[dayIndex];
+		var yearfield=temp[yearIndex];
+		var dayobj = new Date(yearfield, monthfield-1, dayfield);
+		if ((dayobj.getMonth()+1!=monthfield)||(dayobj.getDate()!=dayfield)||(dayobj.getFullYear()!=yearfield)){
+			return false;
+		}
+		return inputData;
+	}
+	var returnVal = matchFunction(input, formatRegex1, 0, 2, 1);
+	if(returnVal){return returnVal;}
+	return matchFunction(input, formatRegex2, 1, 0, 2);
+}
+
+function commonFileProcessProcedures(evt,f){
+	var name = escape(f.name);
+	var batchDate = checkDate(name);
+	batchDate = !batchDate ? '?' : batchDate
+	var results = {
+		batchDate:batchDate,
+		size : (f.size/1024).toFixed(2),
+		lastMod : f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+		fileErrors: $('#fileErrorDetails'),
+		fileArr : evt.result.split(/\r\n|\r|\n/g), // split the file into an array for processing
+		fileName : f.name
+	}
+	var type = f.type || 'n/a';
+	var id = name+results.size+results.lastMod+type;
+	id = id.replace(/[^\w]/g,'');
+	results.id = id;
+	results.fileLength=results.fileArr.length;
+	return results;
+}
+
+function trimFile(r){
+	for(var i=r.fileLength-1; i>0; i--){
+		var line = $.map(r.fileArr[i].split(/\t/), $.trim);
+		line = $.grep(line,function(n){return(n);});
+		if(line.length < 1){r.fileArr.pop();r.fileLength--;}
+		else{i=-1;}
+
+	}
+}
+
+function updateProgress(i,length){
+	var val = parseInt(i/length * 100)+'%';
+	$('#percent').css('width' , val);
+	$('#percent span').html(val);
+	return 1;
+}
+
+function checkProgressM(i,length){
+	if (i % 100 == 0) {
+		var val = parseInt(i/length * 100)+'%';
+		$('#percent').css('width' , val);
+		$('#percent span').html(val);
+	}
+	return 1;
+}
+
+// processes the result of verify_query to see if the query exists in the database
+function processQueryData(data,rowNum,allData,callback){
+	if (typeof data == 'string' || data instanceof String){
+		addPlasmidError("Could not locate this plasmid in the database! Cannot upload this data.", rowNum);
+		return false;
+	}
+	else if(data.length > 1){
+		// console.debug(data);
+		var temp = $("<select/>",{'class': 'row'+rowNum+'Option', 'id':'mQueryLookup'+rowNum});
+		var options = "<option value='' disabled='disabled' selected='selected'>Select pWJ:</option>";
+		for (var i = 0; i < data.length; i++) {
+			options+="<option value='"+data[i].number+"'>"+data[i].number+" = "+data[i].promoter+"-"+data[i].gene+"</option>";
+		}
+		temp.append(options);
+		addPlasmidError(temp, rowNum, "Select a query.");
+		temp.change(function() {
+			if($(this).find(":selected").val() != ''){
+				$('.row'+rowNum+'Option').attr('disabled', false);
+				$('#uploadTD'+rowNum).removeClass('badData');
+				$('#queryLookup'+rowNum).removeClass('badData');
+				callback();
+				// $(this).unbind();
+			}
+		});
+		temp.attr('disabled',false);
+		return false;
+	}
+	else{
+		if(data[0] == undefined || data[0].number.match(/not found/i)){
+			addPlasmidError("Could not locate this plasmid in the database! Cannot upload this data.", rowNum);
+			return false;
+		}
+		else{
+			var plasmidData = parsePlasmidJSON(data[0]);
+			//Checks if the option exists, and returns otherwise
+			if(!plasmidData.parentExists){
+				addPlasmidError("Could not locate the parent ('"+plasmidData.parent+"') of this plasmid ('"+plasmidData.pWJ+"') in the database! Add it, then try again", rowNum);
+				return false;
+			}
+			else{
+				$('#queryLookup'+rowNum).html('Plasmid #: <span class="queryPWJ">'+plasmidData.pWJ+'</span>, Promoter: <span class="queryPromoter">'+plasmidData.promoter+'</span>, Gene: <span class="queryGene">'+plasmidData.gene+'</span>, Selection: <span class="querySelection">'+plasmidData.selection+'</span>');
+				// set comparer selection
+				if($('#comparerUsed'+rowNum).length>0){$('#comparerUsed'+rowNum).val(plasmidData.parent);}
+				return plasmidData.pWJ;
+			}
+		}
+	}
+}
+
+// adds an error message to the indicated rowNum if there was a problem validating the plasmid info
+function addPlasmidError(msg, rowNum, errorMsg){
+	$('#queryLookup'+rowNum).html('');
+	$('#queryLookup'+rowNum).append(msg);
+	$('#queryLookup'+rowNum).addClass('badData');
+	$('#existsInDB'+rowNum).html('<img src=<%=asset_path "exclamation.png" %>/>');
+	if(errorMsg){	$('#uploadTD'+rowNum).html(errorMsg);	}
+	else{	$('#uploadTD'+rowNum).html('Fix problems before uploading');	}
+	$('#uploadTD'+rowNum).addClass('badData');
+	$('.row'+rowNum+'Option').attr('disabled', 'disabled');
+}
+
+//  parse plasmid json info
+function parsePlasmidJSON (jsonObj) {
+	var plasmidData = {pWJ:'',parent:'',promoter:'',selection:'',gene:''};
+	if(typeof jsonObj == 'string' || jsonObj instanceof String){
+		plasmidData.pWJ = 'Not found!';
+	}
+	else{
+		plasmidData.pWJ = jsonObj.number;
+		plasmidData.parent = jsonObj.parent;
+		plasmidData.promoter = jsonObj.promoter;
+		plasmidData.selection = jsonObj.yeast_selection;
+		plasmidData.gene = jsonObj.gene;
+		plasmidData.parentExists = jsonObj.parentExists;
+	}
+	return plasmidData;
+}
+
+// given a condition, this function attempts to formalize the condition (e.g. 100 gets converted to 100uM Cu). Query and file are
+// present in case an error occurs
+function guessConditionInfo(query, condition, file){
+	if(!condition && condition != 0){condition = "";}
+	if(condition.match(/,/)){
+		conditions=condition.split(',');
+		var guess='';
+		for (var i = 0; i < conditions.length; i++) {
+			guess = guess+', '+ guessConditionInfo(query, conditions[i].trim(), file);
+		};
+		var regex = /^\s*,*\s*|\s*,*\s*$/;
+		return guess.replace(regex,"");
+	}
+	if(condition !== undefined && condition != null){
+		if(condition.match(/^[0-9]{1,3}\s*cu$/i)){
+			var amt = condition.match(/^([0-9]{1,3})\s*cu$/i);
+			return amt[1]+'uM Cu';
+		}
+		else if(condition.match(/^[0-9]{1,3}\s*um$/i)){
+			var amt = condition.match(/^([0-9]{1,3})\s*um$/i);
+			return amt[1]+'uM Cu';
+		}
+		else if(condition.match(/^gal$/i)){return 'GAL';}
+		else if(condition.match(/^cu$/i)){return '100uM Cu';}
+		else{
+			var regex = /^(\d+\.?\d*)(uM|nM|mM|dM|ug|mg|ng|dg|g|m)\s*([a-zA-Z]+)$/i;
+			var m = regex.exec(condition);
+			if (m != null) {
+				var amt = m[1];
+				var unit = m[2].length > 1 ? m[2].charAt(0).toLowerCase() + m[2].toUpperCase().slice(1) : m[2];
+				var variable = m[3].length > 1 ? m[3].charAt(0).toUpperCase() + m[3].toLowerCase().slice(1) : m[3];
+				return amt+""+unit+" "+variable;
+		  }
+		}
+	}
+	var answer = "";
+	answer = prompt("Could not determine the condition / plasmid promoter for the following experiment:\nFilename: "+file+"\nQuery: "+query+"\nCondition: '"+condition+"'\n\nThe condition should contain 'Cu' if it is the pCup promoter or 'Gal' if it is the GAL promoter. If this experiment involved a plasmid with a pCup promoter, but was plated on media without copper, your input should be '0Cu'.\n\nMultiple conditions should be separated with commas.\n\nChemical formulas with numbers should not be used (i.e. 100uM CuSO4 should be entered as 100uM Cu).\n",condition);
+	while(!answer && answer !== 0){
+		answer = prompt("Invalid input - this value cannot be blank!\n\nCould not determine the condition / plasmid promoter for the following experiment:\nFilename: "+file+"\nQuery: "+query+"\nCondition: '"+condition+"'\n\nThe condition should contain 'Cu' if it is the pCup promoter or 'Gal' if it is the GAL promoter. If this experiment involved a plasmid with a pCup promoter, but was plated on media without copper, your input should be '0Cu'.\n\nMultiple conditions should be separated with commas.\n\nChemical formulas with numbers should not be used (i.e. 100uM CuSO4 should be entered as 100uM Cu).\n");
+	}
+	return guessConditionInfo(query, answer,file);
+}
+
+// add calendar date select
+function addDateSelect(rowNum){
+	$(function() {
+	  $( "#datepicker"+rowNum ).datepicker({
+	    showOn: "button",
+	    buttonImage: "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/calendar.gif",
+	    buttonImageOnly: true,
+	    dateFormat: "yy-mm-dd",
+	    onSelect:  function(dateText,inst){
+	    	// dateText is the date selected, inst is the datepicker instance
+	    	// 'this' is the hidden input that holds a copy of dateText
+	    	$(this).prev().html(dateText);
+	    	var rowNum = $(this).attr('title');
+	    	var curSelection = $(this).val();
+	    	$(".dupdate"+rowNum).each(function(index){
+	    		// always remove to prevent it from being added more than once...
+	    		$(this).removeClass('match');
+	    		if($(this).html() == curSelection){$(this).addClass('match');}
+	    	});
+
+	    }
+	  });
+	});
+}
+
+//  simple function called in "checkIfExistsInDatabase" that determines if 2 values match and returns the
+//  appropriate table td to indicate this
+function compareOldToNewJSON(variable, newExp, json, rowNum){
+	var temp = json[variable] || '?';
+	var eC = (temp == newExp[variable]) ? 'match' : 'noMatch';
+	return "<td class='dup"+variable+""+rowNum+" "+eC+"'>"+temp+"</td>";
+}
+
+// return a "uploadMe" labeled checkbox
+// if checked is passed (value does not matter) then the checkbox will be checked
+function uploadButton(rowNum, checked){
+	checked = typeof checked !== 'undefined' ? 'checked=checked' : '';
+	return '<input type="checkbox" '+checked+' name="uploadMe" class="uploadBox" onchange="checkUploadButtons()"; value="'+rowNum+'" />';
+}
+
+// given a row number, toggles the display of the div container of the dupTable...
+function toggleDupRows (rowNum) {
+	$('#dupTable'+rowNum).slideToggle();
+}
+
+function calculateChunksize(r,callback){
+	var chunkSize = parseInt(r.fileLength / 100);
+	if(chunkSize < 1){
+		var msg = '<li class="fileFail">Did not process '+r.fileName+'. The file is too small to process, only '+r.fileLength+' lines found.</li>';
+		r.fileErrors.append(msg);
+		callback();
+		return false;
+	}
+	return chunkSize;
+}
+
+function updateGoodTable(button, rowNum){
+	if($(button).prop('checked')) {
+		$("#uploadTD"+rowNum+" span").html(uploadButton(rowNum, true));
+		$("#uploadTD"+rowNum+" span").unbind('click');
+		$('#uploadTD'+rowNum).removeClass('badData');
+	}
+	else{
+		$("#uploadTD"+rowNum+" span").html('Error - click to view');
+		$("#uploadTD"+rowNum+" span").click(function(){	toggleDupRows(rowNum);	});
+		$('#uploadTD'+rowNum).addClass('badData');
+	}
+	checkUploadButtons();
+}

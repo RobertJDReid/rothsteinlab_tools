@@ -1,0 +1,21 @@
+<%= render "form" %>
+
+<%= form_for @user do |f| %>
+	<fieldset style="border:0px solid;">
+
+	<label for="user_login"><strong>Login:</strong><br/>
+	<%= f.text_field :login, {:class=>"formInputText",:size => 20} %></label>
+	<label for="user_email"><strong>Email:</strong><br/>
+	<%= f.text_field :email, {:class=>"formInputText",:size => 20} %></label>
+	<label for="user_password"><strong>Password:</strong><br/>
+	<%= f.password_field :password, {:class=>"formInputText",:size => 20}  %></label>
+
+	<label for="user_password_confirmation"><strong>Password Confirmation</strong><br/>
+	<%= f.password_field :password_confirmation, {:class=>"formInputText",:size => 20}  %></label>
+
+	<label for="human_test"><strong>Human Test:</strong></label>
+	<%= recaptcha_tags %><br/><br/>
+	
+	<%= submit_tag "Signup", :class=>'commit' %><br/>
+</fieldset>
+<%end%>

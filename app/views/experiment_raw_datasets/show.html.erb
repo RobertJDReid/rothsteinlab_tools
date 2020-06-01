@@ -1,0 +1,91 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function(){
+  var oTable = $("#experiment_data").dataTable({
+      "sPaginationType": "full_numbers",
+      "bFilter": true,
+      "bSort": true,
+      "bInfo": true, 
+      "bAutoWidth": true,
+      "bJQueryUI": true,
+      "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      "iDisplayLength" : 50,
+      "oLanguage": { "sSearch": "Filter (all columns):" },
+      "fnDrawCallback": function () {  
+        $("#experiment_data").fadeIn();
+      },
+  });
+  $('#loading-dialog').hide();
+
+  // setup tooltip mouseovers 
+  $("span.question").each(function () {
+    var id = $(this).prop('id');
+    $('#'+id).tooltip({
+      track:true,
+      fade:250,
+      delay:0
+    });
+  });
+  
+});
+function setupTable1(){
+  $("#experiment_raw_datasets").fadeIn();
+  var oTable1 = $("#experiment_raw_datasets").dataTable({
+    "bFilter": false,
+    "bSort": false,
+    "bInfo": false, 
+    "bAutoWidth": true,
+    "bJQueryUI": true,
+    // "sDom": 'lfrtip'
+  });
+}
+</script>
+<style type="text/css">
+  table.dataTable td{text-align: center;}
+  #experiment_raw_datasets_wrapper .fg-toolbar{display:none;}
+</style>
+<%= render partial: "layouts/top" %>
+
+
+<h1>Experiment Info:</h1>
+<%= render :partial => 'experiment_raw_dataset_table' %>
+<script type="text/javascript">
+  setupTable1();
+</script>
+<br/><hr/><br/>
+
+<h1>Data:</h1>
+<div id="data">
+<div id="loading-dialog" title="Loading data...">
+  Loading...
+</div>
+<table id="experiment_data" style="display:none;">
+  <thead>
+  <tr>
+    <th>Plate</th>
+    <th>Row</th>
+    <th>Column</th>
+    <th>Colony Measurement</th>
+    <th>Circularity</th>
+  </tr>
+  </thead>
+  <tbody>
+<% for data in @experiment_colony_data %>
+  <tr>
+    <td><%=data.plate%></td>
+    <td><%=data.row%></td>
+    <td><%=data.column%></td>
+    <td><%=data.colony_measurement%></td>
+    <td><%=data.colony_circularity %></td>
+  </tr>
+<% end %>
+</tbody>
+</table>
+</div>
+<br/>
+</div>
+
+

@@ -1,0 +1,8 @@
+<%= stylesheet_link_tag 'show' %>
+<%= render :partial => "layouts/top" %>
+
+<% if @user.errors.any? %>
+<div id="error" class="error"><ul>
+<% @user.errors.each do |attr, msg| %><li><%= msg  %></li><%end%></ul></div>
+<%= javascript_tag "$('#error').effect('highlight',{},1000);" %>
+<%end%>

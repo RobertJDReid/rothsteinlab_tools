@@ -1,0 +1,439 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'validation' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'validationJQ'%>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<style type="text/css">
+.commit{float:left;}
+input.disabled{color:gray;}
+label{font-weight: bold;padding-bottom:3px;}
+.submitButtons{
+	padding:10px 0px 5px 5px;
+	clear:left;
+}
+#deletionValidations{
+	float:left;
+	padding: 5px;
+	height: 225px;
+	overflow-y:auto;
+	border-bottom: 1px solid gray;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	display: none;
+	margin-bottom: 10px;
+	background-color: rgb(230, 230, 230);
+}
+div#goodGeneContainer{overflow-y:auto;}
+div#goodGeneContainer, div#badGeneContainer{
+	margin:5px;
+	padding:3px;
+	border: 2px solid #339933;
+	background-color: rgba(0, 255, 0, 0.40);
+	background-size: 15px;
+	font-family: Verdana,Arial,sans-serif;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	display:none;
+	float: left;
+	clear: both;
+}
+div#badGeneContainer{
+	background-color: rgba(255, 184, 184, 0.58);
+	border: 2px solid #f66;
+	display: block;
+	float: left;
+	clear: none;
+	width: 160px;
+	overflow-x: auto;
+}
+#validationNote,#validationError{float:left;clear:both;white-space: nowrap;}
+textarea.formInputText{
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	width:auto;
+}
+.formInputText{font-size:1.2em;}
+</style>
+<script type="text/javascript" charset="utf-8">
+var goodDeletionGenesJSON = '';
+
+var splitPattern = new RegExp(/\r|,|\n|,\s+|\s+|\|/);
+
+/* new sorting functions...scientific notation a-okay */
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+  "scientific-pre": function ( a ) {return parseFloat(a);},
+  "scientific-asc": function ( a, b ) {return ((a < b) ? -1 : ((a > b) ? 1 : 0));},
+  "scientific-desc": function ( a, b ) {return ((a < b) ? 1 : ((a > b) ? -1 : 0));}
+});
+/* new sorting functions...percentage notation a-okay */
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "percent-pre": function ( a ) {
+      var x = (a == "-") ? 0 : a.replace( /%/, "" );
+      return parseFloat( x );
+    },
+    "percent-asc": function ( a, b ) {	return ((a < b) ? -1 : ((a > b) ? 1 : 0));	},
+    "percent-desc": function ( a, b ) {  return ((a < b) ? 1 : ((a > b) ? -1 : 0));	}
+} );
+
+$(document).ready(function(){
+	$("select[name='app[cancerStudy]']").prepend("<option value=''>Select Study:</option>");
+	$("select[name='app[cancerStudy]']").val('');
+	$("select[name='app[cancerStudy]'] option:selected").attr('disabled','disabled');
+	$("select[name='app[cancerStudy]']").change(function() {
+		// $('#qCBio')[0].reset();
+		// $(this).val() != 'all';
+		// $('#deletionValidations').hide();
+		// $('#empty-message').hide();
+		populateFields($(this).val());
+	});
+
+  $("#qCBio").validate({
+  	submitHandler: function(form) {
+  		submitForm();
+  	}
+  });
+  jQuery.validator.addClassRules(
+	"numberType", {
+		required: true,
+		number: true,
+		min: -10,
+		max: 10,
+		maxlength: 4
+	});
+});
+
+
+
+function submitForm(){		/* stop form from submitting normally */;
+	$.ajax({
+		type		: 'GET',
+		url			: 'getCbioScores',
+		data		: $("#qCBio").serialize(),
+		dataType: 'json',
+		beforeSend: function(){
+			$("#spinner").fadeIn();
+			$("#cBioResultsContainer").hide();
+			$("#cBioError, #cBioAlerts").html("");;
+			$(".error").hide();
+			$("#cBioResults").html("");
+			$('#submitForm').attr('disabled', 'disabled').attr('value', 'Loading...').addClass('disabled');
+			$('#resetForm').attr('disabled', 'disabled').addClass('disabled');
+		},
+		success	: function(data){
+			if(data.error){
+				var ul = "<ul class='error'>";
+				$.each(data.error, function( id, msg ){
+					ul+='<li>' + msg + '</li>';
+				})
+				ul+='</ul>'
+				$("#cBioError").html(ul);
+				showCbioError();
+			}
+			else{
+				if(data.badData && data.badData.length>0){
+					var ul = "<ul class='error'><li>"+data.badData.join("</li><li>")+"</li></ul>";
+					$("#cBioAlerts").html(ul);
+				}
+				$("#cBioResults").html(data.table);
+				$("#cBioResultsContainer").fadeIn();
+
+				var oTable = $("#scoreTable").dataTable({
+					"sPaginationType": "full_numbers",
+	        "bFilter": true,
+	        "bSort": true,
+	        //"bInfo": true,
+	        //"bAutoWidth": true,
+	        "bJQueryUI": true,
+	        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+	        "iDisplayLength" : -1,
+	        "aoColumnDefs": [{ "sType": "scientific", "aTargets": [ -1 ] },{ "sType": "numeric", "aTargets": [ -2,-4,-5,-7,-8] },{ "sType": "percent", "aTargets": [ -3,-6] } ],
+	        // "sDom": '<"H"l><"toolbar">frt<"F"ip>',
+	        "oLanguage": {
+            "sSearch": "Filter (all columns):"
+        	}
+				});
+			}
+		},
+		error:function(data, e, er){
+			var ul = $("<ul/>",{"class": "error"});
+			ul.append('<li>' + er + '</li>');
+			$("#cBioError").html(ul);
+			showCbioError();
+		},
+		complete:function(){	formSubmissionComplete();	}
+	});
+	return false;
+}
+
+function formSubmissionComplete(){
+	$("#spinner").hide();
+	$('#submitForm').attr('value', 'Submit').removeAttr('disabled').removeClass('disabled');
+	$('#resetForm').removeAttr('disabled').removeClass('disabled');
+}
+
+
+function showCbioError(){
+	$("#cBioAlerts").html("");
+	$("#cBioResults").html("");
+	$("#cBioError").fadeIn();
+}
+
+var delay = (function(){
+	var timer = 0;
+		return function(callback, ms){
+		clearTimeout (timer);
+		timer = setTimeout(callback, ms);
+	}
+})();
+
+function populateFields(cancerStudyID){
+	$("#processing1").fadeIn();
+	$(".error, #cBioResultsContainer").hide();
+	getAlterationTypes(cancerStudyID)
+}
+
+function getCaseList(cancerStudyID){
+	$.ajax({
+		type		: 'get',
+		url			: 'getCaseList',
+		data		: {"cancerStudyID":cancerStudyID},
+		dataType: 'json',
+		beforeSend: function(){},
+		success	: function(data){
+			if(data.error){	$('#caseListText').html("<label class='error'>"+data.error+"</label>");}
+			else{
+				var html = '<select id="app_cancerCaseList" name="app[cancerCaseList]">';
+	    	for (var i = 0; i< data.length; i++) {
+	      	html += '<option value="' + data[i].id + '" title="' + data[i].description + '">' + data[i].name + '</option>';
+	    	}
+	    	$('#caseListText').html(html+"</select>");
+	    }
+		},
+		error:function(data, e, er){
+			$('#caseListText').html("<label class='error'>Sorry - an error occurred when attempting to find case list.</label>");
+			$("#inputFields, #cBioResultsContainer").fadeOut();
+		},
+		complete:function(){
+			$("#processing1").hide();
+			if($('.error:visible').length>0){
+				$("#inputFields, #cBioResultsContainer, #caseList").hide();
+			}
+			else{
+				$('#caseList').fadeIn();
+				$("#inputFields").fadeIn();
+			}
+		}
+	});
+}
+
+function getAlterationTypes(cancerStudyID){
+	$.ajax({
+		type		: 'get',
+		url			: 'getAlterationTypes',
+		data		: {"cancerStudyID":cancerStudyID},
+		dataType: 'json',
+		beforeSend: function(){},
+		success	: function(data){
+			if(data.error){	$('#alterationText').html("<label class='error'>"+data.error+"</label>");	}
+			else{
+				if(data.length == 0){
+					$('#alterationText').html("<label class='error'>Sorry - could not find any alteration types for this study.</label>");
+					$("#inputFields, #cBioResultsContainer").fadeOut();
+				}
+				else{
+					var html = '<select id="app_cancerAlteration" name="app[cancerAlteration]">';
+		    	for (var i = 0; i< data.length; i++) {
+		      	html += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+		    	}
+		    	$('#alterationText').html(html+"</select>");
+		    }
+	    }
+		},
+		error:function(data, e, er){
+			$('#alterationText').html("<label class='error'>Sorry - an error occurred when attempting to find alteration types.</label>");
+			$("#inputFields, #cBioResultsContainer").fadeOut();
+		},
+		complete:function(){
+			$('#alterations').fadeIn();
+			getCaseList(cancerStudyID);
+		}
+	})
+}
+
+function checkDataDelay(data){
+	delay(function(){checkData(data);},500);
+}
+function checkData(data){
+	$("#processing").fadeIn();
+	$('#deletionValidations').hide();
+	$('#goodGeneCount').attr('title',0);
+
+	var genes = data.split(splitPattern);
+	if(genes.length >= 200){
+		$('#validationError').html('To many genes to validate (max = 200) - number entered = '+genes.length);
+		$('#validationError').fadeIn();
+		$("#processing").hide();
+		$('#validationNote').hide();
+		$('#validationNote').html("");
+		$('#goodGeneContainer').hide();
+		$('#badGeneContainer').hide();
+		$('#deletionValidations').fadeIn();
+		var v1 = $('#validationError').outerWidth();
+		$('#deletionValidations').css('width', v1+35);
+	}
+	else{
+		genes = $.grep(genes,function(n){return(n);});
+		checkValidGenes(genes);
+	}
+}
+
+function checkValidGenes(genes){
+	$.ajax({
+		type		: 'get',
+		url			: '/apps/checkValidGenes',
+		data		: {"genes":genes,"organism":"human"},
+		dataType: 'json',
+		beforeSend: function(){},
+		success	: function(data){
+			$('#validationError').html('');
+			$('#validationError').hide();
+			var badGeneWidth=0;
+			var nGoodGenes = data.goodGenes["_size"];
+			delete data.goodGenes["_size"];
+			count = data.badGenes.length + nGoodGenes;
+			if(count && count > 0){
+				$('#validationNote').html("Note: Only valid genes will be considered.").fadeIn();
+				$('#goodGenes').html("");
+				if(nGoodGenes < 1){	$('#goodGeneCount').html(0+" valid gene names:");	}
+				else{
+					var query = $('#query').val();
+					goodDeletionGenesJSON = data.goodGenes;
+					indicesToDelete = [];
+					if(nGoodGenes > 1){$('#goodGeneCount').html(nGoodGenes+" valid gene names:");	}
+					else{$('#goodGeneCount').html("1 valid gene name:");	}
+					$('#goodGeneCount').attr('title', nGoodGenes);
+					$.each( data.goodGenes, function( id, gene ) {
+						if(gene && gene != ""){$('#goodGenes').append(gene+" ("+id+")<br/>");}
+  					else{$('#goodGenes').append(id+"<br/>");}
+					});
+				}
+				$('#goodGeneContainer').fadeIn();
+				if(data.badGenes.length < 1){	$('#badGeneContainer').hide();$('#badGenes').html("");	}
+				else{
+					if(data.badGenes.length > 1){$('#badGeneCount').html(data.badGenes.length+" invalid gene names:");	}
+					else{$('#badGeneCount').html("1 invalid gene name:");}
+					$('#badGenes').html(data.badGenes.join(", "));
+					$('#badGeneContainer').fadeIn();
+					badGeneWidth = $('#badGeneContainer').outerWidth();
+				}
+				$('#deletionValidations').fadeIn();
+				var v1 = 0;
+				goodGeneWidth = $('#goodGeneContainer').outerWidth();
+				if(data.badGenes.length > 0){
+					// console.debug("badGeneWidth = "+badGeneWidth);
+					// console.debug("goodGeneWidth = "+goodGeneWidth);
+					$('#deletionValidations').css('width', badGeneWidth+goodGeneWidth+35);
+				}
+				else{
+					v1 = $('#validationNote').outerWidth()>goodGeneWidth ? $('#validationNote').outerWidth() : goodGeneWidth;
+					$('#deletionValidations').css('width', badGeneWidth+v1+35);
+				}
+			}
+			else{
+				$('#validationNote').hide();
+				$('#deletionValidations').hide();
+				$('#goodGeneContainer').hide();
+				$('#goodGenes').html("");
+				$('#badGenes').html("");
+				$('#badGeneContainer').hide();
+			}
+		},
+		error:function(data, e, er){
+			$('#deletionValidations').fadeIn();
+			$('#validationError').html("Sorry - an error occurred when attempting to validate your gene list.");
+			$('#validationError').fadeIn()
+			$('#goodGeneContainer').hide();
+			$('#goodGenes').html("");
+			$('#badGeneContainer').hide();
+			$('#validationNote').html('');
+			$('#badGenes').html("");
+		},
+		complete:function(){	$("#processing").hide();	}
+	});
+}
+</script>
+
+<%= render :partial => "layouts/top" %>
+
+<form  id='qCBio' >
+	<div class="formElements">
+		<% if !@studies || @studies[0] == 'error' %>
+			<div class="alert">Error! Could not communicate the cbio portal website</div>
+		<%else%>
+		<label for="app[cancerStudy]" style="clear:both;">Cancer Study:</label>
+		<%= select "app", "cancerStudy",  @studies.map {|s| [s[1], s[0]] }, {:class=>"required formSelect" }%>
+		<%=image_tag "ajax-loader.gif", :alt=> "loading",:name=>"loading",:id=>"processing1",:style=>"display:none;" %>
+		<div style="display:none;" id="alterations" >
+			<label for="alerations" style="clear:both;">Alteration Type:</label>
+			<div id="alterationText"></div>
+		</div>
+		<div style="display:none;" id="caseList" >
+			<label for="caseList" style="clear:both;">Patient / Case Set <span>(hover over options for descriptions)</span>:</label>
+			<div id="caseListText"></div>
+		</div>
+		<br/>
+		<div id="inputFields" style="display:none;">
+			<div id="scoreThresholds" style="margin-top:10px;float:left;">
+				<div style="float:left;">
+					<label style="display:inline;font-weight:bold;margin-right:0px;" for="zThresh">mRNA Z-Score threshold: +/-</label>
+					<input type="text" name="app[zThresh]" id="zThresh" class="formInputText numberType" value="1.0" style="display:inline;width:30px;" />
+				</div>
+				<div style="float:left;margin-left:20px;">
+					<label style="display:inline;font-weight:bold;margin-right:0px;" for="CNV_thresh">CNV Threshold: +/-</label>
+					<input type="text" name="app[CNV_thresh]" id="CNV_thresh" class="formInputText numberType" value="1.0" style="display:inline;width:30px;" />
+				</div>
+			</div>
+			<div id="genes" style="float:left;clear:left;">
+				<label for="deletions" style="height:20px;">
+					<strong style="vertical-align:top;">Gene(s):</strong>
+					<%=image_tag "ajax-loader.gif", :alt=> "loading",:name=>"loading",:id=>"processing",:style=>"display:none;" %>
+				</label>
+				<textarea id="deletions" name="app[genes]" onkeyup="checkDataDelay(this.value);" style="margin-right: 10px;margin-bottom: 10px;float:left;" wrap="off" rows="12" cols="40" class="required formInputText"></textarea>
+				<div id="deletionValidations" >
+					<label id='validationError' class="stickyError" style="display:none;"></label>
+					<div id='validationNote'></div>
+					<div id="goodGeneContainer">
+						<div id="goodGeneCount" title="0"></div>
+						<div id="goodGenes"></div>
+						<input type="hidden" value="" id="goodGenesJSON" />
+					</div>
+					<div id="badGeneContainer">
+						<div id="badGeneCount"></div>
+						<div id="badGenes"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="submitButtons">
+				<input type="submit" value="Submit" id="submitForm" class="commit">
+				<input type="reset" class="reset" id="resetForm" value="Clear" style="float:left;margin-left:15px;" />
+				<%=image_tag "ajax-loader.gif", :alt=> "spinner", :style=>"display:none;padding-top:6px;margin-left:10px;border:0px solid black;", :id=>"spinner", :name=>"spinner"%>
+			</div>
+		</div>
+		<%end%>
+	</div>
+</form>
+
+<div id="cBioError" class="error" style="display:none;clear:both">
+</div>
+<fieldset id="cBioResultsContainer" style="clear:left;float:left;display:none;">
+	<div id="cBioAlerts" class="error"></div>
+	<div id="cBioResults" style="float:left;width:100%"></div>
+</fieldset>
+</div>

@@ -1,0 +1,16 @@
+<div class="submitDiv" style="display:none;">
+	<button class="commit" style="float:left;" onclick='setupUploadData();' />&raquo; <% if @buttonMsg %><%=@buttonMsg%><%else%>Upload all good data!<%end%> &laquo;</button>
+	<div class="loading" style="display:none;clear:left;float:left;margin:10px 0px 0px 0px;">
+	<%= image_tag("spinner-big.gif", alt: 'spinner', class: 'spinner', name: 'spinner') %>
+	<span class="message">Uploading Data...</span>
+	</div>
+</div>
+
+<div id="loading-dialog" title="Loading data..." style="display:none;">
+	<div id="progressBar" class="tiny-green"><div></div></div>
+  <div id="loading-message">Loading...</div>
+  <div id="progress-success" title="0"></div>
+  <div id="progress-errors" class="error">Errors (data not uploaded):<ul></ul></div>
+</div>
+
+<br/><br/>

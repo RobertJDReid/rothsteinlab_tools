@@ -1,0 +1,33 @@
+<div class="legend">
+	<label style="display:inline;font-size:1.4em;">Interaction Types<br/>To Consider</label>
+</div>
+<div style="float:left;">
+	<% @interactions.keys.sort.each_with_index do |type, index| %>
+		<%if index % 2 == 0%><% color = 'green' %> <%else%><%color = 'blue' %><%end%>
+		<fieldset style ="color:<%=color%>;border-width:0px;margin-bottom:15px;padding-top:0px;margin-top:0px;">
+			<label style ="color:<%=color%>:green;font-size:1.3em;padding:0px;"><%=type%> <span class="controller selected" onclick="toggleSelected($(this), '<%=type.downcase%>')"> (Select All / None)</span> </label>
+			<div style="float:left;">
+				<%count=0%>
+				<%remaining = @interactions[type].length.to_f %>
+				<%columns   = 2 %>
+				<% limit    = (remaining / columns + 0.99999999).to_i %>
+				<% if @interactions[type].is_a?(String) %>
+					<%=@interactions[type]%>
+				<%else%>
+					<% @interactions[type].each do |name| %>
+						<%if count >=limit%>
+							</div><div style="float:left;">
+								<%columns -= 1 %>
+								<% limit =(remaining / columns + 0.99999999).to_i %>
+							<%count=0%>
+						<%end%>
+						<label><input type="checkbox" class="<%=type.downcase%>" name="<%=type.upcase%>" value="<%=name%>" checked="checked" /><%=name%></label>
+						<%count+=1 %>
+						<%remaining -= 1.0%>
+					<%end%>
+				<%end%>
+			</div>
+		</fieldset>
+		<br style="clear:both;height:0px;line-height:0px"/>
+	<%end%>
+</div>

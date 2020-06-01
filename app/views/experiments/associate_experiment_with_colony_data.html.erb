@@ -1,0 +1,129 @@
+<% if !@experiments %><%@experiments = [@experiment] %><%end%>
+<% associatedExperiments = [] %>
+<% @buttonMsg = "Link Data!" %>
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'convertORFsJQ'%>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<%= javascript_include_tag 'experiments/associate_experiment_with_colony_data'%>
+<%= javascript_include_tag 'experiments/uploadFunctions'%>
+
+
+<style type="text/css">
+select.formSelect{width:21.5em;}
+table.dataTable tr.success{background-color: rgb(158, 255, 197);}
+td.odd{background-color: #E2E4FF;}
+td.even{background-color: white;}
+div.submitDiv{padding:10px;float:left;}
+select.disabled:hover {
+	color: #9F9F9F;
+	background-color: #DFDFDF;
+	border: solid 1px #9F9F9F;
+}
+table.dataTable td{text-align: center;}
+table.dataTable td.text-align-left{text-align: left;}
+</style>
+
+<%= render partial: "layouts/top" %>
+
+<div id="experiments_container">
+	<h2>Experiments that <em>NOT</em> have been linked to raw data</h2>
+	<div class="submitDiv" style="display:none;">
+		<button class="commit" style="float:left;" onclick='setupUploadData();' />&raquo; <%=@buttonMsg%> &laquo;</button>
+		<div class="loading" style="display:none;clear:left;float:left;margin:10px 0px 0px 0px;">
+		<%= image_tag("spinner-big.gif", alt: 'spinner', class: 'spinner', name: 'spinner') %>
+		<span class="message">Uploading Data...</span>
+		</div>
+	</div>
+
+	<table class="exp" id="experiments_table" style="display:none;">
+		<thead>
+	  <tr>
+	  	<th>ID</th>
+	    <th>Batch Date</th>
+			<th>Query</th>
+			<th>Comparer</th>
+			<th>Condition</th>
+			<th>Other info</th>
+			<th>Query Data</th>
+			<th>Comparer Data</th>
+			<th>Link Data?</th>
+	  </tr>
+	  </thead>
+	  <tbody>
+	<% @experiments.each do |experiment| %>
+		<%if !experiment.experiment_comparer_raw_dataset_id %>
+		<% i = experiment.id %>
+		<% eC = "rowNum#{i}" %>
+	  <tr id="<%=eC%>">
+			<td class="rowNum<%=eC%>" id="id<%=eC%>"><%=link_to "#{i}", experiments_associated_data_path(:id=>i) %></td>
+			<td class="rowNum<%=eC%>"><%=experiment.batch_date%></td>
+			<td class="rowNum<%=eC%>"><%=experiment.query %> (<%=PwjPlasmid.select('gene').where('`number` = ? ', experiment.query).map { |e| e.gene  }[0]%>)</td>
+			<td class="rowNum<%=eC%>"><%=experiment.comparer %></td>
+			<td class="rowNum<%=eC%>"><%=experiment.condition%></td>
+			<td class="rowNum<%=eC%> text-align-left"><strong>Density:</strong> <%=experiment.density %><br/>
+					<strong>Replicates:</strong> <%=experiment.replicates %><br/>
+					<strong># of plates:</strong> <%=experiment.number_of_plates %><br/>
+					<strong>Incubation temperature:</strong> <%=experiment.incubation_temperature %><br/>
+					<strong>Screen Purpose:</strong> <%=experiment.screen_purpose %><br/>
+					<strong>Donor:</strong> <%=experiment.donor_strain_used%><br/>
+					<strong>Library:</strong> <%=experiment.library_used %>
+			</td>
+			<td class="querySelectTD rowNum<%=eC%>"><%= collection_select :experiment, :experiment_query_raw_dataset_id, Experiment.experiment_datasets(experiment, 'query'), :exp_raw_set_id, :date_pwj_plasmid_condition, {allow_blank:true}, {class:"formSelect", id:"experiment_query_raw_dataset_id#{eC}"} %></td>
+			<td class="comparerSelectTD rowNum<%=eC%>"><%= collection_select :experiment, :experiment_comparer_raw_dataset_id, Experiment.experiment_datasets(experiment, 'comparer'), :exp_raw_set_id, :date_pwj_plasmid_condition, {allow_blank:true}, {class:"formSelect", id:"experiment_comparer_raw_dataset_id#{eC}"}%></td>
+			<td class="link_data rowNum<%=eC%>" id="uploadTD<%=eC%>"></td>
+	  </tr>
+	  <%else%>
+	  	<% associatedExperiments.push(experiment) %>
+	  <%end%>
+
+	<% end %>
+		</tbody>
+	</table>
+</div>
+
+<%= render :partial => 'common_file_upload_stuff_footer' %>
+
+<br style="clear:both" /><br/><br/>
+<div id="associated_experiments_container">
+	<h2>Experiments that have been linked to raw data</h2>
+	<table class="exp" id="associated_experiments_table" style="display:none;">
+		<thead>
+	  <tr>
+	  	<th>ID</th>
+	    <th>Batch Date</th>
+			<th>Query</th>
+			<th>Comparer</th>
+			<th>Condition</th>
+			<th>Strains / plate</th>
+			<th>Reps</th>
+			<th>Plates</th>
+			<th>Incubation Temp</th>
+			<th>Purpose</th>
+			<th>Query Data id</th>
+			<th>Comparer Data id</th>
+	  </tr>
+	  </thead>
+	  <tbody>
+	<% associatedExperiments.each do |experiment| %>
+	  <tr>
+			<td><%=link_to "#{experiment.id}", experiments_associated_data_path(:id=>experiment.id) %></td>
+			<td><%=experiment.batch_date%></td>
+			<td><%=experiment.query%></td>
+			<td><%=experiment.comparer %></td>
+			<td><%=experiment.condition%></td>
+			<td><%=experiment.density %></td>
+			<td><%=experiment.replicates %></td>
+			<td><%=experiment.number_of_plates %></td>
+			<td><%=experiment.incubation_temperature %></td>
+			<td><%=experiment.screen_purpose %></td>
+			<td><%=experiment.experiment_query_raw_dataset_id %></td>
+			<td><%=experiment.experiment_comparer_raw_dataset_id %></td>
+	  </tr>
+	<% end %>
+		</tbody>
+	</table>
+</div>
+
+
+</div>

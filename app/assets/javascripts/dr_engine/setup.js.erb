@@ -1,0 +1,287 @@
+
+$(document).ready(function(){
+
+	$("#drForm").validate({
+		submitHandler: function(form) {
+			setupDrFlash();
+			form.submit();
+		}
+	});
+	$.validator.addMethod("description", function(value, element) {
+    return this.optional(element) || /^[a-zA-Z0-9_'"\,\-\.\?!\(\)\s&%#@\+\:\;~]*$/.test(value);
+  }, "Invalid description!");
+	$.validator.addClassRules(
+		"validate-description", {
+			required: true,
+			minlength: 4,
+			description: true,
+			messages: {required: "Required field!", minlength: "Too short!"}
+		}
+	);
+
+	toggle_disable($('#store'));
+	checkKeyInfo();
+	if($('#flashMessageBackground')){
+		$('#flashMessageBackground').hide();
+	}
+
+	$('.fieldhint').each(function(){setupFieldHint(this)});
+
+
+	$('#key').change(function(){
+		var el =$('#key option:selected');
+		update_key_desc(el.text(), el.val(), '#key_desc');
+	});
+
+
+	$("#submitFormButton").click(function(){	$('#generateHistogram').val('0'); });
+
+	$("#resetButton").click(function(){
+		checkKeyInfo();
+		toggle_disable($('#store'));
+		$('#generateHistogram').val('0');
+	});
+
+	$("#restoreSession").click(function(){
+		setupFlash(true, "Loading Sessions...");
+
+		var callback = function(){
+			$("#restore_div2").css('overflow',"auto");
+			killFlash();
+		}
+		var at = $('#authenticity_token').val()
+		submitAjax({
+			'strURL':"<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/dr_engine/show_sessions.cgi?at="+encodeURIComponent(at),
+			'method':'GET',
+			'whatToUpdate':'restore_div',
+			'callback':callback
+		});
+
+	});
+
+	$('#generateHistogramButton').click(function(){	$('#generateHistogram').val('1'); });
+
+	$("#advanced_options_head").click(function(){showHideDiv($(this));});
+
+	// $('#drForm').on('submit',function(evt){
+	// 	evt.preventDefault();
+	// 	if($('#drForm').valid()){
+
+	// 	}
+	// 	return false;
+	// });
+
+	$('#result_fake').load(function(){
+		if($('#result_fake').contents().find('body:contains("500 error"),title:contains("500")').length > 0){
+			updateFlash('Error running DR Engine. Please try again later or <a style=\'display:inline;\' href=\'mailto:admin@rothsteinlab.com\'>contact the administrator.</a><br/>', 'ERROR!', 'flashError')
+		}
+	});
+
+});
+
+function setupFieldHint(elem){
+	$(elem)
+		.focus(function(){showFieldHint(this);})
+		.mouseover((function(){showFieldHint(this);}))
+		.blur(function(){$(this).prev().prop('class','field-hint-inactive');})
+		.mouseout(function(){$(this).prev().prop('class','field-hint-inactive');});
+}
+
+// called on load and in dr_engine_setup
+function checkKeyInfo(){
+	var el =$('#key option:selected');
+	update_key_desc(el.text(), el.val(), '#key_desc');
+	return true;
+}
+
+function setupDrFlash(){
+	setupFlash(true, 'Validating Data...', 'Uploading Log File' );
+	window.scrollTo(0,0);
+}
+
+// called in dr_engine_setup
+function showHideDiv(elem){
+	var body = elem.next();
+	if(body.css('display')=='none'){
+		body.slideDown();
+		elem.prop('class','sprite-minus');
+	}
+	else{
+		body.slideUp();
+		elem.prop('class','sprite-plus');
+	}
+	toggle_disable($('#store'));
+}
+
+// used in recovering / displaying sessions
+function delete_session(form_name){
+	var answer=confirm("Are you sure you would like to delete this session?");
+	if(answer){	document.form_name.submit();	}
+}
+
+// called on load, in showHideDiv and in dr_engine_setup
+// not really sure what to do about the validation at the end of this function.
+// el = jquery element
+function toggle_disable(el){
+	var disabled='true';
+
+	if(!el.prop('checked')){disabled='false';}
+	if(disabled == 'true'){
+		// re-enable form elements
+		$("[name^=store_params]").prop('disabled', null).addClass('required');
+	}
+	else{
+		// $('#american').removeClass('validate-date');
+		if($('#store_params_batch_date').next() && $('#store_params_batch_date').next().hasClass('validation-advice')){
+			$('#store_params_batch_date').next().remove();
+		}
+		$("[name^=store_params]").prop('disabled', 'disabled').removeClass('required');
+		var elements = $("[name^=store_params]");
+		for (var i = 0; i < elements.length; i++) {
+			if($(elements[i]).next() && $(elements[i]).next().hasClass('validation-advice')){
+				$(elements[i]).next().remove();
+			}
+		}
+	}
+}
+
+// called in dr_engine_setup and in checkKeyInfo()
+function update_key_desc(text, value, div_id){
+	var parameters="";
+	if(value == "custom"){
+		modifyExtraFields(1);
+		text='';
+		parameters = "Custom Key File &#8658; Your key file must be in comma-separated values (csv) or tab-delimited format.";
+	}
+	else if(value == "none"){
+		modifyExtraFields(2);
+		text='';
+		parameters = "Please fill in the density and replicate parameters below.<br/>YOU MAY NOT NORMALIZE DATA TO CONTROLS WITH THIS OPTION SELECTED!";
+	}
+	else{
+		modifyExtraFields(0);
+		if(value == "R384" || value == "C384")
+			parameters=" &#8658; Density: 384.  Replicates: 4. Library Mating Type: MAT alpha.";
+		else if(value == "R384a")
+			parameters=" &#8658; Density: 384.  Replicates: 4. Library Mating Type: MAT a.";
+		else if(value == "1536a")
+			parameters=" &#8658; Density: 1536.  Replicates: 4. Library Mating Type: MAT a.";
+		else if(value == "R1536")
+			parameters=" &#8658; Density: 1536.  Replicates: 4. Library Mating Type: MAT alpha.";
+		else if(value == "DAmPa")
+			parameters=" &#8658; Density: 1536.  Replicates: 4. Library Mating Type: MAT a.";
+		else if(value == "DPI")
+			parameters="&#8658; Density: 1536. Replicates 16. Library Mating Type: MAT alpha."
+		else if(value == "RHB_1rep")
+			parameters=" &#8658; Density: 384.  Replicates: 1. Library Mating Type: MAT alpha.";
+		else if(value == "R96_1rep")
+			parameters=" &#8658; Density: 96.  Replicates: 1. Library Mating Type: MAT alpha.";
+		else if(value == "R96a_1rep")
+			parameters=" &#8658; Density: 96.  Replicates: 1. Library Mating Type: MAT a.";
+		else if(value == "hieterMATa")
+			parameters=" &#8658; Density: 1536.  Replicates: 1. Library Mating Type: MAT a.";
+		else if(value == "R1536ts_a")
+			parameters=" &#8658; Density: 1536.  Replicates: 4. Library Mating Type: MAT a.";
+	}
+	if(!value || value==""){	$(div_id).html("You must select a key file!");	}
+	else{	$(div_id).html(text+parameters);	}
+	checkNormalizationMethod(value);
+}
+
+// called in update_key_desc
+// need to lookup what RF does
+function checkNormalizationMethod(keyValue){
+	var value = $("input:radio[name='normalizationMethod']:checked").val();
+	if(keyValue == "none"){
+		$('#nToControls').prop('disabled','disabled');
+		$('#controlNormalLabel').addClass('inactive');
+		if(value == "controls"){
+			$('#nToControls, #doNotNormalize').prop('checked',false);
+		}
+	}
+	else{
+		$('#nToControls').prop('disabled',null);
+		$('#controlNormalLabel').removeClass('inactive');
+	}
+}
+
+function modifyExtraFields(shouldAddFields){
+	if(shouldAddFields > 0){
+		if($('#extraKeyInfo').length > 0){$('#extraKeyInfo').remove();}
+
+		var myDIV = '<div id="extraKeyInfo" style="display:none;">';
+		var end = '</div>';
+
+		myDIV += '<hr style="color:#aaaaaa; padding-bottom:3px; background-color:#aaaaaa;" />';
+
+		myDIV += '<table class="formTable" style="padding-top:3px;padding-bottom:3px;">';
+		end += '</table>';
+
+		myDIV += '<tr><td>';
+
+		// Density
+		myDIV += '<div class="required"><label for="density" class="right required">Screen Plate Density: </label></div></td>';
+		myDIV += '<td>';
+		// add fieldhint for select
+		myDIV += '<div class="field-hint-inactive" id="density-H">';
+		myDIV += '<div>Select the density screened in.<br/>This should be the number of data on each plate.</div></div>';
+		// add select
+		myDIV += '<select id="density" class="formSelect fieldHint" name="density" style="background-color:#ffff99; width:120px;">';
+		myDIV += '<option value="96">96</option>';
+		myDIV += '<option value="384">384</option>';
+		myDIV += '<option value="1536" selected="selected">1536</option>';
+		myDIV += '<option value="2304">2304</option>';
+		myDIV += '</select>';
+
+		// replicates label
+		var reps = '<td><div class="required"><label for="replicates" id="repLabel" class="right required"># of Replicates: </label></div></td>';
+		// replicate fieldhint
+		reps += '<td><div class="field-hint-inactive" id="replicates-H">';
+		reps += '<div>Select the number of replicates of each element on a plate.</div></div>';
+		// replicate selection input box
+		reps += '<select id="replicates" class="formSelect fieldHint" name="replicates" style="background-color:#ffff99; width:125px;">';
+		reps += '<option value="1">1</option>';
+		reps += '<option value="2v">2 Vertical</option>';
+		reps += '<option value="2h">2 Horizontal</option>';
+		reps += '<option value="4" selected="selected">4 square ( 2 x 2 )</option>';
+		reps += '<option value="16">16 square ( 4 x 4 )</option>';
+		reps += '</select></td>';
+
+		if(shouldAddFields == 1){
+			// create notice div
+			myDIV += '<td rowspan="4"><div class="permanent_notice" style="margin-left:20px;">';
+			myDIV += 'Key files uploaded must be in a specific format.<br>Consult the following link for guidance:';
+			myDIV += '<br><br><ul style="margin:0px;"><li><a class="ext_link" onclick="return popup(this, \'Key File Notes\')" href="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/screen_mill/key_file_info">';
+			myDIV += 'Key file format description and sample.</a></li></ul><br></div></td></tr>';
+
+			// add replicates row
+			myDIV += '<tr>'+reps+'</tr>';
+
+			// add ID row and label
+			myDIV += '<tr><td><div class="required"><label for="id" class="right">ID Column: </label></div></td>';
+			// add id text box to row
+			myDIV += '<td><input id="id_col" value="ORF" name="id_col" type="text" class="required field_associates"';
+			myDIV += ' style="background-color:#ffff99;width:125px;"></td></tr>';
+			// add File upload row
+			myDIV += '<tr id="extraRow1"><td><div class="required"><label for="key_file_upload" class="right">Key File: </label></div></td>';
+			// add File upload input
+			myDIV += '<td><input id="keyfile" name="key_file" type="file" class="required field_associates" /></td>';
+		}
+		else{
+			// shouldAddFields == 2 if no key file is wanted
+			myDIV += reps;
+		}
+
+		$('#fileinfo').append(myDIV+''+end);
+
+		$('#fileinfo .fieldHint').each(function(){ setupFieldHint(this); });
+
+
+		$('#extraKeyInfo').slideDown(300);
+	}
+	else{
+		if($('#extraKeyInfo').length > 0){
+			$('#extraKeyInfo').slideUp(300,function(){$('#extraKeyInfo').remove();});
+		}
+	}
+}

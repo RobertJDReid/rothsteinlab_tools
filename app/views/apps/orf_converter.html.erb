@@ -1,0 +1,124 @@
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'screenTroll', "data-turbolinks-track" => true  %>
+
+<style type="text/css">
+	div fieldset{float:left;}
+	legend{letter-spacing:0.03em;}
+	.formTable{padding-left:10px;}
+	#spinner{border-width:0px;}
+	#covert{margin-left:5px;}
+	#covert, #spinner, #spinner1{float:left;}
+	.resultDiv{clear:left;}
+
+	.loading{
+		font-size:1.3em;
+		margin-left:15px;
+		float:left;
+	}
+
+	.commit{float:left;}
+
+	fieldset{
+		border: 3px solid #AAAAAA;
+		height:auto;
+		margin-right:30px;
+		padding:5px;
+		float:left;
+		-webkit-border-radius: 4px;
+		-moz-border-radius: 4px;
+		border-radius: 4px;
+	}
+	legend{
+		color: black;
+		font-weight: bold;
+		font-size:2em;
+		font-variant: small-caps;
+		padding: 2px 8px;
+	}
+	textarea{
+		font-size:1.5em;
+		font-family: 'Lucida Grande';
+	}
+	table tr td{text-align:center;}
+	table tr td.left{text-align:left;}
+	label{
+		font-weight:bold;
+		font-size:1.2em;
+	}
+
+	/* screentroll specific css */
+	.screenTrollResults .underRep{color:blue;font-style: italic;}
+	fieldset.screenTrollResults{margin-bottom:10px;}
+	.ajaxy{clear:both;padding:5px 5px 5px 0px;}
+</style>
+
+<script type="text/javascript" charset="utf-8">
+
+function validate_form(formName){
+
+	var scriptName = 'converter.cgi';
+	var loader = '#loading';
+	var submitForm = false;
+	var resultDiv = '#result1';
+	if(formName == 'conversion'){
+		$("#result1, #result2").html('');
+	}
+	else if(formName=='comparison'){
+		scriptName = 'screenTroll/screenTroll.cgi';
+		loader = '#loading1';
+		resultDiv = '#result2';
+		$(resultDiv).html('');
+	}
+
+	//$('form[name='+formName+']').removeAttr("novalidate");
+	if($('form[name='+formName+']').valid()){
+		$.ajax({
+			type		: 'POST',
+			url			: '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/'+scriptName,
+			data		: $('form[name='+formName+']').serialize(),
+			dataType: 'html',
+			beforeSend: function(){ $(loader).show(); },
+			success: function(data){
+				$(resultDiv).html(data);
+				$(resultDiv).slideDown();
+			},
+			error: function(){
+				var failText = '<div class="alert">Sorry, an error occurred. Please try again or contact the admin.</div>';
+				$(resultDiv).html(failText);
+			},
+			complete: function(){	$('.loading').hide();}
+		});
+	};
+	return false;
+}
+
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<form name="conversion"  id="conversion" style="float:left;margin-bottom:10px;">
+	<div style="float:left;clear:left;">
+	<h2 style="padding:0px;margin:0px;">Type or Paste in your identifier list: </h2>
+	<em >You may separate your identifiers with commas, spaces, or carriage returns.</em><br/>
+	</div>
+	<div style="float:left;clear:left;">
+	<textarea title="You must type or paste in an identifier list to continue" name="ids" id="ids" rows="15" cols="35" class='required'></textarea>
+	</div>
+	<div style="float:left;clear:left;margin-top:10px;">
+		<input type="checkbox" style="display:inline;margin-bottom:10px;" id="maintainOrder" name="maintainOrder" value="yes" />
+		<label for="maintainOrder" style="padding-left:5px;margin-top:-5px;display:inline;color:black;">Maintain input order?</label>
+	</div>
+	<br style="clear:left" /><br/>
+	<input type="button" value="&raquo; Submit &laquo;" id='submitConversion' class="commit" onclick="validate_form('conversion');" />
+	<input type="reset" class="reset" value="&raquo; Reset &laquo;" style="float:left;margin-left:15px;"/>
+	<div id="loading" class="loading" style="display:none;">
+		<%=image_tag "spinner-big.gif", :alt=> "spinner", :id=>"spinner", :name=>"spinner"%><div style="padding:5px;float
+		:left;">Loading...</div>
+	</div>
+</form>
+<br style="clear:left" />
+<div id="result1" class="resultDiv" ></div>
+<div id="result2" class="resultDiv"></div>
+<br/><br/>
+</div>

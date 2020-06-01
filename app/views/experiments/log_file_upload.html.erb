@@ -1,0 +1,43 @@
+<%= stylesheet_link_tag 'experiments/screenMillDataUpload', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'experiments/tables', "data-turbolinks-track" => true %>
+<script type="text/javascript" charset="utf-8">
+var onLoadHandler = function(evt, f){logFileOnLoadHandler(evt,f);}
+</script>
+
+
+<script type="text/javascript" charset="utf-8">
+var currentUser = '<%=current_user.login %>';
+var densityPossibilities = [<%=raw(Density.select("density").map{|x| x.density}.join(", "))%>];
+var onLoadHandler = function(evt,f,callback){return logFileOnLoadHandler(evt,f,callback);};
+</script>
+<%= javascript_include_tag 'experiments/screenMillDataUpload', "data-turbolinks-track" => true%>
+<%= javascript_include_tag 'experiments/logFileUpload', "data-turbolinks-track" => true%>
+<%= javascript_include_tag 'experiments/uploadFunctions'%>
+
+<%= render partial: "layouts/top" %>
+
+<% @file_name = 'CM Engine Log File' %>
+<% @file_label = raw("<label for='logFile'><b>#{@file_name}:</b></label>") %>
+<%= render :partial => 'common_file_upload_stuff_header' %>
+
+<output id="goodFiles">
+	<h3>Good File(s) processed:</h3>
+	<table class="exp" id="goodFileTable">
+		<thead>
+			<tr>
+				<th>File Name / Info</th>
+				<th>#</th>
+				<th>Query</th>
+				<th>Condition</th>
+				<th class="nowrap">Query Plasmid Info <span class="question" id="plasmidInfo"  title="This column contains details of the plasmid screened. If there is no information then the corresponding query could not be found in the plasmid database. The query must be in the plasmid database prior to uploading data.">?</span></th>
+				<th class="nowrap">Batch Date<span class="question" id="batchDate" title="This is the date that this screen was performed. For consistancy, it should corrispond to the date the mating was performed.">?</span></th>
+				<th># plates</th>
+				<th>Density</th>
+				<th>Exists in DB?<span class="question" id="existsInDB" title="If 'no', then the indicated query condition combo does not yet exist in the database. If 'yes' then data matching the query-condition combo exists in the database. Hover over the 'no' icon for detailed information on the data already in the database.">?</span></th>
+				<th>Upload?</th>
+			</tr>
+		</thead>
+	</table>
+</output>
+
+<%= render :partial => 'common_file_upload_stuff_footer' %>

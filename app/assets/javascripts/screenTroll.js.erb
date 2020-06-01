@@ -1,0 +1,19 @@
+function submitScreenTrollAjax(responseContainer, loader){
+	$.ajax({
+		type		: 'POST',
+		url			: '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/screenTroll/screenTrollOutput.cgi',
+		data		: {'outputContents':$('#output').html()},
+		dataType: 'html',
+		beforeSend: function(){	$('#'+loader).show(); 	},
+		success: function(data){
+			$('#'+responseContainer).html(data);
+			$('#'+responseContainer).slideDown();
+		},
+		error: function(){
+			var failText = '<div class="alert">Sorry, an error occurred. Please try again or contact the admin.</div>';
+			$('#'+responseContainer).html(failText);
+		},
+		complete: function(){	$('.loading').hide();	}
+	});
+	return false;
+}

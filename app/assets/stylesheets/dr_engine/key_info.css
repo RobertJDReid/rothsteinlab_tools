@@ -1,0 +1,27 @@
+ul ul{ margin-bottom:5px; }
+fieldset ul, fieldset li{
+	color:#0C0AAF;
+	margin-top:5px;
+	font-weight:bold;
+}
+ul ul li{ color:#006F2E; }
+tr.odd{ background-color:#CFDCFF; }
+th{
+	background-image:url();
+	background-color:#AFC5FF;
+}
+fieldset ul li a, fieldset ul li a:visited{
+	color:#3774DF;
+	text-decoration:underline;
+}
+div fieldset{
+	border:1px solid gray;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+div fieldset b{line-height:1.7em;}
+div fieldset legend{
+	color:#555555;
+	font-size:200%;
+}

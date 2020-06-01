@@ -1,0 +1,63 @@
+<style type="text/css">
+ul ul{
+	margin-bottom:5px;
+}
+fieldset ul, fieldset li{
+	color:#0C0AAF;
+	margin-top:5px;
+	font-weight:bold;
+}
+ul ul li{
+	color:#006F2E;
+}
+li.important{
+	font-size:1.3em;
+	text-decoration:underline;
+}
+fieldset ul li a:link, fieldset ul li a, fieldset ul li a:visited{
+	color:#3774DF;
+	text-decoration:underline;
+}
+</style>
+<%= render partial: "layouts/top" %>
+<fieldset style="width:90%;"><br/>
+<div class="notes" style="float:left;padding:15px;width:auto;font-weight:bold;">
+	<h4>About <i>CM Engine</i>:</h4>
+<p>
+	<i>CM Engine</i> translates digital images of rectangular plates that contain gridded colonies into quantitative data. It currently contains 4 analysis modes to ensure accurate measurements no matter how cells are deposited onto the agar. It also has multiple error correction algorithms built in to ensure accurate quantifications. <i>CM Engine</i> is licensed as an open source macro for the freely available NIH program, ImageJ. If you use <i>CM Engine</i> or any other tool within the ScreenMill suite, please site:
+</p>
+<p  style="padding-top:5px;">
+	<a href="http://www.ncbi.nlm.nih.gov/pubmed/20584323" class="ext_link">Dittmar JC, Reid RJ, Rothstein R. "ScreenMill: a freely available software suite for growth measurement, analysis and visualization of high-throughput screen data." BMC BioInformatics. 2010.</a>
+</p>
+</div>
+<div class="theRest" style="clear:both">
+<strong><u>Download:</u></strong>
+<ul>
+	<li>The <i>CM Engine</i> software is GPL licensed and available on SourceForge <a href='http://cm-engine.sourceforge.net' class="ext_link" title="SourceForge" >here.</a></li>
+	<li><%= link_to "Mirror of <i>CM Engine v1.64</i> for ImageJ <strong>v1.47+</strong>".html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/cm engine_ImageJ1.64.txt" %></li>
+	<li><%= link_to "Mirror of <i>CM Engine v1.43</i> for ImageJ <strong>v1.43+</strong>".html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/cm engine_ImageJ1.43.txt" %></li>
+	<li><%= link_to "Mirror of <i>CM Engine v1.42</i> for ImageJ <strong>v1.42</strong>".html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/cm engine_ImageJ1.42.txt" %></li>
+	<li><%= link_to "Mirror of <i>CM Engine</i> instruction manual.".html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/cm engine supplement.pdf" %></li>
+</ul>
+<strong><u>Recommended Usage:</u></strong>
+<ul>
+	<li><%=link_to 'Instructions for using <i>CM Engine</i>'.html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/cm engine supplement.pdf", class: "ext_link"%></li>
+	<li>To help ensure accuracy, plate images should be captured at a resolution of 300 dpi.</li>
+	<li>It is recommended that a high quality scanner, capable of scanning in transmissive mode, be used to capture digital images of plates. Transmissive mode scans eliminate many artifacts caused by reflected light and result in higher contrast images than reflected light scans. In addition, the use of a scanner will help reduce any vignetting and fisheye effect that may be present in images captured using a digital camera.</li>
+	<li>In order to capture multi-plate images a black mask may be used. The Rothstein lab uses a custom built PlexiGlas 3 x 3 scanning template to roughly align plates on the scanner bed and mask the light between plates. A scanning template may also be made out of cardboard. For help making your own scanning template please contact the Rothstein Lab at the link above.</li>
+</ul>
+<strong><u>Sample images:</u></strong>
+<ul>
+	<li><%= link_to "Multi-plate", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/multi_plate.zip"%></li>
+	<li><%= link_to "Rough crops", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/rough_crops.zip"%></li>
+	<li><%= link_to "Fine crops", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/cm_engine/fine_crops.zip"%></li>
+</ul>
+
+<strong><u>Additional Notes:</u></strong>
+<ul>
+<li><%= link_to "Image Naming Convention Notes", screen_mill_cm_engine_names_path, class: "ext_link", title: "CM Engine Naming Conventions" %></li>
+	<li>If you would like to submit any alterations to the <i>CM Engine</i>, you may do though the SourceForge link or by contacting the Rothstein Lab at the link above.</li>
+	<li>If you would like a feature to be added to <i>CM Engine</i>, please us the 'Feature Request' link above.</li>
+</ul>
+</div>
+</fieldset>

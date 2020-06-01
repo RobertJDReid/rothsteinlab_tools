@@ -1,0 +1,77 @@
+<style type="text/css">
+ul ul{
+	margin-bottom:5px;
+}
+fieldset ul, fieldset li{
+	color:#0C0AAF;
+	margin-top:5px;
+	font-weight:bold;
+}
+ul ul li{
+	color:#006F2E;
+}
+fieldset ul li a, fieldset ul li a:visited{
+	color:#3774DF;
+	text-decoration:underline;
+}
+</style>
+<%= render partial: "layouts/top" %>
+<fieldset style="width:90%;"><br/>
+	<strong><u>Multi-Plate Images:</u></strong>
+	<ul>
+		<li>Plates should be positioned symmetrically within the image with a small space separating them.</li>
+		<li>The background of the image should be black.</li>
+		<li>Plates must be positioned vertically with coordinate A1 in the lower left hand corner. No orientation marks are required.</li>
+		<li>In your images, plates should ordered by row with the first plate in the top-left corner of the image and the last plate should be in the bottom right corner of the image.</li>
+		<li>Images of rectangular agar plates should be named using the following convention:
+			<ul>
+				<li>One plate in image = “Main Condition,Plate ID.xyz”</li>
+				<li>Two plates in image = “Main Condition,Plate ID 1,Plate ID 2.xyz”</li>
+				<li>Three plates in image = “Main Condition,Plate ID 1,Plate ID 2,Plate ID 3.xyz”</li>
+				<li>Etc</li>
+				<li><i>Note that there are no spaces between the commas in the file names.</i></li>
+			</ul>
+		</li>
+		<li>File name parameter definitions:
+			<ul>
+				<li>Main Condition = common identifier for all plates contained in your image. For example, if all the plates in an image were control plates then Main Condition could be “Control”. All plates of a given main condition will be compared to all plates with the main condition that is labeled as the control, provided that the plate IDs match.</li>
+				<li>Plate ID = plate number (usually a integer) with sub condition ID, if present. Plates with a given plate ID are compared to the Control main condition plates with the same plate ID.</li>
+				<li>.xyz = file extension of image (a lossless format, such as Tiff, is recommended).</li>
+				<li>Plate numbers may be followed by a non-alphanumeric character (see below) to indicate the presence of a specific sub-condition.</li>
+			</ul>
+		</li>
+		<li>Example image name:
+			<ul>
+				<li>An example of a typical image from a screen, see Figure S1, below. Condition1 in library plates 3 and 4, with (+) and without the sub condition that induces over-expression:<br/>File name = “Condition1,3,3+,4,4+.tif”</li>
+				<li>The main condition in this image is “Condition1”.</li>
+				<li>The plate IDs are 3, 3+, 4, and 4+.</li>
+				<li>Plate IDs 3+ and 4+ contain a sub condition identified with the symbol “+”.</li>
+				<li>The sub condition may be anything, for instance, it could be the presence Copper to induce the over-expression of a gene (the gene would be the main condition).</li>
+			</ul>
+		</li>
+		<li>Sub Condition Specifics
+			<ul>
+				<li>The following characters (excluding the commas) may be used to identify your experimental sub conditions:<br/>+, ~, ^, #, @</li>
+				<li>Any number or combination of these characters may be used.</li>
+				<li>
+					For example, the following character combinations will work:
+					<ul><li>++</li><li>+</li><li>~</li><li>~+</li><li>%~!@~</li></ul>
+				</li>
+			</ul>
+		</li>
+	</ul>
+	<strong><u>Single-Plate Images (rough crops and fine crops):</u></strong>
+	<ul>
+		<li>Single Plate filenames should be in the format: main-condition,plateID,sub-condition.</li>
+		<li>You must identify at least one main condition as a control. You may designate this main condition in the "Control Condition" field of the "Screen Data Analysis" webpage.</li>
+		<li>All plates of a given main condition will be compared to all plates with the main condition that is identified as the control, provided that the plate IDs match.</li>
+		<li>
+			Example Plate Identifiers:
+			<ul>
+				<li>Cln3,4,Cu.tif ← This is an example plate ID typical for a SDL screen. It identifies "Cln3" as the main condition in plate 4, and that copper is present in the plate (the Rothstein lab uses copper to induce gene expression when conducting SDL screens).</li>
+				<li>Control,plate1,.tif ← In this example a generic label of “Control” has been entered as the main condition. This plate contains data from plate 1 and no sub-condition is present.</li>
+				<li>glucose,1,.tif ← In this example "glucose" is the main condition in plate 1 with no sub-condition.</li>
+			</ul>
+		</li>
+	</ul>
+</fieldset>

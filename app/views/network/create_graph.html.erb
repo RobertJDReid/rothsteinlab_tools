@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <%= stylesheet_link_tag 'show' %>
+  <%= stylesheet_link_tag 'validation' %>
+  <%= stylesheet_link_tag 'bootstrap-min' %>
+  <%= stylesheet_link_tag 'public/jquery-ui-custom.min' %>
+  <%= stylesheet_link_tag 'networkGraph' %>
+  <%= javascript_include_tag 'jquery.min' %>
+  <%= javascript_include_tag 'public/jquery.ui.1.10.3.custom.min'%>
+  <%= javascript_include_tag 'public/commonJQ', :async=>true %>
+
+  <%= javascript_include_tag 'bootstrap.min', :async=>true%>
+  <%= javascript_include_tag 'Tooltip',  :async=>true%>
+
+  <script type="text/javascript">
+    // this has to be here
+    var network_json = '<%=raw(@network)%>';
+    console.debug(network_json);
+    function getNetwork () {
+      if(network_json){
+        return $.parseJSON(network_json);
+      }
+      else{return false;}
+    }
+  </script>
+  <%= javascript_include_tag 'd3.v3.min'%>
+  <title><%= @title %></title>
+
+</head>
+<body>
+  <div id="controls">
+  <div id="layouts" class="control">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Layout:</a>
+          <ul class="nav">
+            <li class="controlItem" id="force" >
+              <a href="#" class="selectable">Force Directed</a>
+            </li>
+            <li class="active controlItem" id="radial" >
+              <a href="#" class="selectable">Radial</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="sorts" class="control">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Sort Clusters by:</a>
+          <ul class="nav">
+            <li class="active controlItem" id="nodeCount" >
+              <a href="#" class="selectable"># Nodes</a>
+            </li>
+            <li class="controlItem" id="edgeCount" >
+              <a href="#" class="selectable"># Edges</a>
+            </li>
+            <li class="controlItem" id="pvalue" >
+              <a href="#" class="selectable">P-value</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="features" class="control">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Color nodes based on:</a>
+          <ul class="nav">
+            <li class="dropdown dd-scrolling-right controlItem" id="networkBiology" >
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                Network Biology:
+                <span id="networkBiologyValue" class="valueDisplay">-</span>
+                <b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu" id="networkBiologySelect">
+                <li>
+                  <a href="#" class="selectable" id="goProcess">GO Process</a>
+                </li>
+                <li>
+                  <a id="complexMembership" href="#" class="selectable">Complex Membership</a>
+                </li>
+              </ul>
+            </li>
+            <li class="dropdown dd-scrolling-right controlItem" id="networkMetrics" >
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                Network Metrics:
+                <span id="networkMetricsValue" class="valueDisplay">-</span>
+                <b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu" id="networkMetricsSelect">
+                <li><a href = '#' class='selectable' id="degree">Degree</a></li>
+                <li><a href = '#' class='selectable' id="connectivity">Connectivity</a></li>
+              </ul>
+            </li>
+            <li class="divider-vertical"></li>
+            <li>
+              <a href="#" class="big-icon big-icon-plus" id="addFeature"></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br style="clear:both;"/>
+  <div id="filters" class="control">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Filter:</a>
+          <ul class="nav">
+            <li class="active controlItem" id="all" >
+              <a href="#" class="selectable">All</a>
+            </li>
+
+            <%limit = ('1'..'50').to_a %>
+            <li class="dropdown dd-scrolling-right controlItem" id="degreeLesser" >
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                Nodes with degree less than:
+                <span id="degreeLesserValue" class="valueDisplay">-</span>
+                <b class="caret"></b>
+              </a>
+               <ul class="dropdown-menu" id="degreeLesserSelect">
+                <li><a href = '#' class='selectable'><%=limit.join("</a></li><li><a  href='#' class='selectable'>") %></a></li>
+              </ul>
+            </li>
+
+            <li class="dropdown dd-scrolling-right controlItem" id="degreeGreater" >
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                Nodes with degree greater than:
+                <span id="degreeGreaterValue" class="valueDisplay">-</span>
+                <b class="caret"></b>
+              </a>
+               <ul class="dropdown-menu" id="degreeGreaterSelect">
+                <li><a href="#" class='selectable'><%=limit.join("</a></li><li><a  href='#' class='selectable'>") %></a></li>
+              </ul>
+            </li>
+
+            <li class="controlItem" id="selectedInteractions" >
+              <a href="#" class="selectable">Selected Interactions</a>
+            </li>
+            <li class="divider-vertical"></li>
+          </ul>
+          <form class="navbar-search pull-left" action="">
+            <input type="text" class="search-query span2" placeholder="Search" id="search" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+<div id="graphContainer">
+<div id="graph">
+</div>
+<div id="informationPane" class="myAccordian">
+  <div class="group">
+    <button class="btn heading" id="interactions">Interaction types to consider (via BioGRID):</button>
+    <div class="outerContainer">
+      <div class="innerContainer interactionsContainer">
+      </div>
+    </div>
+  </div>
+  <div class="group">
+    <button class="btn heading" id="currentFeature">Current Feature Data: <span>na</span></button>
+    <div class="outerContainer">
+      <div class="currentFeatureContainer innerContainer">
+        blah blah blah
+      </div>
+    </div>
+  </div>
+</div>
+<div id="zeroDegreeNodes"></div>
+</div>
+<%= javascript_include_tag 'd3NetworkGraph',  :async=>true %>
+</body>
+
+
+</html>

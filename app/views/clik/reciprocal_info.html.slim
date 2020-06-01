@@ -1,0 +1,5 @@
+= stylesheet_link_tag 'bootstrap-min'
+= javascript_include_tag 'bootstrap.min', async: true
+= render partial: "layouts/top"
+.explanation
+	p.lead The density on the CLIK graphs tends to be mirrored across the diagonal of the graph, however the mirroring may be perfect because in some cases an interaction between a bait and prey has been annotated, but the converse has not. Selecting the 'Consider all interactions reciprocal' option prior to running CLIK will eliminate this directionality by interpreting all annotated interactions as bi-directional. Conversely, the user may wish to only consider interactions that have been observed in both directions (i.e. A->B and B->A). To do this, users may select the 'Only consider reciprocal interactions' option prior to running CLIK.

@@ -1,0 +1,22 @@
+<title><%= @title %></title>
+</head>
+
+<% if @bg_image && @bg_image != '' %>
+	<% @bg_image = "style='background-image: url(#{@bg_image});'" %>
+<% else %>
+	<% @bg_image = "" %>
+<% end %>
+<body id="temp" <%= @bg_image %>>
+<%=image_tag "header1.gif", class: "headImage", alt: "header" %>
+<div id="layout">
+	<div id="content">
+		<div id="breadcrumb"><div id="login_info"><%= raw current_user_info()%></div></div>
+		<div id="main">
+			<div id="header"><%= raw @header %></div>
+
+						<% flash.each do |name, msg| %>
+							<%if msg.present? %>
+								<div id="<%=name%>" class="<%=name%>"><%=raw(msg)%></div>
+								<script>$('#<%=name%>').effect('highlight',{},1000);</script>
+								<%end%>
+						<% end %>

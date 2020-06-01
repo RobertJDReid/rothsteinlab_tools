@@ -1,0 +1,335 @@
+
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'field_hints', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+
+<%= stylesheet_link_tag    "clik/clikSetup", media: "all", "data-turbolinks-track" => true %>
+<%= javascript_include_tag "clik/clikSetup", "data-turbolinks-track" => true %>
+
+<%= render partial: "layouts/top" %>
+<div id="body">
+	<div id="attribution">
+	<h3>
+		For instructions for how to use CLIK please see:<div style="padding:10px;"><a href="http://www.ncbi.nlm.nih.gov/pubmed/23589890" class="ext_link" >Dittmar JC, Pierce S, Rothstein R, Reid RJ "Physical and genetic-interaction density reveals functional organization and informs significance cutoffs in genome-wide screens." PNAS. 2013.</a></div>This paper should also be referenced if you use any CLIK results in a publication.</h3>
+	</div>
+	<br style="clear:both;height:0px;line-height:0px"/>
+
+	<form id="clikForm" name="clikForm" enctype="multipart/form-data" action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/clik.cgi" method = "post" style="color:#00008B;margin-left:20px;padding-right:10px;" target="dummyFrame" onsubmit="return validate();true;">
+	<input type='hidden' name='authenticity_token' id='authenticity_token' value="<%= form_authenticity_token %>" />
+		<input type="hidden" name="sessionID" id="sessionID" value="<%=current_user.id%>">
+		<div style="float:left;">
+		<fieldset style="width:auto;border:0px;margin-top:20px;">
+			<div class="legend">
+				<label for="organism" style="display:inline;font-size:1.4em;"><b>Interaction Data Source</b></label>
+			</div>
+			<select class="field_associates" name="organism" id="organism" style="font-size:1.4em;float:left;">
+			<%if @version.present? %>
+				<option selected="selected" value="saccharomyces_cerevisiae_biogrid">Saccharomyces cerevisiae (BioGRID v=<%=@version%>)</option>
+				<%end%>
+				<!-- <option value="saccharomyces_cerevisiae_goComponent">Saccharomyces cerevisiae (Gene Ontology [Component])</option>
+				<option value="saccharomyces_cerevisiae_goFunction">Saccharomyces cerevisiae (Gene Ontology [Function])</option>-->
+				<option value="saccharomyces_cerevisiae_goProcess">Saccharomyces cerevisiae (Gene Ontology [Process])</option>
+				<option value="saccharomyces_cerevisiae_fnet">Saccharomyces cerevisiae (Functional Net)</option>
+				<option value="saccharomyces_cerevisiae_preppi">Saccharomyces cerevisiae (PrePPI)</option>
+				<%if @version.present? %>
+					<option value="saccharomyces_cerevisiae_fnetANDbioGrid">Saccharomyces cerevisiae (BioGRID v=<%=@version%> &amp; Functional Net)</option>
+					<option value="schizosaccharomyces_pombe_biogrid">Schizosaccharomyces pombe (BioGRID v=<%=@version%>)</option>
+				<%end%>
+				<!-- <option value="schizosaccharomyces_pombe_goAll">Schizosaccharomyces pombe (Gene Ontology [All Aspects])</option>
+				<option value="schizosaccharomyces_pombe_goComponent">Schizosaccharomyces pombe (Gene Ontology [Component])</option>
+				<option value="schizosaccharomyces_pombe_goFunction">Schizosaccharomyces pombe (Gene Ontology [Function])</option> -->
+				<option value="schizosaccharomyces_pombe_goProcess">Schizosaccharomyces pombe (Gene Ontology [Process])</option>
+				<%if @version.present? %>
+				<option value="schizosaccharomyces_pombe_go_and_biogrid">Schizosaccharomyces pombe (BioGRID v=<%=@version%> &amp; Gene Ontology)</option>
+				<%end%>
+				<!-- <option value="c_elegans_fnet">Caenorhabditis elegans (Functional Net)</option>
+				<option value="drosophila_melanogaster_biogrid">Drosophila melanogaster (BioGRID)</option>
+				<option value="mus_musculus_biogrid">Mus musculus (BioGRID)</option> -->
+				<%if @version.present? %>
+				<option value="homo_sapien_biogrid">Homo sapiens (BioGRID v=<%=@version%>)</option>
+				<%end%>
+				<option value="homo_sapien_preppi">Homo sapiens (PrePPI)</option>
+				<%if @droid_version.present? %>
+					<option value="d_melanogaster_droidb">Drosophilia melanogaster (DroiDB v=<%=@droid_version%>)</option>
+				<%end%>
+			</select>
+			<div style="clear: both;float: right;margin-left: 240px;">
+				BioGRID data from: <a href="http://thebiogrid.org/" class='ext_link' title="BioGRID">http://thebiogrid.org/</a><br/>
+				PrePPI data from:
+					<a href="http://bhapp.c2b2.columbia.edu/PrePPI/" class='ext_link'>
+					http://bhapp.c2b2.columbia.edu/PrePPI/
+					</a> <a href="http://www.ncbi.nlm.nih.gov/pubmed/23193263" class='ext_link' style="padding-left:10px">
+					see  Zhang QC, Petrey D, Garz&#243;n JI, Deng L, Honig B.
+					</a></br>
+				Functional Net data from: <a href="http://www.functionalnet.org/" title="Functional Net" class='ext_link'>http://www.functionalnet.org/</a><br/>
+				<em>D. melanogaster</em> data from: <a href="http://www.droidb.org/" class='ext_link' title="DroID">http://www.droidb.org/</a><br/>
+				Gene Ontology data from: <a href="http://http://www.geneontology.org/" title="Gene Ontology" class='ext_link'>http://www.geneontology.org/</a>. <br/>For GO data, if two genes share membership to a GO term, they are considered interacting. Only terms with greater than 4 members and less than 200 are considered.
+			</div>
+			<br/>
+		</fieldset>
+		<hr>
+		<%if @version.present? %>
+		<input type="hidden" value="saccharomyces_cerevisiae" id="interactionDataOrganism" />
+		<fieldset style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;" id="interactions">
+			<%= render partial: "clik/clik_interactions" %>
+		</fieldset>
+		<hr>
+		<%end%>
+		<fieldset id="rankData" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend">
+				<label style="display:inline;font-size:1.4em;"><b>Rank Order List<br/></b></label>
+				In the "input your own" area enter a list of gene identifiers in rank order. Identifiers may be separated by spaces, commas, or bars (|). Alternatively you may upload a ScreenMill data file. If you do not know what a ScreenMill data file is you should probably use the "input your own" area.<br/>
+				You may also enter a dataset description. This will be the title of the outputted CLIK graph and will be prepended to CLIK analysis output filenames.
+			</div>
+			<div style="float:left;">
+				<div id='idsInputContainer'>
+					<label for="ids" style="padding:0px;"><b>Input your own</b></label>
+					<textarea title="You must type or paste in a rank ordered list or upload a file" name="ids" id="ids" rows="5" cols="15" class="field_associates" style="width:95%;"></textarea>
+				</div>
+				<div style="float:left;clear:left; padding-top:5px;" id="screenMillFileContainer">
+					<label for="millFile"><b>Upload ScreenMillStats-All Data File</b></label>
+					<input type="file" name="millFile" id="millFile" class="field_associates" /><br/>
+					Sort by: <input type="radio" name="sortBy" value="z-score" checked="checked" style="margin:0px 0px 0px 5px;" /> Z-score
+								 	<input type="radio" name="sortBy" value="p-value" style="margin:0px 0px 0px 5px;" /> P-Value
+				</div>
+				<div style="clear:both;float: left;width:100%;">
+					<div style="float:left;width:100%;">
+						<label for="dataSetLabel" style="display:inline;float:left;">Dataset Description (optional):</label>
+						<br/>
+						<input id="dataSetLabel" type="text" style="width:350px;" name="dataSetLabel" class="validate-description field_associates" />
+					</div>
+				</div>
+			</div>
+		</fieldset>
+		<hr>
+		<fieldset id="noiseReduction" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend">
+				<label style="display:inline;font-size:1.4em;"><b>Noise Reduction</b></label>
+				<br/><%=link_to "What is noise reduction?", clik_noise_reduction_path, class: "ext_link", title: "Noise reduction explanation" %>
+			</div>
+			<div style ="float:left;">
+				<label for="promiscuousCutoff" style="display:inline;"><b>Ignore genes with more than
+					<select class="field_associates" name="promiscuousCutoff" id="promiscuousCutoff" style="width:75px;;">
+						<optionvalue="0">Do not ignore anything</option>
+						<option value="800">800</option>
+						<option value="700">700</option>
+						<option value="600">600</option>
+						<option value="500">500</option>
+						<option value="400" selected="selected" >400</option>
+						<option value="300">300</option>
+						<option value="200">200</option>
+						<option value="100">100</option>
+					</select>
+					interactions</b>
+				</label>
+			</div>
+			<!-- <div style ="clear:left;float:left;">
+				<label><input style="display:inline;margin-right:10px;" type="checkbox" name="interactionNormalization" value="1" />Normalize data based on number of interactions</label>
+			</div> -->
+		</fieldset>
+		<hr>
+		<fieldset id="bootstrapping" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend">
+				<label style="display:inline;font-size:1.4em;"><b>Bootstrap Data To<br/>CLIK Groups By</b></label><br/>
+				Bootstrap other genes (identifiers) in your rank list into CLIK groups based on how connected they are to other members of a given CLIK group using the hypergeometric distribution. Connections defined by Genetic / Physical evidence (Network Connections) or by membership in a complex (Complex Data).
+				<br/><%=link_to "Click here for more information on how bootstrapping is performed", clik_bootstrapping_path, class: "ext_link", title: "Bootstrapping explanation" %>
+			</div>
+			<div style="float:left;min-width:440px;">
+				<div style='float:left;width:100%;margin-bottom:10px;'>
+					<div style ="clear:left;float:left;" id="newtorkBootStrapping">
+						<label for="networkConnectionsBS" style="display:inline;float:left;padding:0px;width:200px;"><b>Network Connections:</b></label>
+						<input type="radio" name="networkConnectionsBS" value="yes" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkBS();" />
+						<em style="display:inline;">Yes</em>
+						<input type="radio" name="networkConnectionsBS" id="noNetworkBS" checked="checked" value="no" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkBS();" />
+						<em style="display:inline;">No</em>
+					</div>
+					<div style ="float:left;clear:left;margin:5px 0px 0px 15px;" id="numBSArea">
+						<label style="display:inline;font-size:0.9em;"># to bootstrap:
+							<select class="field_associates" name="numBootStrapping" id="numBootStrapping"  style="width:50px;" disabled="disabled">
+								<option value="10">10</option>
+								<option value="15">15</option>
+								<option value="20">20</option>
+								<option value="25">25</option>
+								<option value="30">30</option>
+								<option value="35">35</option>
+								<option value="40">40</option>
+								<option value="45">45</option>
+								<option value="50" selected="selected">50</option>
+								<option value="55">55</option>
+								<option value="60">60</option>
+								<option value="65">65</option>
+								<option value="70">70</option>
+								<option value="75">75</option>
+								<option value="80">80</option>
+								<option value="85">85</option>
+								<option value="90">90</option>
+								<option value="95">95</option>
+								<option value="100">100</option>
+								<option value="110">110</option>
+								<option value="120">120</option>
+								<option value="130">130</option>
+								<option value="140">140</option>
+								<option value="150">150</option>
+								<option value="175">175</option>
+								<option value="200">200</option>
+								<option value="225">225</option>
+								<option value="250">250</option>
+								<option value="275">275</option>
+								<option value="300">300</option>
+								<option value="350">350</option>
+								<option value="400">400</option>
+								<option value="450">450</option>
+								<option value="500">500</option>
+							</select>
+						</label>
+					</div>
+				</div>
+				<br style="clear:both;height:0px;line-height:0px"/>
+				<div  style='float:left;clear:left;margin-top:10px;' id='complexSource'>
+					<label for="complexData" style="display:inline;float:left;padding:0px;width:200px;clear:both;"><b>Complex Data:</b></label>
+					<input type="radio" name="complexData" value="yes" checked="checked" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkComplex()" />
+					<em style="display:inline;">Yes</em>
+					<input type="radio" name="complexData" value="no" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkComplex()" id="noComplexBS" />
+					<em style="display:inline;">No</em></br>
+					<div style ="float:left;clear:left;margin:5px 0px 0px 15px;" id="complexBSArea">
+						<label style="display:inline;font-size:0.9em;">Complex Data Source:</label>
+						<input type="radio" name="complexDataset" value="baryshnikova" checked="checked" style="margin:0px 0px 0px 5px;display:inline;" />
+						<label style="display:inline;font-size:0.9em;"> <a href="http://www.ncbi.nlm.nih.gov/pubmed/21076421">Baryshnikova et al.</a></label>
+						<input type="radio" name="complexDataset" value="benschop" style="margin:0px 0px 0px 5px;display:inline;" />
+						<label style="display:inline;font-size:0.9em;"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20620961">Benschop et al.</a></label>
+					</div>
+				</div>
+			</div>
+		</fieldset>
+		<hr>
+		<fieldset id="densityScaling" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend"><label style="display:inline;font-size:1.4em;"><b>Density Scaling</b></label>
+				<br/>
+				To have CLIK automatically determine the false color scale on the graph, choose yes. If you are comparing 2 or more CLIK graphs you should
+				select 'no' and manually set the minimum and maximum scales to be the same for all graphs.
+				<br/><%=link_to "Click here for more information on density scaling", clik_scoring_path, class: "ext_link", title: "CLIK scoring / density scaling explanation" %>
+			</div>
+			<div style ="float:left;">
+				<div style ="clear:left;float:left;">
+					<label for="scaleDensity" style="display:inline;float:left;padding:0px;width:200px;"><b>Auto Scale Density:</b></label>
+					<input type="radio" name="scaleDensity" value="yes" checked="checked" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkDensity();" />
+					<em style="display:inline;">Yes</em>
+					<input type="radio" name="scaleDensity" value="no" id="manualScale" style="margin:0px 0px 0px 5px;display:inline;" onchange="checkDensity();" />
+					<em style="display:inline;">No</em>
+				</div>
+				<div style ="clear:left;float:left;margin-top:5px;" id="manualScaleInputArea">
+					<br/>
+					<label style="display:inline;font-w">Start:<input type="text" name="startScale" id="startScale" class="formInputText" disabled="disabled" /></label>
+					<label style="display:inline;">End:<input type="text" name="endScale" id="endScale" class="formInputText" disabled="disabled" /></label>
+				</div>
+			</div>
+		</fieldset>
+		<hr>
+		<fieldset id="binWidthID" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend"><label style="display:inline;font-size:1.4em;"><b>Bin Width</b></label><br/>
+			For the 2-D histogram, width of bin that will be used to calculate point density.
+			<br/><%=link_to "Click here for a more detailed explanation of bin width", clik_bin_width_path, class: "ext_link", title: "Bin Width explanation" %>
+			</div>
+			<div style ="float:left;">
+				<select class="field_associates" name="binWidth" id="binWidth" style="width:175px;" >
+					<option selected="selected" value="auto">Auto</option>
+					<option value="10">10</option>
+					<option value="15">15</option>
+					<option value="20">20</option>
+					<option value="25">25</option>
+					<option value="30">30</option>
+					<option value="35">35</option>
+					<option value="40">40</option>
+					<option value="45">45</option>
+					<option value="50">50</option>
+					<option value="55">55</option>
+					<option value="60">60</option>
+					<option value="65">65</option>
+					<option value="70">70</option>
+					<option value="75">75</option>
+					<option value="80">80</option>
+					<option value="85">85</option>
+					<option value="90">90</option>
+					<option value="95">95</option>
+					<option value="100">100</option>
+					<option value="110">110</option>
+					<option value="120">120</option>
+					<option value="130">130</option>
+					<option value="140">140</option>
+					<option value="150">150</option>
+					<option value="175">175</option>
+					<option value="200">200</option>
+					<option value="225">225</option>
+					<option value="250">250</option>
+					<option value="275">275</option>
+					<option value="300">300</option>
+					<option value="350">350</option>
+					<option value="400">400</option>
+					<option value="450">450</option>
+					<option value="500">500</option>
+					<option value="600">600</option>
+					<option value="700">700</option>
+					<option value="800">800</option>
+					<option value="900">900</option>
+					<option value="1000">1000</option>
+				</select>
+			</div>
+		</fieldset>
+		<hr>
+		<fieldset id="reciprocality" style ="clear:left;float:left;border:0px;margin:20px 0px 20px 0px;">
+			<div class="legend"><label style="display:inline;font-size:1.4em;"><b>Reciprocality</b></label><br/>
+				How should we process interactions? This only applies to BioGRID data. All other interactions are considered to be reciprocal.
+				<br/><%=link_to "What is a reciprocal interaction?", clik_reciprocal_info_path, class: "ext_link", title: "Reciprocal interaction explanation" %>
+		</div>
+			<div style ="float:left;">
+				<div>
+					<label style="padding:0px;">
+						<input type="radio" name="reciprocal" value="asIs" checked="checked"  style="margin:5px;display:inline;float:left;" />
+						Consider all interactions as is.
+					</label>
+				</div>
+				<div>
+					<label>
+						<input type="radio" name="reciprocal" value="forceRecip" style="margin:5px;display:inline;float:left;" />
+						Force all interactions to be reciprocal.
+					</label>
+				</div>
+				<div>
+					<label>
+						<input type="radio" name="reciprocal" value="onlyRecip" style="margin:5px;display:inline;float:left;" />
+						<div style="display:inline;float:left;">
+							Only consider reciprocal interactions<br/>(i.e. only consider interaction if A -> B and B -> A exist).
+						</div>
+					</label>
+				</div>
+			</div>
+		</fieldset>
+		<input type="hidden" value='' name="conditionCombo" id="conditionCombo" />
+		<!-- <div style ="clear:left;float:left;margin-top:5px;width:860px;">
+			<label><input style="display:inline;margin-right:10px;" type="checkbox" name="accumulateScores" value="1" />Accumulate interaction evidence (those interactions with multiple evidences will be weighted higher if this is checked).</label>
+		</div> -->
+		<!-- <div style ="clear:left;float:left;margin-top:5px;width:720px;">
+			<label><input style="display:inline;margin-right:10px;" type="checkbox" name="permutation" value="1" />Perform permutation test to determine CLIK group significance.</label>
+		</div> -->
+		<!-- <div style ="clear:left;float:left;margin-top:5px;width:720px;">
+			<label style="float:left"><input style="display:inline;" type="checkbox" name="accumulateScores" value="1" /><div style="float:left;width:680px;font-size: 14px;font-weight:bold;margin-top:6px;">Accumulate scores for interactions (ie interactions discovered through multiple independent experiments have more impact than those wih only one experiment).</div></label>
+		</div> -->
+		<div style="margin:15px 0px 10px 0px;clear:left;float:left; " id="submitContainer">
+			<input type="submit" value="&raquo; Generate 2d Histogram &laquo;" class="commit" style="float:left;" onclick='$("clikForm").action = "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/clik.cgi"' />
+			<!-- <input type="submit" value="&raquo; Generate Line Graph &laquo;" class="commit" style="float:left;" onclick='$("clikForm").action = "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/clik-line.cgi"' /> -->
+			<div id="loading" class="loading" style="display:none;clear:left;float:left;margin:10px 0px 0px 0px;">
+				<%=image_tag "spinner-big.gif", alt: "spinner", id:"spinner", name: "spinner"%>
+				<div style="padding:5px;float:left;width:400px;" id="progress-div">
+					<div id="trough"><div id="bar" style="width: 0%"></div></div>
+					<span id="message">Loading...</span>
+				</div>
+			</div>
+		</div>
+		</div>
+	</form>
+</div>
+<script type="text/javascript" charset="utf-8">	$('conditionCombo').value="";</script>
+<br style="clear:left;" />
+<div id="pingError" class="error" style="display:none;"></div>
+<iframe name="results" id="results" allowTransparency="true" frameborder="0" style="display:none;clear:left;border:0px;width:100%;" onload="iFrameLoad();"></iframe>
+<iframe name="dummyFrame" id="dummyFrame" allowTransparency="true" frameborder="0" style="display:none;clear:left;border:0px;width:100%;" onload="checkDummyContentOnLoad();"></iframe>

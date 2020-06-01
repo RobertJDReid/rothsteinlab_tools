@@ -1,0 +1,370 @@
+var EXP_INFO;
+$(document).ready(function(){
+	$("#store_params_batch_date").datepicker();
+	$("select[name^=store_params\\[]").each(function(){$(this).find('option:first').prop('disabled', 'disabled')});
+	$("#rothstein_sdl_head").click(function(){showHideDiv($(this));});
+	$("#store").click(function(){toggle_disable($(this));});
+});
+
+// from http://athousandnodes.com/article/processing-multiple-ajax-requests-simultaneously
+var ProcessResponse = (function() {
+  var numRequestToComplete,
+  requestsCompleted,
+  callBacks,
+  data = {},
+  singleCallBack;
+
+  return function(options) {
+    if (!options){  options = {}; }
+
+    numRequestToComplete = options.numRequest || 0;
+    requestsCompleted = options.requestsCompleted || 0;
+    callBacks = [];
+    var fireCallbacks = function () {
+      for (var i = 0; i < callBacks.length; i++){  callBacks[i](data);  }
+    };
+
+    if (options.singleCallback){  callBacks.push(options.singleCallback);  }
+
+    this.addCallbackToQueue = function(isComplete, callback) {
+      if (isComplete){  requestsCompleted++;  }
+      if (callback){  callBacks.push(callback);  }
+      if (requestsCompleted == numRequestToComplete){  fireCallbacks();  }
+    };
+    this.requestComplete = function(isComplete) {
+      if (isComplete){  requestsCompleted++;  }
+      if (requestsCompleted == numRequestToComplete){  fireCallbacks();  }
+    };
+    this.setCallback = function(callback) {
+      callBacks.push(callBack);
+    };
+    this.setData = function(name, responseData){
+      data[name] = responseData;
+    }
+  };
+})();
+
+// check to see if the submission div should be displayed or not depending on if any experiments are "checked" to be uploaded
+// called in updateGoodTable, uploadData and as an onchange event in the checkboxes themselves
+function checkUploadButtons(){
+	if($('input[name=uploadAnyway]:checked').length > 0 || $('.goodSets ul li').length > 0){$('.buttonContainer').fadeIn();}
+	else{$('.buttonContainer').fadeOut();}
+}
+
+function setup_query_condition_validations(count,project_info){
+	EXP_INFO = $.parseJSON(project_info);
+	if($('#qc_table_holder').length<1){$('body').append('<div id="qc_table_holder"><table id="qc_table"></table></div>');}
+	if($('#qc_table').length<1){$('#qc_table_holder').append('<table id="qc_table"></table>');}
+	console.debug(qc_table);
+	validate_query_and_conditions(0, count);
+	return false;
+}
+
+function validate_query_and_conditions(pos, count){
+	// count == # of query condition combos
+	var q = $('#result_fake').contents().find('[name=query\\['+pos+'\\]]').val();
+	var original_c = $('#result_fake').contents().find('[name=condition\\['+pos+'\\]]').val();
+	var c = guessConditionInfo(q, original_c);
+	param_c = c.replace(/\W/, '_');
+	$.ajax({
+		type		: 'GET',
+		url			: '../experiments/verify_query',
+		data		: {  query: q, condition: c },
+		dataType: 'json',
+		beforeSend: function(){
+			updateFlash("Verifying '"+q+", "+c+"'", 'Looking for plasmid info...', "flashGood");
+			$('#qc_table').append('<tr><td class="qc_disp">'+q+', '+c+':</td><td><select id="'+q+param_c+'plasmid" class="experiment_pwj_select" name="pwj",'+q+','+param_c+'"></select><input type="hidden" value="'+param_c+'"/></td></tr>');
+		},
+		success	: function(data, status){
+			var temp = $('#'+q+param_c+'plasmid');
+			var options = '';
+			if(data.length > 1){
+				options = "<option value='' disabled='disabled' selected='selected'>Select pWJ:</option>";
+			}
+			else if(data.length == 0){
+				options = "<option value='' disabled='disabled' selected='selected' class='invalid_plasmid'>NOT IN DB!</option>";
+			}
+			for (var i = 0; i < data.length; i++) {
+				options+="<option value='"+data[i].id+","+data[i].number+","+q+","+c+","+original_c+"'>"+data[i].number+" = "+data[i].promoter+"-"+data[i].gene+"</option>";
+			}
+			temp.append(options);
+
+			pos++;
+
+			if(pos < count){	validate_query_and_conditions(pos, count);	}
+			else{
+				var title = 'Verify query plasmids below:';
+				console.debug($('#qc_table_holder'));
+				var msg = $('#qc_table_holder').html();
+				var buttonContainer = '<div class="buttonContainer"><div class="continueButton" onclick="verify_experiment_params()">Continue</div>';
+				buttonContainer += '<div class="cancelButton" onclick=killFlash();>Cancel</div></div>';
+				msg+=buttonContainer;
+				updateFlash(msg, title, 'flashInteractive');
+				$('#qc_table_holder').html('');
+				// hide progress bar
+			}
+		},
+		error: function(){
+			updateFlash('A server-side error occurred. Sorry about that.', "Error!", 'flashError');
+		},
+		complete: function(){}
+	});
+
+}
+
+function verify_experiment_params(){
+	var continue_flag = true;
+	if($('.invalid_plasmid').length>0){continue_flag=true;}
+
+	var selects = $('.experiment_pwj_select');
+	updateFlash(' ', 'Checking if experiments already exist...', 'flashGood');
+
+
+	var qc_data = [];
+	for (var i = 0; i < selects.length; i++) {
+		if(! $(selects[i]).val() ){
+			continue_flag = false;
+			break;
+		}
+		else{
+			var qc = $(selects[i]).val().split(',');
+			if(qc[2] == EXP_INFO['comparer']){EXP_INFO['comparer_pwj'] = qc[1]}
+			qc_data.push({'plasmid_id':qc[0], 'query':qc[2], 'pwj':qc[1], 'condition': qc[3], 'original_condition': qc[4] });
+			// gather info about plasmid selection....
+		}
+	};
+	if(!continue_flag){
+		alert("Could not continue because one or more of your plasmid selections is invalid. Please fix and try again. Fixing may include adding plasmids to the pwj_plasmids table or modifying your log file with proper pWJ numbers.");
+		return false;
+	}
+	else if(qc_data.length < 1){
+		alert("Could not continue because no plasmid selection boxes were found. Please fix and try again. Fixing may include adding plasmids to the pwj_plasmids table or modifying your log file with proper pWJ numbers.");
+		return false;
+	}
+	var callback=function(data){display_duplicate_rows(data);};
+	var processResponse = new ProcessResponse({
+	  numRequest: qc_data.length,
+	  singleCallback: callback
+	});
+
+	check_if_experiment_exists(processResponse, qc_data, 0);
+}
+
+
+function display_duplicate_rows(data){
+	var table = '';
+	var hiddens = '<input type="hidden" name="authenticity_token" value="'+$("meta[name=csrf-token]").attr('content')+'" />';
+	hiddens += '<input type="hidden" name="page_num" value="FIRST_PAGE" />';
+	var dupsPresent = false;
+	var count = 0;
+	var sets_to_upload = '';
+	var sets_to_not_upload = '';
+	var submit_div_style = 'display:none;';
+	$.each(data, function(index, qc_data){
+		var exp_cond_combo = qc_data["exp_info"]["plasmid_id"]+','+qc_data["exp_info"]["pwj"]+','+qc_data["exp_info"]["query"]+','+qc_data["exp_info"]["condition"]+','+qc_data["exp_info"]["original_condition"];
+		if(qc_data['dups'].hasOwnProperty('comments') && qc_data['dups'].comments.match(/not found/i)){
+			hiddens += '<input type="hidden" value="'+exp_cond_combo+'" name="verified_combo_data['+count+']" />';
+			sets_to_upload += '<li>'+qc_data['exp_info']["query"]+' ('+qc_data['exp_info']["pwj"]+'), '+qc_data['exp_info']["condition"]+'</li>';
+			count++;
+			submit_div_style = 'display:block;';
+		}
+		else{
+			dupsPresent = true;
+			var temp = exp_cond_combo.replace(/\W/g,'_');
+			sets_to_not_upload += '<li id="'+temp+'_upload_status_li" class="qc_li">'+qc_data['exp_info']["query"]+' ('+qc_data['exp_info']["pwj"]+'), '+qc_data['exp_info']["condition"]+'</li>';
+			table += '<tr><td colspan="10" class="badData qc-combo toggleRowSpan">Query: \''+qc_data['exp_info']["query"]+' ('+qc_data['exp_info']["pwj"]+')\'  --  Condition: \''+qc_data['exp_info']["condition"]+'\' ';
+			table += ' <br/><small class="badData">click to view </small> ';
+			table += "<br/></td>";
+			table += '<tr class="toggleRow"><td class="toggleTD" colspan="10">';
+			table += '<div class="toggleRowDiv">';
+			table += '<strong>Upload anyway? <input type="checkbox" name="uploadAnyway[]" value="'+exp_cond_combo+'" style="display:inline;" /></strong>';
+			table +=	'<table class="exp ui-widget dupDataTable"><thead class="ui-widget-header">';
+			table +=	'	<tr>';
+			table +=	'		<th>Query</th>';
+			table +=	'		<th>Condition</th>';
+			table += '		<th>Comparer</th>'
+			table +=	'		<th>Strains / plates</th>';
+			table +=	'		<th># reps</th>';
+			table +=	'		<th class="nowrap">Batch date</th>';
+			table +=	'		<th>Library used</th>';
+			table +=	'		<th>Donor</th>';
+			table +=	'		<th>Purpose</th>';
+			table +=	'		<th>By</th>';
+			table +=	'	</tr>';
+			table +=	'</thead>';
+			table +=	'<tbody class="ui-widget-content">';
+
+			// if value is not a hash object, then it is an array containing dup data...
+			for (var i = 0; i < qc_data['dups'].length; i++) {
+				var eC = (qc_data['dups'][i]['query'] == qc_data['exp_info']['pwj']) ? 'match' : 'noMatch';
+				// purposely leave off the starting tr here, it will be added below
+				var dupRowHTML = "<td class='dupquery "+eC+"'>"+qc_data['dups'][i]['query']+"</td>";
+				eC = (qc_data['dups'][i]['condition'] == qc_data['exp_info']['condition']) ? 'match' : 'noMatch';
+				dupRowHTML += "<td class='dupcondition "+eC+"'>"+qc_data['dups'][i]['condition']+"</td>";
+				eC = (qc_data['dups'][i]['comparer'] == EXP_INFO['comparer_pwj']) ? 'match' : 'noMatch';
+				dupRowHTML += "<td class='dupcomparer "+eC+"'>"+qc_data['dups'][i]['comparer']+"</td>";
+
+				var density = qc_data['dups'][i].density / qc_data['dups'][i].replicates;
+				eC = (density == (EXP_INFO['density']/EXP_INFO['replicates'])) ? 'match' : '';
+				dupRowHTML += "<td class='dupDensity "+eC+"'>"+density+"</td>";
+				dupRowHTML += compareOldToNewJSON('replicates', qc_data['dups'][i]);
+				dupRowHTML += compareOldToNewJSON('batch_date', qc_data['dups'][i]);
+				dupRowHTML += compareOldToNewJSON('library_used', qc_data['dups'][i]);
+				dupRowHTML += compareOldToNewJSON('donor_strain_used', qc_data['dups'][i]);
+				dupRowHTML += compareOldToNewJSON('screen_purpose', qc_data['dups'][i]);
+				dupRowHTML += compareOldToNewJSON('performed_by', qc_data['dups'][i]);
+				dupRowHTML+="</tr>";
+				// if duplicate sub-table for this q-c combo exists then append the row data, else create the table
+				eC = (i % 2) == 0 ? '' : 'class="alt"';
+				table += '<tr '+eC+'>'+dupRowHTML;
+			}
+			table+='</tbody></table></div></td></tr></tr>'
+		}
+	});
+	var title = "WARNING! Possible duplicate experiment!";
+
+	if(dupsPresent){
+		var temp = "<div style='text-align:center;'><br/>Current analysis parameters:<br/><ul class='double'><li><strong>Batch data: </strong>"+EXP_INFO['batch_date']+"</li>";
+		temp += "<li><strong>Performed by: </strong>"+EXP_INFO['performed_by']+"</li>";
+		temp += "<li><strong>Comparer: </strong>"+EXP_INFO['comparer']+"</li>";
+		temp += "<li><strong>Density: </strong>"+EXP_INFO['density']+"</li>";
+		temp += "<li><strong>Replicates: </strong>"+EXP_INFO['replicates']+"</li>";
+		temp += "<li><strong>Screen type: </strong>"+EXP_INFO['screen_type']+"</li>";
+		temp += "<li><strong>Screen purpose: </strong>"+EXP_INFO['screen_purpose']+"</li>";
+		// temp += "<li><strong>Library used: </strong>"+EXP_INFO['library_used']+"</li>";
+		temp += "<li><strong>Donor: </strong>"+EXP_INFO['donor_strain_used']+"</li>";
+		temp += "<li><strong>Incubation temperature: </strong>"+EXP_INFO['incubation_temperature']+"&deg;C</li></ul></div>";
+		temp += "<div style='clear:both'><h3>Possible duplicates already in database (fields with same values are highlighted in red):</h3>";
+		table = temp+'<table class="exp" id="dup_experiments">'+table+'</table>';
+	}
+	else{
+		sets_to_not_upload = "<li class='blankAnnouncement'>Nothing here!</li>";
+		title = "All good!";
+		table = '<br/>No duplicate experiments detected!<br/>Click "Continue" to proceed with the analysis.';
+	}
+	table = '<form action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/screen_mill/dr_engine" id="rothstein_exp_param_form" method="post" target="_parent" >'+table;
+	table += '<div class="resultsContainer"><div class="goodSets">Sets to upload:<ul class="triple">'+sets_to_upload+'</ul></div>';
+	table += '<div class="badSets">Sets that will not be uploaded:<ul class="triple">'+sets_to_not_upload+'</ul></div>'
+	table += '<div style="'+submit_div_style+'" class="buttonContainer"><div class="continueButton" onclick="verify_submission_params()">Continue</div>';
+	table += '<div class="cancelButton" onclick=killFlash();>Cancel</div></div></div>'+hiddens+'</form>';
+
+	$('#flashMessageText').fadeOut(function(){
+		updateFlash(table, title, 'flashInteractive whiteFlash');
+		$(this).fadeIn(function(){
+			$(".toggleRowSpan").click(function(){	$(this).parent().next().find('.toggleRowDiv:first').slideToggle();});
+			$('input[name^=uploadAnyway]').change(function(){
+				var temp = $(this).val().replace(/\W/g,'_');
+				if($(this).prop('checked')){
+					if($('.goodSets #'+temp+'_upload_status_li').length==0){
+						var elem = $('.badSets #'+temp+'_upload_status_li');
+						var id = elem.prop('id');
+						elem.prop('id','');
+						elem.slideUp();
+						elem.clone().appendTo('.goodSets ul').hide().slideDown(function(){
+							$(this).prop('id',id);
+							elem.remove();
+							if($('.badSets ul li.qc_li').length < 1){
+								$('.badSets ul').append('<li class="blankAnnouncement">Nothing here!</li>');
+							}
+						});
+					}
+				}
+				else if($('.goodSets #'+temp+'_upload_status_li').length > 0){
+					var elem = $('.goodSets #'+temp+'_upload_status_li');
+					var id = elem.prop('id');
+					elem.prop('id','');
+					elem.slideUp();
+					elem.clone().appendTo('.badSets ul').hide().slideDown(function(){
+						$(this).prop('id',id);
+						elem.remove();
+					});
+
+					// $('.badSets ul').append();
+					$('.badSets ul .blankAnnouncement').remove();
+				}
+				checkUploadButtons();
+			});
+		});
+	});
+}
+
+function verify_submission_params(){
+	window.scrollTo(0, 0);
+	$('#rothstein_exp_param_form').submit();
+	updateFlash("Cool", "Entering DR Engine!", 'flashGood');
+
+}
+
+//  simple function called in "checkIfExistsInDatabase" that determines if 2 values match and returns the
+//  appropriate table td to indicate this
+function compareOldToNewJSON(variable, json){
+	var temp = json[variable] || '?';
+	var eC = (temp == EXP_INFO[variable]) ? 'match' : 'noMatch';
+	return "<td class='dup"+variable+" "+eC+"'>"+temp+"</td>";
+}
+
+// checks to see if this experiment already exists in the database with an ajax call
+function check_if_experiment_exists(processResponse, qc_data, pos){
+	$.ajax({
+		type		: 'GET',
+		url			: '../experiments/check_if_experiment_exists',
+		data		: {  query: qc_data[pos]['pwj'], condition: qc_data[pos]['condition'] },
+		dataType: 'json',
+		beforeSend: function(){
+			updateFlash('', 'Checking if experiments already exist...', 'flashGood');
+		},
+		success	: function(data){
+			var results = {'exp_info':qc_data[pos], 'dups':data};
+			processResponse.setData(pos, results);
+			processResponse.requestComplete(true);
+			pos++;
+			if(pos < qc_data.length){	check_if_experiment_exists(processResponse, qc_data, pos);	}
+		},
+		error:function(data, e, er){
+			alert("Database error looking for duplicate experiments.");
+		}
+	});
+}
+
+// given a condition, this function attempts to formalize the condition (e.g. 100 gets converted to 100uM Cu). Query and file are
+// present in case an error occurs
+function guessConditionInfo(query, condition){
+	if(!condition && condition != 0){condition = "";}
+	if(condition.match(/,/)){
+		conditions=condition.split(',');
+		var guess='';
+		for (var i = 0; i < conditions.length; i++) {
+			guess = guess+', '+ guessConditionInfo(query, conditions[i].trim());
+		};
+		var regex = /^\s*,*\s*|\s*,*\s*$/;
+		return guess.replace(regex,"");
+	}
+	if(condition !== undefined && condition != null){
+		if(condition.match(/^[0-9]{1,3}\s*cu$/i)){
+			var amt = condition.match(/^([0-9]{1,3})\s*cu$/i);
+			return amt[1]+'uM Cu';
+		}
+		else if(condition.match(/^[0-9]{1,3}\s*um$/i)){
+			var amt = condition.match(/^([0-9]{1,3})\s*um$/i);
+			return amt[1]+'uM Cu';
+		}
+		else if(condition.match(/^gal$/i)){return 'GAL';}
+		else if(condition.match(/^cu$/i)){return '100uM Cu';}
+		else{
+			var regex = /^(\d+\.?\d*)(uM|nM|mM|dM|ug|mg|ng|dg|g|m)\s*([a-zA-Z]+)$/i;
+			var m = regex.exec(condition);
+			if (m != null) {
+				var amt = m[1];
+				var unit = m[2].length > 1 ? m[2].charAt(0).toLowerCase() + m[2].toUpperCase().slice(1) : m[2];
+				var variable = m[3].length > 1 ? m[3].charAt(0).toUpperCase() + m[3].toLowerCase().slice(1) : m[3];
+				return amt+""+unit+" "+variable;
+		  }
+		}
+	}
+	var answer = "";
+	answer = prompt("Could not determine the condition / plasmid promoter for the following experiment:\nQuery: "+query+"\nCondition: '"+condition+"'\n\nThe condition should contain 'Cu' if it is the pCup promoter or 'Gal' if it is the GAL promoter. If this experiment involved a plasmid with a pCup promoter, but was plated on media without copper, your input should be '0Cu'.\n\nMultiple conditions should be separated with commas.\n\nChemical formulas with numbers should not be used (i.e. 100uM CuSO4 should be entered as 100uM Cu).\n",condition);
+	while(!answer && answer !== 0){
+		answer = prompt("Invalid input - this value cannot be blank!\n\nCould not determine the condition / plasmid promoter for the following experiment:\nQuery: "+query+"\nCondition: '"+condition+"'\n\nThe condition should contain 'Cu' if it is the pCup promoter or 'Gal' if it is the GAL promoter. If this experiment involved a plasmid with a pCup promoter, but was plated on media without copper, your input should be '0Cu'.\n\nMultiple conditions should be separated with commas.\n\nChemical formulas with numbers should not be used (i.e. 100uM CuSO4 should be entered as 100uM Cu).\n");
+	}
+	return guessConditionInfo(query, answer);
+}

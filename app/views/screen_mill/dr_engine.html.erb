@@ -1,0 +1,53 @@
+<%= stylesheet_link_tag 'dr_engine/flash_message' %>
+<%= stylesheet_link_tag 'dr_engine/plate_layout' %>
+<%= javascript_include_tag 'dr_engine/plate_review' %>
+<style type="text/css">
+	ul{	margin:0px;	}
+</style>
+<!--[if IE]>
+<style type="text/css">
+.flashGood, .flashError{ { text-align: center; }
+.flashGood, .flashError{ br { display: block; }
+.flashGood, .flashError{ * { text-align: left; }
+#flashMessageText{
+	zoom: 1;
+	display: inline;
+}
+</style>
+<![endif]-->
+<%= render partial: "layouts/top" %>
+<div class="permanent_notice" style="clear:left;float:left;font-size:1.1em;">
+	<strong>Notes</strong>
+	<ul>
+		<li>Analysis progress is automatically saved move to a new page. To save your progress without being redirected to a new page click the "Save Progress" button at the bottom of the page.</li>
+		<li>Clicking on a colony will toggle its exclusion status.</li>
+		<li>Clicking on a row heading (one of the letters on the left of a plate) will toggle the exclusion of the entire row.</li>
+		<li>Clicking on a column heading (one of the numbers above a plate) will toggle the exclusion of the entire column.</li>
+	</ul>
+</div>
+
+<div id="key">
+	<div class="keys" style="background:#FEFF49;"><em><strong>Yellow = dead</strong></em></div>
+	<div class="keys" style="background:red;"><em><strong style="color:white;">Red = excluded</strong></em></div>
+	<div class="keys" style="background:#DF7D7D;"><em><strong>Light Red = excluded on "comparer" plate</strong></em></div>
+</div><br style="clear:both;" />
+
+<% uploadAnyway = @params['uploadAnyway'] || [] %>
+<% verified_combo_data = @params['verified_combo_data'] || {} %>
+<form style="display:none" target="plates_reviewed" id="setup_form" method="get" action="/tools/cgi-bin/dr_engine/main.cgi">
+	<% uploadAnyway.each do |val| %>
+		<input type='hidden' name="save_this_qc" value="<%=val%>"/>
+	<% end -%>
+	<% verified_combo_data.each_pair do |key,val| %>
+		<input type='hidden' name="save_this_qc" value="<%=val%>"/>
+	<% end -%>
+	<input type='hidden' name="page_num" value="<%=@page_num%>"/>
+	<input type='hidden' name="resetting" value="<%=@resetting%>"/>
+</form>
+
+<iframe class="plateReview" name="plates_reviewed" id="plates_reviewed" onload="calcHeight(this);"></iframe>
+<script type="text/javascript">
+	$('#setup_form').submit();
+	$(document).ready(function(){setupFlash(true, 'Generating Cartoon Renderings...');});
+</script>
+</div>

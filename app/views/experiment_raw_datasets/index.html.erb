@@ -1,0 +1,44 @@
+
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function(){
+  var oTable = $("#experiment_raw_datasets").dataTable({
+      "sPaginationType": "full_numbers",
+      "bFilter": true,
+      "bSort": true,
+      "bInfo": true, 
+      "bAutoWidth": true,
+      "bJQueryUI": true,
+      "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      "iDisplayLength" : 50,
+      "oLanguage": { "sSearch": "Filter (all columns):" },
+      "fnDrawCallback": function () {  
+        $("#experiment_raw_datasets").fadeIn();
+      },
+  });
+  // setup tooltip mouseovers 
+  $("span.question").each(function () {
+    var id = $(this).prop('id');
+    $('#'+id).tooltip({
+      track:true,
+      fade:250,
+      delay:0
+    });
+  });
+});
+</script>
+<style type="text/css">
+  table.dataTable td{text-align: center;}
+</style>
+<%= render partial: "layouts/top" %>
+
+<h2><%= link_to 'Upload more raw datasets', new_experiment_raw_dataset_path %></h2>
+
+<%= render :partial => 'experiment_raw_dataset_table' %>
+
+<br>
+<br/>
+</div>

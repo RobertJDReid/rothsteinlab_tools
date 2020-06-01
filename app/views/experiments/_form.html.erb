@@ -1,0 +1,68 @@
+<%= errors_for_helper(@experiment) %>
+<%= form_for @experiment, html: {style:"padding:0px;", id:"theForm"} do |f| %>  
+	<label for="date" class="required">Batch Date:</label>
+	<%= f.text_field :batch_date, {:class=>"formInputText required date",:size=>30, :style=>'display:inline;'} %>
+
+	<label class="required" for="density">Density:</label>
+	<%= f.collection_select :density,  Density.all, :density, :density, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" } %>
+	
+	<label class="required" for="replicates"># of replicates:</label>
+	<%= f.collection_select :replicates,  Replicate.all, :reps, :reps, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+
+	<label class="required" for="screen_type">Screen type:</label>
+	<%= f.collection_select :screen_type,  ScreenType.all, :screen_type, :screen_type, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+
+	<label class="required" for="screen_purpose">Screen purpose:</label>
+	<%= f.collection_select :screen_purpose,  ScreenPurpose.all, :purpose, :purpose, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+	
+	<label class="required" for="library_used">Library used:</label>
+	<%= f.collection_select :library_used,  StrainLibrary.all, :name, :name, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+	
+	<label class="required" for="donor_strain_used">Donor strain used:</label>
+	<%= f.collection_select :donor_strain_used,  Donor.all, :wNumber, :number_and_type, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+
+	<label class="required" for="comparer">Comparer:</label>
+	<%= f.collection_select :comparer,  PwjPlasmid.all, :number, :pwj_details, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+	
+	<label class="required" for="query">Query:</label>
+	<%= f.collection_select :query,  PwjPlasmid.all, :number, :pwj_details, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+	
+	<label class="required" for="condition" class="required">Condition:</label>
+	<%= f.text_field :condition, {:class=>"formInputText required ",:size=>30} %>
+
+	<label class="required" for="number_of_plates" class="required"># of plates:</label>
+	<%=@experiment.number_of_plates%>
+
+	<label class="required" for="incubation_temperature" class="required">Incubation temperature:</label>
+	<%= f.select :incubation_temperature, ((10..60).step(1).map{|s| [s,s]} ),  {:class=>"required formSelect" }%>
+
+	<label class="required" for="performed_by" class="required">Performed By:</label>
+	<%= f.collection_select :performed_by, User.where('permissions = ? || permissions = ?','labMember', 'admin'), :login, :login, {allow_blank:true, :include_blank=>'None associated'}, {class:"required formSelect" }%>
+
+	<label class="required" for="experiment_query_raw_dataset_id" class="required">Query Data:</label>
+	<%= f.collection_select :experiment_query_raw_dataset_id, Experiment.experiment_datasets(@experiment, 'query'), :exp_raw_set_id, :date_pwj_plasmid_condition, {allow_blank:true, :include_blank=>'None associated'}, {class:" formSelect"}  %>
+
+	<label class="required" for="experiment_comparer_raw_dataset_id" class="required">Comparer Data:</label>
+	<%= f.collection_select :experiment_comparer_raw_dataset_id, Experiment.experiment_datasets(@experiment, 'comparer'), :exp_raw_set_id, :date_pwj_plasmid_condition, {allow_blank:true, :include_blank=>'None associated'}, {class:" formSelect" } %>
+
+	<label class="required" for="comments" class="required">Comments:</label>
+	<textarea id="notes" name="experiment[comments]" style="margin-right: 10px;margin-bottom: 10px;width:auto;" wrap="off" rows="15" cols="80" class="required formInputText"><%=@experiment.comments%></textarea>
+
+  <br/>
+	<%= submit_tag @buttonLabel, :class=>"commit" %>
+<% end %>
+
+<script type="text/javascript" charset="utf-8">
+var item = $('#experiment_comparer_raw_dataset_id');
+if(!item.find(':selected').val()){disableSelect(item);}
+item = $('#experiment_query_raw_dataset_id');
+if(!item.find(':selected').val()){disableSelect(item);}
+
+function disableSelect(elem){
+	elem
+		.prop('disabled','disabled')
+		.addClass('disabled')
+		.append('<option selected="selected" value="">No datasets found!</option>');
+	return false;
+}
+</script>

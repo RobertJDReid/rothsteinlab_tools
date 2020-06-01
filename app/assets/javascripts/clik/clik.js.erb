@@ -1,0 +1,190 @@
+var image_magnification_multiplier = 4;
+var zoomPadding=10;
+
+$(document).ready(function(){
+	setupExternals();
+	var myInterval = setInterval ( calcHeight, 5000 );
+});
+
+function submitCLIKajax(options){
+	var removeSubmit = true;
+	if(options.hasOwnProperty('removeSubmit')){
+		removeSubmit = options.removeSubmit == true ? true : false;
+	}
+	var resultDivID = options.responseContainer+'_result';
+	$.ajax({
+		type		: 'POST',
+		url			: '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/clik.cgi',
+		data		: $('#'+options.formID).serialize(),
+		dataType: 'html',
+		beforeSend: function(){
+		 $('#'+options.loader).show();
+		 $('#'+options.formID+' input[type="submit"]').prop('disabled','disabled');
+		},
+		success: function(data){
+			if(removeSubmit){$('#'+options.formID).remove();}
+			if($('#'+resultDivID).length>0){$('#'+resultDivID).html(data);}
+			else{$('#'+options.responseContainer).append('<div id="'+resultDivID+'">'+data+'</div>');}
+		},
+		error: function(){
+			var failText = 'Sorry, an error occurred. Please try again or contact the admin.';
+			if($('#'+resultDivID).length>0){$('#'+resultDivID).html(failText);}
+			else{$('#'+options.responseContainer).append('<div id="'+resultDivID+'">'+failText+'</div>');}
+		},
+		complete: function(){
+			$('#'+options.formID+' input[type="submit"]').prop('disabled','');
+			if($('#'+options.loader).length >0){$('#'+options.loader).hide();}
+			calcHeight();
+			$('#'+options.responseContainer+' .hel').click(function(){return popup(this,this.title);});
+			if(!$('#'+resultDivID).is(':visible')){	$('#'+resultDivID).show();	}
+			//console.debug($('#'+resultDivID).is(':visible'));
+		}
+	});
+	return false;
+}
+
+function generateNetworkGraph(inputID){
+	var newForm = '<form action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/network/create_graph" target="_blank" method="post">';
+	newForm += '<input name="nodesAndEdgesJSON" type="hidden" value=\''+$("#"+inputID).val()+'\'/>';
+	newForm += '<input name="authenticity_token" type="hidden" value=\''+$("#authenticity_token").val()+'\'/></form>';
+	newForm = $(newForm).submit();
+	return false;
+}
+
+function setupExternals(){
+	// pretty sure the title on this is broke
+	$(".ext_link").click(function(e) {return popup(this, '')});
+	// hel = hidden external link (ie do not show the little external link icon)
+	$(".hel").click(function() {return popup(this, '');});
+}
+
+function scrollToID(id){
+	position = parent.document.getElementById('results').offsetTop+document.getElementById(id).offsetTop;
+	parent.scrollTo(0,position);
+}
+
+// properly position image viewing window
+function absolutelyPositionZoom(ev){
+	var leftPos = $(ev.lens).position().left+zoomPadding+($(ev.lens).width());
+	$('#zoomContainer').css({"left":leftPos, "top":ev.y, "display":'block'});
+}
+
+function setupClikMagnifyEffect(){
+		var evt = new Event();
+		var m = new Magnifier(evt,{largeWrapper: document.getElementById('zoom')});
+		m.attach({
+	  	thumb: document.getElementById('clikImage'),
+	  	large: $('#clikImage').prop('src'),
+	  	largeWrapper: document.getElementById('zoom'),
+	  	zoomable:false,
+	  	zoom: 7,
+	  	onthumbenter: function (data) {
+	  		$('#zoomContainer, #mousePos, #followMouseX, #followMouseY').fadeIn(100);
+	  		absolutelyPositionZoom(data);
+	  		updateCoordinates(data);
+	  	},
+	  	onthumbleave: function (data) {	$('#zoomContainer, #mousePos, #followMouseX, #followMouseY').fadeOut(100);},
+	  	onthumbmove: function (data) {
+	  		updateCoordinates(data);
+	  		absolutelyPositionZoom(data);
+
+	  	},
+	  	onzoom: function (data) {absolutelyPositionZoom(data);}
+		});
+		// if the zoomContainer (and therefore #zoom) are not visible (i.e display:none;) when the magnifier
+		// is initialized, then the image coordinates in #zoom will not be updated properly
+		$('#zoomContainer').hide();
+}
+
+// position image in appropriate are of viewing window.
+// function update_zoom_position(ev) {
+// 	if (!ev) var ev = window.event;
+// 	var mouse_x_pos = ev.clientX;
+// 	var mouse_y_pos = ev.clientY;
+// 	// image x axis position in frame is == mouse_x_pos - 1
+// 	var zoom_image = $("#zoom");
+// 	//	xZoomOffset is set in the script clik.cgi
+// 	var leftPos=(-mouse_x_pos) * image_magnification_multiplier+xZoomOffset;
+// 	zoom_image.left(leftPos);
+// 	$("#zoomAxis").left(leftPos + yZoomOffset - 6); // the -6 is to center the font (font size is 12px)
+// 	zoom_image.top((-mouse_y_pos+$('clikImage').offsetParent.offsetTop) * image_magnification_multiplier+xZoomOffset);
+// }
+
+function showHideDiv(elem){
+	var body = $(elem).next();
+	if(!body.is(':visible')){
+		body.slideDown();
+		$(elem).prop('class','sprite-minus');
+	}
+	else{
+		body.slideUp();
+		$(elem).prop('class','sprite-plus');
+	}
+	calcHeight();calcHeight();
+}
+
+function calcHeight(){
+	//find the height of the internal page & change the height of the iframe
+	if($('#results').length>0 && $('#results')[0].contentWindow.document.body){
+		$('#results').height($('#results')[0].contentWindow.document.body.scrollHeight);
+	}
+	else{
+		parent.document.getElementById('results').height = parent.document.getElementById('results').contentWindow.document.body.scrollHeight;
+	}
+}
+
+function updateCoordinates(ev){
+	var x,y;
+	if (!ev){
+		var ev = window.event;
+		x = ev.clientX;
+		y = ev.clientY;
+	}
+	else{
+		// ev.x and y are relative to the display port, so we need to adjust them appropriately...
+		var windowTop = document.documentElement.scrollTop || document.body.scrollTop;
+		var windowLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+		x = ev.x + windowLeft;
+		y = ev.y + windowTop;
+	}
+
+	var showLines = true;
+
+	// leftOffset, axisLength, image_xAxisLength, image_yAxisLength, topOffset and bottomOffset
+	// are defined in clikModule.pm.
+	var xWidth = 	x - leftOffset;
+	datasetXpos = (xWidth / image_xAxisLength) * axisLength;
+	if(datasetXpos < 0  ){	datasetXpos = 0;	showLines = false;}
+	else if(datasetXpos > axisLength){datasetXpos = axisLength; showLines = false;}
+	datasetXpos=datasetXpos.toFixed(2);
+
+	var topPos = y;
+	var topRelPos = topPos - $('#clikImage').offset().top;
+	var dataSetYpos = axisLength - ((topRelPos-topOffset) / image_yAxisLength ) * axisLength;
+	if(dataSetYpos<0){dataSetYpos=0; showLines = false;}
+	if(dataSetYpos > axisLength){dataSetYpos = axisLength; showLines = false;}
+	dataSetYpos=dataSetYpos.toFixed(2);
+
+	$('#mousePos').html(datasetXpos+", "+dataSetYpos);
+	// $("#debug").html( x + "," + y + " -- "+ datasetXpos + " -- leftOffset = "+leftOffset+ "  --> image_xAxisLength = "+image_xAxisLength +", image_yAxisLength = "+image_yAxisLength+", axisLength = "+ axisLength+ ", topOffset: "+ topOffset + ", $('#clikImage').offset().top = "+ $('#clikImage').offset().top +", topRelPos = "+topRelPos);
+	var divYpos = topPos-20;
+	var divXpos = x-25;
+
+	if(showLines){
+		$('#mousePos').css({'left':divXpos, 'top':divYpos, 'display':'block'});
+		var yHeight = $('#clikImage').height() - topRelPos - bottomOffset;
+		$('#followMouseY').css({'left':x, 'top':topPos, 'height':yHeight, 'display':'block'});
+		$('#followMouseX').css({'left':leftOffset, 'top':topPos, 'width':xWidth, 'display':'block'});
+	}
+	else{	$('#mousePos', '#followMouseY', '#followMouseX').hide();}
+}
+
+// this function determines whether the event is the equivalent of the microsoft
+// mouseleave or mouseenter events.
+// from http://dynamic-tools.net/toolbox/isMouseLeaveOrEnter/
+function isMouseLeaveOrEnter(e, handler){
+	if (e.type != 'mouseout' && e.type != 'mouseover'){ return false; }
+	var reltg = e.relatedTarget ? e.relatedTarget : e.type == 'mouseout' ? e.toElement : e.fromElement;
+	while (reltg && reltg != handler) {reltg = reltg.parentNode; }
+	return (reltg != handler);
+}

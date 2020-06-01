@@ -1,0 +1,269 @@
+<%= stylesheet_link_tag 'dr_engine/key_info', "data-turbolinks-track" => true %>
+
+<script type="text/javascript">
+window.onload = function(){
+	$('tr:nth-child(odd)').addClass('odd');
+}
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<div>
+<div>
+	<fieldset style="border-bottom:0px;">
+		<legend>Introduction</legend>
+			<b>To associate the measurements in the log file with the appropriate contextual information (e.g., strain information), the <em>DR Engine</em> maps data within the log file to data contained in a text-based key file that reflects the configuration of the library. The key file minimally contains position information and an identifier for every strain in the library. Position information is defined by "plate #", "row", and "column". The identifier (ID) is user-defined and can be information such as "strain name", "ORF", "gene" etc. The ID column may also be used to indicate the location of "Positive Control" locations (for use with "Designated Controls" normalization method). Key files for several strain libraries are available directly from the <em>DR Engine</em> web interface, however custom key files for other libraries can be uploaded prior to analysis. </b>
+	</fieldset>
+</div>
+<div style="float:left;width:100%">
+	<fieldset style="margin-right:470px;">
+	  <legend style="color:#555555;font-size:200%;">Requirements / Notes</legend>
+		<ul>
+			<li>Data in key files must be tab-delimited or comma-separated.</li>
+			<li>The key file data starts with a header row that contains a label for every column of data. The header row does need to be the first line of the file; however, only the lines following the header are used to map the data in the log file.</li>
+			<li>
+				The header row must contain columns labeled "plate #", "row" and "column" as well as one user-defined ID column.
+				<ul>
+					<li>Plate # (plate number): A unique identifier used to identify the plates in the key file. Integer values are recommended to facilitate proper data sorting within the <em>DR Engine</em></li>
+					<li>Row: these values must be letters (e.g. A-Z then Aa-Az then Ba-Bz, etc. ). These values identify the row positions of each plate.</li>
+					<li>Column: these values must be integers. These values identify the column positions in each plate.</li>
+					<li>ID column: user-defined column of information about the position, (e.g., strain name). Upon uploading a key file to the <em>DR Engine</em>, the user is prompted to enter which column label indicates the ID column.</li>
+				</ul>
+			</li>
+			<li>
+				The number of rows for each plate in the key file should be equivalent to the number of samples in each plate divided by the number of replicates.
+				<ul>
+					<li>For example, a screen conducted with 1536 samples per plate and in a 2 x 2 array (4 replicates) should contain 384 rows for each plate in the key file to match the number of unique samples on the plate.</li>
+				</ul>
+			</li>
+			<li>
+				Every plate number in the log file must be present in the key file. For example, if the following query,plate,condition labels are in your log file:
+				<ul>
+					<li>Top1-TA,1,Cu.tif</li>
+					<li>Top1-TA,2a,Cu.tif</li>
+					<li>Top1-TA,Three,Cu.tif</li>
+				</ul>
+				Then the following plate numbers must be present in your key file:
+				<ul>
+					<li>1</li>
+					<li>2a</li>
+					<li>Three</li>
+				</ul>
+			</li>
+			<li>If using "Designated Controls" as the normalization method, key file rows with phrase <i>Positive Control</i> in the ID Column will be considered as control data. See the example on the left for more details.
+			<li>Key files may contain additional information simply by adding extra columns. The information contained in these columns is appended to the <em>DR Engine</em> output files.</li>
+		</ul>
+	</fieldset>
+</div><!-- end content -->
+
+<div style="float:left;width:400px;float: left;margin-left:-470px;">
+	<fieldset>
+	  <legend>Examples</legend>
+		<b>In all examples the column labeled 'ORF' would be use the ID Column. You may also download any of the following key files list below:</b>
+		<ul>
+			<li><%= link_to "Rothstein Deletion (MAT alpha)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/rothstein_deletion_alpha.tab" %></li>
+			<li><%= link_to "Rothstein HB Deletion (MAT alpha)", "#{ENV['RAILS_RELATIVE_URL_ROOT']}/key_files/HB_alpha.tab" %></li>
+		</ul>
+		<b>The example below only contains data for 2 plates, each with 96 rows.<br/>
+		In addition this example key file may be used in conjunction with the "Designated Controls" normalization method.<br/>Control locations are indicated at:</br/> Plate 1, positions A1, B2, C3 and D4<br/>Plate 2, positions E5, F6, G7 and H8</b><br/><br/>
+		<table style="text-align:center;border:1px solid black;">
+			<tr><th>Plate #</th><th>Row</th><th>Column</th><th>ORF</th><th>Gene</th><th>Alias</th></tr>
+			<tr><td>1</td><td>A</td><td>1</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>2</td><td>YAL068C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>3</td><td>YAL067C</td><td>SEO1</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>4</td><td>YAL066W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>5</td><td>YAL065C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>6</td><td>YAL062W</td><td>GDH3</td><td>FUN51</td></tr>
+			<tr><td>1</td><td>A</td><td>7</td><td>YAL061W</td><td>BDH2</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>8</td><td>YAL060W</td><td>BDH1</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>9</td><td>YAL059W</td><td>ECM1</td><td>-</td></tr>
+			<tr><td>1</td><td>A</td><td>10</td><td>YAL058W</td><td>CNE1</td><td>FUN48</td></tr>
+			<tr><td>1</td><td>A</td><td>11</td><td>YAL056W</td><td>GPB2</td><td>KRH1</td></tr>
+			<tr><td>1</td><td>A</td><td>12</td><td>YAL055W</td><td>PEX22</td><td>YAF5</td></tr>
+			<tr><td>1</td><td>B</td><td>1</td><td>YAL053W</td><td>FLC2</td><td>HUF2</td></tr>
+			<tr><td>1</td><td>B</td><td>2</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>3</td><td>YAL049C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>4</td><td>YAL048C</td><td>GEM1</td><td>GON1</td></tr>
+			<tr><td>1</td><td>B</td><td>5</td><td>YAL046C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>6</td><td>YAL045C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>7</td><td>YAL044C</td><td>GCV3</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>8</td><td>YAL042W</td><td>ERV46</td><td>FUN9</td></tr>
+			<tr><td>1</td><td>B</td><td>9</td><td>YAL042C-A</td><td>-</td><td>YAL043C-A</td></tr>
+			<tr><td>1</td><td>B</td><td>10</td><td>YAL040C</td><td>CLN3</td><td>WHI1|FUN10|DAF1</td></tr>
+			<tr><td>1</td><td>B</td><td>11</td><td>YAL037W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>B</td><td>12</td><td>YAL036C</td><td>RBG1</td><td>FUN11</td></tr>
+			<tr><td>1</td><td>C</td><td>1</td><td>YAL035W</td><td>FUN12</td><td>yIF2</td></tr>
+			<tr><td>1</td><td>C</td><td>2</td><td>YAL034C</td><td>FUN19</td><td>-</td></tr>
+			<tr><td>1</td><td>C</td><td>3</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>C</td><td>4</td><td>YAL030W</td><td>SNC1</td><td>-</td></tr>
+			<tr><td>1</td><td>C</td><td>5</td><td>YAL029C</td><td>MYO4</td><td>SHE1|FUN22</td></tr>
+			<tr><td>1</td><td>C</td><td>6</td><td>YAL028W</td><td>FRT2</td><td>HPH2</td></tr>
+			<tr><td>1</td><td>C</td><td>7</td><td>YAL026C</td><td>DRS2</td><td>SWA3|FUN38</td></tr>
+			<tr><td>1</td><td>C</td><td>8</td><td>YAL023C</td><td>PMT2</td><td>FUN25</td></tr>
+			<tr><td>1</td><td>C</td><td>9</td><td>YAL022C</td><td>FUN26</td><td>-</td></tr>
+			<tr><td>1</td><td>C</td><td>10</td><td>YAL021C</td><td>CCR4</td><td>NUT21|FUN27</td></tr>
+			<tr><td>1</td><td>C</td><td>11</td><td>YAL020C</td><td>ATS1</td><td>KTI13|FUN28</td></tr>
+			<tr><td>1</td><td>C</td><td>12</td><td>YAL019W</td><td>FUN30</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>1</td><td>YAL018C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>2</td><td>YAL017W</td><td>PSK1</td><td>FUN31</td></tr>
+			<tr><td>1</td><td>D</td><td>3</td><td>YAL015C</td><td>NTG1</td><td>SCR1|FUN33</td></tr>
+			<tr><td>1</td><td>D</td><td>4</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>5</td><td>YAL013W</td><td>DEP1</td><td>FUN54</td></tr>
+			<tr><td>1</td><td>D</td><td>6</td><td>YAL011W</td><td>SWC3</td><td>SWC1</td></tr>
+			<tr><td>1</td><td>D</td><td>7</td><td>YAL010C</td><td>MDM10</td><td>FUN37</td></tr>
+			<tr><td>1</td><td>D</td><td>8</td><td>YAL009W</td><td>SPO7</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>9</td><td>YAL008W</td><td>FUN14</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>10</td><td>YAL007C</td><td>ERP2</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>11</td><td>YAL004W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>D</td><td>12</td><td>YAL005C</td><td>SSA1</td><td>YG100</td></tr>
+			<tr><td>1</td><td>E</td><td>1</td><td>YAL002W</td><td>VPS8</td><td>VPT8|FUN15</td></tr>
+			<tr><td>1</td><td>E</td><td>2</td><td>YAR002W</td><td>NUP60</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>3</td><td>YAR003W</td><td>SWD1</td><td>SAF49|CPS50|FUN16</td></tr>
+			<tr><td>1</td><td>E</td><td>4</td><td>YAR014C</td><td>BUD14</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>5</td><td>YAR015W</td><td>ADE1</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>6</td><td>YAR018C</td><td>KIN3</td><td>NPK1|FUN52</td></tr>
+			<tr><td>1</td><td>E</td><td>7</td><td>YAR020C</td><td>PAU7</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>8</td><td>YAR023C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>9</td><td>YAR027W</td><td>UIP3</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>10</td><td>YAR028W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>11</td><td>YAR029W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>E</td><td>12</td><td>YAR031W</td><td>PRM9</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>1</td><td>YAR030C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>2</td><td>YAR035W</td><td>YAT1</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>3</td><td>YAR037W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>4</td><td>YAR040C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>5</td><td>YAR042W</td><td>SWH1</td><td>OSH1|YAR044W</td></tr>
+			<tr><td>1</td><td>F</td><td>6</td><td>YAR043C-a</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>7</td><td>YAR044W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>8</td><td>YAR047C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>9</td><td>YLL001W</td><td>DNM1</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>10</td><td>YLL002W</td><td>RTT109</td><td>REM50|KIM2</td></tr>
+			<tr><td>1</td><td>F</td><td>11</td><td>YLL005C</td><td>SPO75</td><td>-</td></tr>
+			<tr><td>1</td><td>F</td><td>12</td><td>YLL010C</td><td>PSR1</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>1</td><td>YLL012W</td><td>YEH1</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>2</td><td>YLL013C</td><td>PUF3</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>3</td><td>YLL014W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>4</td><td>YLL015W</td><td>BPT1</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>5</td><td>YLL016W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>6</td><td>YLL017W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>7</td><td>YLL019C</td><td>KNS1</td><td>L124</td></tr>
+			<tr><td>1</td><td>G</td><td>8</td><td>YLL020C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>9</td><td>YLL021W</td><td>SPA2</td><td>PEA1|FUS6</td></tr>
+			<tr><td>1</td><td>G</td><td>10</td><td>YLL023C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>G</td><td>11</td><td>YLL024C</td><td>SSA2</td><td>YG102</td></tr>
+			<tr><td>1</td><td>G</td><td>12</td><td>YLL025W</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>1</td><td>YLL026W</td><td>HSP104</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>2</td><td>YLL028W</td><td>TPO1</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>3</td><td>-</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>4</td><td>YLL029W</td><td>FRA1</td><td>RUP2</td></tr>
+			<tr><td>1</td><td>H</td><td>5</td><td>YLL032C</td><td>-</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>6</td><td>YLL038C</td><td>ENT4</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>7</td><td>YLL039C</td><td>UBI4</td><td>UB14|SCD2</td></tr>
+			<tr><td>1</td><td>H</td><td>8</td><td>YLL040C</td><td>VPS13</td><td>VPT2|SOI1</td></tr>
+			<tr><td>1</td><td>H</td><td>9</td><td>YLL041C</td><td>SDH2</td><td>SDHB|ACN17</td></tr>
+			<tr><td>1</td><td>H</td><td>10</td><td>YLL043W</td><td>FPS1</td><td>-</td></tr>
+			<tr><td>1</td><td>H</td><td>11</td><td>YLL045C</td><td>RPL8B</td><td>SCL41|KRB1</td></tr>
+			<tr><td>1</td><td>H</td><td>12</td><td>YLL046C</td><td>RNP1</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>1</td><td>YLL047W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>2</td><td>-</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>3</td><td>YLL051C</td><td>FRE6</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>4</td><td>YLL052C</td><td>AQY2</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>5</td><td>YLL053C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>6</td><td>YLL054C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>7</td><td>YLL055W</td><td>YCT1</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>8</td><td>YLL056C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>9</td><td>YLL057C</td><td>JLP1</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>10</td><td>YLL058W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>11</td><td>YLL060C</td><td>GTT2</td><td>-</td></tr>
+			<tr><td>2</td><td>A</td><td>12</td><td>YLL061W</td><td>MMP1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>1</td><td>YLL062C</td><td>MHT1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>2</td><td>YLL063C</td><td>AYT1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>3</td><td>YLR001C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>4</td><td>YLR003C</td><td>CMS1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>5</td><td>YLR004C</td><td>THI73</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>6</td><td>YLR011W</td><td>LOT6</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>7</td><td>YLR012C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>8</td><td>YLR013W</td><td>GAT3</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>9</td><td>YLR014C</td><td>PPR1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>10</td><td>YLR015W</td><td>BRE2</td><td>CPS60</td></tr>
+			<tr><td>2</td><td>B</td><td>11</td><td>YLR016C</td><td>PML1</td><td>-</td></tr>
+			<tr><td>2</td><td>B</td><td>12</td><td>YLR017W</td><td>MEU1</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>1</td><td>YLR018C</td><td>POM34</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>2</td><td>YLR019W</td><td>PSR2</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>3</td><td>YLR020C</td><td>YEH2</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>4</td><td>YLR021W</td><td>IRC25</td><td>DMP2|PBA3|POC3</td></tr>
+			<tr><td>2</td><td>C</td><td>5</td><td>YLR023C</td><td>IZH3</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>6</td><td>YLR024C</td><td>UBR2</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>7</td><td>YLR025W</td><td>SNF7</td><td>RNS4|VPS32|DID1</td></tr>
+			<tr><td>2</td><td>C</td><td>8</td><td>YLR028C</td><td>ADE16</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>9</td><td>YLR042C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>10</td><td>YLR043C</td><td>TRX1</td><td>LMA1</td></tr>
+			<tr><td>2</td><td>C</td><td>11</td><td>YLR044C</td><td>PDC1</td><td>-</td></tr>
+			<tr><td>2</td><td>C</td><td>12</td><td>YLR046C</td><td>-</td><td>RLA1</td></tr>
+			<tr><td>2</td><td>D</td><td>1</td><td>YLR047C</td><td>FRE8</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>2</td><td>YLR048W</td><td>RPS0B</td><td>YST2|NAB1B</td></tr>
+			<tr><td>2</td><td>D</td><td>3</td><td>YLR049C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>4</td><td>YLR053C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>5</td><td>YLR054C</td><td>OSW2</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>6</td><td>YLR055C</td><td>SPT8</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>7</td><td>YLR056W</td><td>ERG3</td><td>PSO6|SYR1</td></tr>
+			<tr><td>2</td><td>D</td><td>8</td><td>YLR057W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>9</td><td>YLR058C</td><td>SHM2</td><td>SHMT2</td></tr>
+			<tr><td>2</td><td>D</td><td>10</td><td>YLR059C</td><td>REX2</td><td>YNT20</td></tr>
+			<tr><td>2</td><td>D</td><td>11</td><td>YLR061W</td><td>RPL22A</td><td>-</td></tr>
+			<tr><td>2</td><td>D</td><td>12</td><td>YLR062C</td><td>BUD28</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>1</td><td>YLR063W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>2</td><td>YLR064W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>3</td><td>YLR065C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>4</td><td>YLR068W</td><td>FYV7</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>5</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>6</td><td>YLR073C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>7</td><td>YLR074C</td><td>BUD20</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>8</td><td>YLR077W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>9</td><td>YLR079W</td><td>SIC1</td><td>SDB25</td></tr>
+			<tr><td>2</td><td>E</td><td>10</td><td>YLR080W</td><td>EMP46</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>11</td><td>YLR081W</td><td>GAL2</td><td>-</td></tr>
+			<tr><td>2</td><td>E</td><td>12</td><td>YLR082C</td><td>SRL2</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>1</td><td>YLR083C</td><td>EMP70</td><td>TMN1|p24a</td></tr>
+			<tr><td>2</td><td>F</td><td>2</td><td>YLR084C</td><td>RAX2</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>3</td><td>YLR085C</td><td>ARP6</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>4</td><td>YLR087C</td><td>CSF1</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>5</td><td>YLR089C</td><td>ALT1</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>6</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>7</td><td>YLR092W</td><td>SUL2</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>8</td><td>YLR093C</td><td>NYV1</td><td>MAM2</td></tr>
+			<tr><td>2</td><td>F</td><td>9</td><td>YLR094C</td><td>GIS3</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>10</td><td>YLR095C</td><td>IOC2</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>11</td><td>YLR096W</td><td>KIN2</td><td>-</td></tr>
+			<tr><td>2</td><td>F</td><td>12</td><td>YLR097C</td><td>HRT3</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>1</td><td>YLR098C</td><td>CHA4</td><td>SIL3|SIL2</td></tr>
+			<tr><td>2</td><td>G</td><td>2</td><td>YLR099C</td><td>ICT1</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>3</td><td>YLR102C</td><td>APC9</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>4</td><td>YLR104W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>5</td><td>YLR107W</td><td>REX3</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>6</td><td>YLR108C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>7</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>8</td><td>YLR111W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>9</td><td>YLR112W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>10</td><td>YLR113W</td><td>HOG1</td><td>SSK3</td></tr>
+			<tr><td>2</td><td>G</td><td>11</td><td>YLR114C</td><td>AVL9</td><td>-</td></tr>
+			<tr><td>2</td><td>G</td><td>12</td><td>YLR118C</td><td>-</td><td>APT1</td></tr>
+			<tr><td>2</td><td>H</td><td>1</td><td>YLR119W</td><td>SRN2</td><td>VPS37|SRN10</td></tr>
+			<tr><td>2</td><td>H</td><td>2</td><td>YLR120C</td><td>YPS1</td><td>YAP3</td></tr>
+			<tr><td>2</td><td>H</td><td>3</td><td>-</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>4</td><td>YLR121C</td><td>YPS3</td><td>YPS4</td></tr>
+			<tr><td>2</td><td>H</td><td>5</td><td>YLR122C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>6</td><td>YLR123C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>7</td><td>YLR124W</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>8</td><td>POSITIVE CONTROL</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>9</td><td>YML089C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>10</td><td>YML088W</td><td>UFO1</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>11</td><td>YML087C</td><td>-</td><td>-</td></tr>
+			<tr><td>2</td><td>H</td><td>12</td><td>YML084W</td><td>-</td><td>-</td></tr>
+		</table>
+	</fieldset>
+	<br/><br/>
+</div>
+
+</div> <!-- end wrapper -->
+</div>

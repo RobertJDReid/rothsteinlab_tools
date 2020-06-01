@@ -1,0 +1,35 @@
+<script type="text/javascript" charset="utf-8">
+var currentUser = '<%=current_user.login %>';
+</script>
+
+<div id="rightColumn">
+	<div id="fileErrors">
+		<h3>There was a issue processing <strong id="numErrors"></strong> files. See below for explanation</h3>
+		<ul id="fileErrorDetails"></ul>
+	</div>
+</div>
+<div id="leftcolumn">
+	<% if(! defined? @file_label) %>
+	<label for="millStatsFile"><b>Tab-delimited ScreenMillStats-All Data File:</b></label>
+	<%else%>
+	<%=@file_label%>
+	<%end %>
+	<div id="drop_zone">Drop <% if(! defined? @file_name) %>ScreenMillStats-All File<%else%><%=@file_name%><%end%>s here<br/><small>Files must have a .txt file extension</small></div>
+</div>
+<br style="clear:left;" />
+<div id="progress_bar2">
+	<div id="percent2">File progress: 0 of ?</div>
+</div>
+<div id="progress_bar">
+	<div id="percent">Current File Progress: <span>0%</span></div>
+</div>
+
+<br style="clear:left;" />
+<output id="badFiles">
+	<h3>File(s) processed with errors:</h3>
+	<table class="exp" id="badFileTable">
+		<thead>
+			<tr><th>File Name / Info</th><th>Error Message</th></tr>
+		</thead>
+	</table>
+</output>

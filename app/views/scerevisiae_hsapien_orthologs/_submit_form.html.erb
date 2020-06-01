@@ -1,0 +1,8 @@
+<%= render :partial => "errors" %>
+
+<%= form_for @scerevisiaeHumanOrtholog, :url => {:action => 'new_pair_submission'}, :html => {style:"padding:0px;", id:"theForm"} do |f| %>
+
+<%= render :partial => "form_fields",:locals => { :f => f }  %>
+
+<% end %><br/><br/>
+

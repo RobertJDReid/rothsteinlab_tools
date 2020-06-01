@@ -1,0 +1,650 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'validation' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'validationJQ'%>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<%= javascript_include_tag 'fixedHeader-min'%>
+<style type="text/css">
+.commit{float:left;}
+.pValueSections{
+	float: right;
+	padding-right: 50px;
+	padding-left: 50px;
+}
+.submitButtons{
+	padding:10px 0px 5px 5px;
+	clear:left;
+	float:left;
+}
+td.nw{white-space: nowrap;}
+.submitButtons input.commit, .submitButtons input.reset, .submitButtons button{
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+}
+input.disabled{color:gray;}
+/*#main table{
+	border-collapse: collapse;
+	margin:5px 5px 5px 15px;
+}
+
+#main table tr th{
+	font-weight: bold;
+	color: white;
+	background: #3E83C9;
+}
+#main table tr td, table tr th{
+	text-align: center;
+	border:1px solid #95BCE2;
+	padding:3px;
+}*/
+#main table tr.odd td{background-color: #ECF6FC;}
+
+.ui-menu{
+	list-style: none;
+	padding:2px;
+	margin:0px;
+	display:block;
+	outline:none;
+}
+.ui-autocomplete{
+	position: absolute;
+	cursor: default;
+	font-family: Verdana,Arial,sans-serif/*{ffDefault}*/;
+	font-size: 1.1em/*{fsDefault}*/;
+	border: 1px solid #aaaaaa/*{borderColorContent}*/;
+	background: #ffffff/*{bgColorContent}*/;
+	color: #222222/*{fcContent}*/;
+}
+.ui-corner-all{
+	border-top-left-radius: 4px/*{cornerRadius}*/;
+	border-top-right-radius: 4px/*{cornerRadius}*/;
+	border-bottom-right-radius: 4px/*{cornerRadius}*/;
+	border-bottom-left-radius: 4px/*{cornerRadius}*/;
+}
+.ui-menu .ui-menu-item {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+.ui-menu .ui-menu-item a {
+	text-decoration: none;
+	display: block;
+	padding: 2px .4em;
+	line-height: 1.5;
+	min-height: 0;
+	font-weight: normal;
+}
+.ui-menu .ui-menu-item a.ui-state-focus, .ui-menu .ui-menu-item a.ui-state-active {
+	font-weight: normal;
+	margin: -1px;
+}
+
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus {
+	border: 1px solid #999999/*{borderColorHover}*/;
+	background: #dadada/*{bgColorHover}*/;
+	font-weight: normal/*{fwDefault}*/;
+	color: #212121/*{fcHover}*/;
+}
+.ui-helper-hidden-accessible{display:none;}
+#deletionValidations{
+	float:left;
+	padding: 5px;
+	height: 225px;
+	overflow-y:auto;
+	border-bottom: 1px solid gray;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	display: none;
+	margin-bottom: 10px;
+	background-color: rgb(230, 230, 230);
+}
+div#goodGeneContainer{overflow-y:auto;}
+div#goodGeneContainer, div#badGeneContainer{
+	margin:5px;
+	padding:3px;
+	border: 2px solid #339933;
+	background-color: rgba(0, 255, 0, 0.40);
+	background-size: 15px;
+	font-family: Verdana,Arial,sans-serif;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	display:none;
+	float: left;
+	clear: both;
+}
+div#badGeneContainer{
+	background-color: rgba(255, 184, 184, 0.58);
+	border: 2px solid #f66;
+	display: block;
+	float: left;
+	clear: none;
+	width: 160px;
+	overflow-x: auto;
+}
+#validationNote,#validationError{float:left;clear:both;white-space: nowrap;}
+textarea.formInputText{
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	width:auto;
+}
+.formInputText{font-size:1.2em;}
+</style>
+<script type="text/javascript" charset="utf-8">
+
+var SUGGEST_URL = '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/searchSuggest.cgi';
+var goodDeletionGenesJSON = '';
+var goodQueryGenesJSON = '';
+
+var splitPattern = new RegExp(/\r|,|\n|,\s+|\s+|\|/);
+$(document).ready(function(){
+	$("input[name='organism']").change(function() {
+		$('#qCBio')[0].reset();
+		$(this).prop('checked', true);
+		$('#deletionValidations').hide();
+		$('#empty-message').hide();
+	});
+
+	/* new sorting functions...scientific notation a-okay */
+	jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+	  "scientific-pre": function ( a ) {return parseFloat(a);},
+	  "scientific-asc": function ( a, b ) {return ((a < b) ? -1 : ((a > b) ? 1 : 0));},
+	  "scientific-desc": function ( a, b ) {return ((a < b) ? 1 : ((a > b) ? -1 : 0));}
+	});
+	/* Custom filtering function which will filter data in column four between two values */
+	/*custom filter that will enable showing only positve, only negative, or all p-values
+	 (column #7) based on the section from a selection box */
+	$.fn.dataTableExt.afnFiltering.push(
+		function( oSettings, aData, iDataIndex ) {
+			var column = 8;
+			var pValsToShow = $(".pValueSections select").val();
+			if(!pValsToShow || pValsToShow == 'all'){return true;}
+			if(aData[column] == 'na'){return false;}
+			var pVal = parseFloat(aData[column])*1;
+			if ( pValsToShow == "positive" && pVal>0 ){return true;}
+			else if ( pValsToShow == "negative" && pVal<0 ){return true;}
+			return false;
+		}
+	);
+
+	$("#qCBio").validate({
+		//onkeyup: false, //turn off auto validate whilst typing
+		rules:{
+			query:{
+				required:true,
+				minlength:3,
+				maxlength:16,
+				remote:{
+					url: '../apps/checkValidGenes',
+					type: 'POST',
+					//async: false,
+					dataFilter: function(data) {
+						data = JSON.parse(data);
+						if(data.badGenes && data.badGenes.length > 0){
+							return '"Invalid query gene!"';
+						}
+						goodQueryGenesJSON = data.goodGenes;
+						return '"true"';
+					},
+					data: {
+						genes: function() {
+							var genes = $("#query").val().split(splitPattern);
+							genes = $.grep(genes,function(n){return(n);});
+							return genes;
+						},
+						organism: function() { return $('input[name=organism]:checked', '#qCBio').val();}
+					}
+				}
+			},
+		},
+		onkeyup: function(element) {
+			// apply onkeyupvalidation to all field names except 'query' (this will only validate prior to submission)
+			if ($(element).attr('name') != 'query') {
+				$.validator.defaults.onkeyup.apply(this,arguments);
+			}
+		},
+		onsubmit:true,
+		onfocusout:false,
+		onclick:false,
+		submitHandler: function(form) {
+			$("#stamp").val(Math.random().toString(36).substring(2,7)+"-"+new Date().getTime());
+			$.ajax({
+				type		: 'POST',
+				url			: 'mutual_exclusion',
+				data		: $(form).serialize(),
+				dataType: 'json',
+				beforeSend: function(){
+					$("#spinner").show();
+					$("#cBioResultsContainer").hide();
+					$("#cBioError").html("");
+					$("#cBioError").hide();
+					$("#cBioResults").html("");
+					$('#submitForm').attr('disabled', 'disabled').attr('value', 'Loading...').addClass('disabled');
+					$('#resetForm').attr('disabled', 'disabled').addClass('disabled');
+					$("#cBioAlerts").html("");
+					// remove any fixed headers around...
+					// $(window).unbind('.FixedHeader');
+					// $('.fixedHeader').remove();
+					return otherValidations();
+				},
+				success	: function(data){
+					if(data.error){
+						var ul = "<ul class='error'>";
+						$.each(data.error, function( id, msg ){
+							ul+='<li>' + msg + '</li>';
+						})
+						ul+='</ul>'
+						$("#cBioError").html(ul);
+						showCbioError();
+					}
+					else{
+						if(data.badData && data.badData.length>0){
+							var ul = "<ul class='error'><li>"+data.badData.join("</li><li>")+"</li></ul>";
+							$("#cBioAlerts").html(ul);
+						}
+						$("#cBioResultsContainer").show();
+						$("#cBioGenesQueried").html(data.geneSummary);
+						$("#cBioResults").html(data.table);
+						var oTable = $("#mutExclusionData").dataTable({
+							// "bPaginate":false,
+							// "bLengthChange": false,
+							"sPaginationType": "full_numbers",
+			        "bFilter": true,
+			        "bSort": true,
+			        "bInfo": true,
+			        "bAutoWidth": true,
+			        "bJQueryUI": true,
+			        "aoColumnDefs": [{ "sType": "scientific", "aTargets": [ -1 ] },{ "sType": "numeric", "aTargets": [ -2,-3,-4,-5] } ],
+			        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+			        "iDisplayLength" : -1,
+			        // "sDom": '<"H"l><"toolbar">frt<"F"ip>',
+			        "oLanguage": {
+		            "sSearch": "Filter (all columns):"
+		        	},
+			        "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+	            	/* highlight significant p-values! */
+	            	if ( parseFloat(Math.abs(aData[8]))<0.05 ){
+	              	$('td:eq(8)', nRow).html( '<b>'+aData[8]+'</b>' );
+	            	}
+	        		},
+						});
+						var div = $("<div/>",{"class": "pValueSections"});
+						var select = $("<select/>");
+	    			$("<option />", {value: "all", text: "all"}).appendTo(select);
+	    			$("<option />", {value: "positive", text: "positive"}).appendTo(select);
+	    			$("<option />", {value: "negative", text: "negative"}).appendTo(select);
+	    			select.appendTo(div);
+	    			select.after(" p-values.");
+	    			select.before("Show ");
+						$("div.dataTables_filter").after(div);
+						/* Add event listeners to the two range filtering inputs */
+	    			$('.pValueSections select').change( function() { $("#mutExclusionData").dataTable().fnDraw(); } );
+						//oTable.fnAdjustColumnSizing();
+						// new FixedHeader( oTable );
+					}
+				},
+				error:function(data, e, er){
+					var ul = $("<ul/>",{"class": "error"});
+					ul.append('<li>' + er + '</li>');
+					$("#cBioError").html(ul);
+					showCbioError()
+				},
+				complete:function(){	formSubmissionComplete();	}
+			});
+			return false;
+		},
+	});
+	jQuery.validator.addClassRules(
+	"numberType", {
+		required: true,
+		number: true,
+		min: -10,
+		max: 10,
+		maxlength: 4
+	});
+
+	$('#query').autocomplete({
+		minLength: 3,
+		delay: 500,
+		source: function(request, response) {
+			$.ajax({
+				url: SUGGEST_URL,
+				dataType: "json",
+				type:"GET",
+				data: {
+					term : request.term,
+					organism : $('input[name=organism]:checked', '#qCBio').val()
+				},
+				beforeSend:function(){
+					$("#empty-message").html("");
+					//$('#query').attr('disabled', 'disabled');
+					var o = $('input[name=organism]:checked', '#qCBio').val();
+					if(request.term.length >=16){showAutoCompleteError("");return false;}
+					if(o == 'human'){
+						if(request.term.match(/^LGR/i) && request.term.length < 5){
+							showAutoCompleteError("Human terms starting with 'LGR' must be at least 5 characters long for autocomplete to work.");
+							return false;
+						}
+						if(request.term.match(/ENS/i) && request.term.length < 10){
+							showAutoCompleteError("Human terms starting with 'ENS' must be at least 10 characters long for autocomplete to work.");
+							return false;
+						}
+					}
+				},
+				success: function(data) {
+					if(!data){	showAutoCompleteError("Server error, please contain the admin.");	}
+					else if(data.length < 1 || !data[0].label){	showAutoCompleteError("No results found.");	}
+					else if(data[0].errorMsg){	showAutoCompleteError(data[0].errorMsg);	}
+					else{	response(data);}
+					$('#autoSpinner').hide();
+				},
+				error:function(xhr,status,exception){
+					showAutoCompleteError("Server error, please contain the admin. Status:"+status+", Exception:"+exception+".");
+				}
+				//complete:function(data){$('#query').removeAttr('disabled');}
+			});
+		},
+		response: function( event, ui ){
+			// ui.content is the array that's about to be sent to the response callback.
+			$("#empty-message").hide();
+		},
+		select: function(event, ui) {
+			//console.debug(ui.item)
+			// Triggered when an item is selected from the menu.
+			//$(this).val(ui.item.value);
+			//$('#searchform').submit()
+		},
+		search: function(event,ui){
+			$("#empty-message").hide();
+			$('#autoSpinner').show();
+		},
+		error:function(xhr,status,exception){
+			showAutoCompleteError("Server error, please contain the admin. Status:"+status+", Exception:"+exception+".");
+		},
+		complete:function(){$('#autoSpinner').hide();}
+	});
+
+});
+
+// run this function after x seconds
+var delay = (function(){
+	var timer = 0;
+		return function(callback, ms){
+		clearTimeout (timer);
+		timer = setTimeout(callback, ms);
+	}
+})();
+
+function showCbioError(){
+	$("#cBioGenesQueried").html("");
+	$("#cBioResults").html("");
+	$("#cBioError").show();
+	$("#cBioAlerts").html("");
+}
+
+function formSubmissionComplete(){
+	$("#spinner").hide();
+	$('#submitForm').attr('value', 'Submit').removeAttr('disabled').removeClass('disabled');
+	$('#resetForm').removeAttr('disabled').removeClass('disabled');
+}
+function otherValidations(){
+	var returnValue = true;
+	// check to make sure there is at least 1 good gene in the deletions field
+	if($('#goodGeneCount').attr('title') > 0){	$('#validationError').hide();	}
+	else{
+		$('#validationError').html("This field requires at least 1 valid gene.");
+		$('#validationError').show();
+		returnValue = false;
+	}
+	// check to make sure there is at least 1 human ortholog of the yeast genes before
+	// submission...nevermind, will just run this check after submission (since the submission is an ajax request
+	// as well, this should make 0 difference)
+	// if($('input[name=organism]:checked', '#qCBio').val() == 'yeast'){
+	// 	$.ajax({
+	// 		type		: 'POST',
+	// 		url			: 'checkForHumanOrthologs',
+	// 		data		: {"genes":genes,"organism":$('input[name=organism]:checked', '#qCBio').val()},
+	// 		dataType: 'json',
+	// 		async: false,
+	// 		beforeSend: function(){},
+	// 		success	: function(data){
+	// 		},
+	// 		error:function(data, e, er){},
+	// 		complete:function(){}
+	// 	});
+	// }
+
+
+	// check to make sure the gene in the query field does not also match a field in
+	// the deletion field...on second thought, this comnparison is not necessary
+	// var numberOfQueries = goodQueryGenesJSON.length;
+	// var numberOfDeletions = goodDeletionGenesJSON.length;
+	// var dups=[];
+	// for(var i=0; i<numberOfQueries;i++){
+	// 	if(goodDeletionGenesJSON.indexOf(goodQueryGenesJSON[i]) > -1) {
+	// 		dups.push(goodQueryGenesJSON[i]["gene"]+" ("+goodQueryGenesJSON[i]["id"]+")");
+	// 	}
+	// }
+	// if(dups.length >= numberOfQueries){
+	// 	returnValue = false;
+	// 	$('#validationError').append("Cannot perform this search, all of the queries are also in the gene deletions.");
+	// }
+	// return true;
+	// }
+	if(returnValue){return true;}
+	formSubmissionComplete();
+	return false;
+}
+
+function showAutoCompleteError(msg){
+	if(msg && msg != ""){	$("#empty-message").text(msg);	}
+	$("#empty-message").show();
+	$('#autoSpinner').hide();
+}
+
+function checkDataDelay(data){
+	$("#processing").show();
+	delay(function(){checkData(data);},500);
+}
+function checkData(data){
+	var genes = data.split(splitPattern);
+	genes = $.grep(genes,function(n){return(n);});
+	checkValidGenes(genes);
+}
+
+function checkValidGenes(genes){
+	$.ajax({
+		type		: 'POST',
+		url			: '../apps/checkValidGenes',
+		data		: {"genes":genes,"organism":$('input[name=organism]:checked', '#qCBio').val()},
+		dataType: 'json',
+		beforeSend: function(){
+			$('#deletionValidations').hide();
+			$('#goodGeneCount').attr('title',0);
+		},
+		success	: function(data){
+			$('#validationError').html('');
+			$('#validationError').hide;
+			var goodGeneWidth=0;
+			var badGeneWidth=0;
+			var nGoodGenes = data.goodGenes["_size"];
+			delete data.goodGenes["_size"];
+			count = data.badGenes.length + nGoodGenes;
+			if(count && count > 0){
+				$('#goodGenes').html("");
+				$('#validationNote').html("Note: Only valid genes will be considered.").show();
+				if(nGoodGenes < 1){	$('#goodGenes').html("0 valid genes found.");	$('#goodGeneCount').html('');}
+				else{
+					var query = $('#query').val();
+					goodDeletionGenesJSON = data.goodGenes;
+					indicesToDelete = [];
+					if(nGoodGenes > 1){$('#goodGeneCount').html(nGoodGenes+" valid gene names:");	}
+					else{$('#goodGeneCount').html("1 valid gene name:");	}
+					$('#goodGeneCount').attr('title', nGoodGenes);
+					$.each( data.goodGenes, function( id, gene ) {
+						if(gene && gene != ""){$('#goodGenes').append(gene+" ("+id+")<br/>");}
+  					else{$('#goodGenes').append(id+"<br/>");}
+					});
+				}
+				$('#goodGeneContainer').show();
+
+				if(data.badGenes.length < 1){	$('#badGeneContainer').hide();$('#badGenes').html("");	}
+				else{
+					if(data.badGenes.length > 1){$('#badGeneCount').html(data.badGenes.length+" invalid gene names:");	}
+					else{$('#badGeneCount').html("1 invalid gene name:");}
+					$('#badGenes').html(data.badGenes.join(", "));
+					$('#badGeneContainer').show();
+					badGeneWidth = $('#badGeneContainer').outerWidth();
+				}
+				$('#deletionValidations').show();
+				var v1 = 0;
+				goodGeneWidth = $('#goodGeneContainer').outerWidth();
+				if(data.badGenes.length > 0)
+					$('#deletionValidations').css('width', badGeneWidth+goodGeneWidth+35);
+				else{
+					v1 = $('#validationNote').outerWidth()>goodGeneWidth ? $('#validationNote').outerWidth() : goodGeneWidth;
+					$('#deletionValidations').css('width', badGeneWidth+v1+35);
+				}
+			}
+			else{
+				$('#validationNote').hide();
+				$('#deletionValidations').hide();
+				$('#goodGeneContainer').hide();
+				$('#goodGenes').html("");
+				$('#badGenes').html("");
+				$('#badGeneContainer').hide();
+			}
+		},
+		error:function(data, e, er){
+			$('#deletionValidations').show();
+			$('#validationError').html("Sorry - an error occurred when attempting to validate your gene list");
+			$('#goodGeneContainer').hide();
+			$('#goodGenes').html("");
+			$('#badGeneContainer').hide();
+			$('#validationNote').html('');
+			$('#badGenes').html("");
+		},
+		complete:function(){	$("#processing").hide();	}
+	});
+}
+
+</script>
+<%= render :partial => "layouts/top" %>
+
+<% if !@studies || @studies[0] == 'error' %>
+	<div class="alert">Error! Could not communicate the cbio portal website</div>
+<%else%>
+<form  id='qCBio'>
+	<div class="formElements">
+
+		<label for="organism" style="display:inline;float:left;padding:0px;"><b>Genes:</b></label>
+		<input type="radio" name="organism"  checked="checked" value="yeast" style="margin:0px 0px 0px 5px;display:inline;" />
+		<em style="display:inline;">Yeast</em>
+		<input type="radio" name="organism" value="human" style="margin:0px 0px 15px 5px;display:inline;" />
+		<em style="display:inline;">Human</em>
+
+		<br/>
+		<div style="float:left;">
+			<label style="display:inline;font-weight:bold;margin-right:0px;" for="zThresh">mRNA Z-Score threshold: +/-</label>
+			<input type="text" name="zThresh" id="zThresh" class="formInputText numberType" value="1.0" style="display:inline;width:30px;" />
+		</div>
+		<div style="float:left;margin-left:20px;">
+			<label style="display:inline;font-weight:bold;margin-right:0px;" for="CNV_thresh">CNV Threshold: +/-</label>
+			<input type="text" name="CNV_thresh" id="CNV_thresh" class="formInputText numberType" value="1.0" style="display:inline;width:30px;" />
+		</div>
+		<div style="float:left;clear:left">
+			<label style="display:inline;font-weight:bold;margin-right:0px;" for="pValueThreshold">
+				Mutual Exclusion P-Value Threshold:
+			</label>
+			<input type="text" name="pValueThreshold" id="pValueThreshold" class="formInputText numberType" value="0.05" style="display:inline;width:100px;" />
+		</div>
+		<div style="float:left;clear:left;margin-top:15px;">
+			<label style="display:inline;font-weight:bold;margin-right:0px;" for="pValueThreshold">
+				Only consider tumors with PTEN downregulated (same thresholds as above):
+			</label>
+			<input type="checkbox" name="ptenDown" id="ptenDown" class="formInputText" value="true" checked="checked" style="display:inline;width:100px;" />
+		</div>
+		<div style="float:left;clear:left">
+			<label for="alerations" style="clear:both;"><b>Cancer Study:</b></label>
+			<%= select "app", "cancerStudy",  @studies.map {|s| [s[1], s[0]] }, {:class=>"required formSelect" }%>
+		</div>
+<!-- 		<div style="float:left;clear:left">
+			<label for="pValuesToConsider" style="display:inline;float:left;padding:0px;"><b>Genes:</b></label>
+			<input type="radio" name="pValuesToConsider"  checked="checked" value="all" style="margin:0px 0px 0px 5px;display:inline;" />
+			<em style="display:inline;">All</em>
+			<input type="radio" name="pValuesToConsider" value="negative" style="margin:0px 0px 15px 5px;display:inline;" />
+			<em style="display:inline;">Negative (i.e. mutually excluded)</em>
+			<input type="radio" name="pValuesToConsider" value="positive" style="margin:0px 0px 15px 5px;display:inline;" />
+			<em style="display:inline;">Positive (i.e. mutually included)</em>
+		</div> -->
+		<label for="query" style="clear:both;">
+			<strong>Gene Over-Expressed:</strong>
+			<%=image_tag "spinner.gif", :alt=> "spinner", :style=>"display:none;border:0px solid black;", :id=>"autoSpinner" %>
+		</label>
+		<input type="text" name="query" id="query" class="formInputText queryGene" />
+
+		<div id="empty-message" style="display:none;"></div>
+		<label for="deletions" style="height:20px;">
+			<strong style="vertical-align:top;">Gene Deletion(s):</strong>
+			<%=image_tag "ajax-loader.gif", :alt=> "loading",:name=>"loading",:id=>"processing",:style=>"display:none;" %></label>
+		<textarea id="deletions" name="deletions" onkeyup="checkDataDelay(this.value);" style="margin-right: 10px;margin-bottom: 10px;float:left;" wrap="off" rows="12" cols="40" class="required formInputText"></textarea>
+		<div id="deletionValidations">
+			<label for="deletion" id='validationError' class="error" style="display:none;"></label>
+			<div id='validationNote'></div>
+			<div id="goodGeneContainer">
+				<div id="goodGeneCount" title="0"></div>
+				<div id="goodGenes"></div>
+				<input type="hidden" value="" id="goodGenesJSON" />
+			</div>
+			<div id="badGeneContainer">
+				<div id="badGeneCount"></div>
+				<div id="badGenes"></div>
+			</div>
+		</div>
+	</div>
+	<p style="clear:left;">Note - only datasets with >50 tumors are considered.</p>
+	<div class="submitButtons">
+		<input type="submit" value="Submit" id="submitForm" class="commit">
+		<input type="reset" class="reset" id="resetForm" value="Clear" style="float:left;margin-left:15px;" />
+		<%=image_tag "ajax-loader.gif", :alt=> "spinner", :style=>"display:none;padding-top:6px;margin-left:10px;border:0px solid black;", :id=>"spinner", :name=>"spinner"%>
+	</div>
+	<input type="hidden" name="stamp" id="stamp" value="" />
+</form>
+
+<div id="cBioError" class="error" style="display:none;clear:both">
+</div>
+<fieldset id="cBioResultsContainer" style="clear:left;float:left;display:none;">
+	<div id="cBioHeader">
+		<table>
+			<tr>
+				<td><b>N (total population):</b></td>
+				<td>all tumors in which there is data for both the query and indicated gene deletion.</td>
+			</tr>
+			<tr>
+				<td><b>K (poplulation successes):</b></td>
+				<td>all tumors in which the indicated gene deletion is below the threshold cutoffs (i.e. down-regulated).</td>
+			</tr>
+			<tr>
+				<td><b>n (sample size):</b></td>
+				<td>all tumors in which the query gene is above the threshold cutoffs (i.e. up-regulated).</td>
+			</tr>
+			<tr>
+				<td><b>k (successes in sample):</b></td>
+				<td>the overlab between 'K' and 'q', i.e, all tumors in which the indicated gene deletion is below the threshold cutoffs (i.e. down regulated) AND the query gene is above the threshold cutoffs (i.e. up-regulated).</td>
+			</tr>
+		</table>
+	</div>
+	<div id="cBioGenesQueried"></div>
+	<div id="cBioAlerts" class="error"></div>
+	<div id="cBioResults" style="float:left;width:100%"></div>
+</fieldset>
+
+<script type="text/javascript" charset="utf-8">if($('#deletions').val() != ''){	checkData($('#deletions').val());}</script>
+<%end%>

@@ -1,0 +1,74 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'convertORFsJQ'%>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<%= javascript_include_tag 'experiments/associated_data'%>
+<%= stylesheet_link_tag 'experiments/associated_data' %>
+
+<%= render partial: "layouts/top" %>
+<h1>Experiment Info:</h1>
+<%= render :partial => 'experiment_table' %>
+<br/><br/><hr/><br/><br/>
+
+<h1>Data:</h1>
+<div id="data">
+<button onclick="orfsToGeneNamesFromDataTable('experiments',12);" style="float:left;margin-bottom:15px;">Click me to convert ORFs to Gene Names</button>
+<div style="float:right;margin-left:25px;margin-right:20px;">
+	<label style="display:inline;font-weight:bold;margin-right:5px;" for="max">Only Consider Ratios Less than:</label>
+	<input type="text" name="max" id="max" class="text ui-widget-content ui-corner-all" value="" style="display:inline;width:30px;" />
+</div>
+<div style="float:right;">
+	<label style="display:inline;font-weight:bold;margin-right:5px;" for="min">Only Consider Ratios Greater Than:</label>
+	<input type="text" name="min" id="min" class="text ui-widget-content ui-corner-all" value="" style="display:inline;width:30px;" />
+</div>
+
+<br/><br/>
+<table class="exp" id="experiment_data">
+	<thead>
+  <tr>
+  	<th>Plate</th>
+    <th>Row</th>
+		<th>Column</th>
+		<th>P-Value</th>
+		<th>Z-Score</th>
+		<th>Ratio</th>
+		<th>Comp &mu;</th>
+		<th>Exp &mu;</th>
+		<th>Exp &sigma;<sup>2</sup></th>
+		<th>Exp Circ &mu;</th>
+		<th>Exp Circ &sigma;<sup>2</sup></th>
+		<th># Considered Reps</th>
+		<th>ORF</th>
+		<th>Flag</th>
+  </tr>
+  </thead>
+  <tbody>
+<% for data in @screen_data %>
+  <tr>
+		<td><%=data.plate%></td>
+		<td><%=data.row%></td>
+		<td><%=data.column%></td>
+		<td><%=data.p_value%></td>
+		<td><%=data.z_score %></td>
+		<td><%=data.ratio %></td>
+		<td><%=data.comparer_colony_size_mean %></td>
+		<td><%=data.exp_colony_size_mean %></td>
+		<td><%=data.exp_colony_size_variance %></td>
+		<td><%=data.exp_colony_circularity_mean %></td>
+		<td><%=data.exp_colony_circularity_variance %></td>
+		<td><%=data.number_of_considered_exp_replicates %></td>
+		<td class="orf"><%=data.ORF %></td>
+		<td><%=data.problem_flag %></td>
+  </tr>
+<% end %>
+</tbody>
+</table>
+</div>
+<br/>
+</div>
+
+
+<div id="loading-dialog" title="Loading data...">
+	<div id="progressBar" class="tiny-green"><div></div></div>
+  <div id="loading-message">Loading...</div>
+</div>

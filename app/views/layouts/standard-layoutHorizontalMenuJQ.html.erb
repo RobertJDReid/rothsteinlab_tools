@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta charset="utf-8"/>
+	<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script> -->
+	<%= stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true %>
+	<%= javascript_include_tag "application", "data-turbolinks-track" => true %>
+	<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		// hel = hidden external link (ie do not show the little external link icon)
+		$(".ext_link, .help_ext_link, .hel").click(function(){	return popup(this, this.title);	});
+		$(".fieldHint").bind('mouseover focus',function(){showFieldHint(this);});
+		$(".fieldHint").bind({
+			blur: function() {
+				$(this).prev().attr('class','field-hint-inactive');
+			},
+			mouseout: function() {
+				$(this).prev().attr('class','field-hint-inactive');
+			}
+		});
+	});
+	</script>
+	<%= csrf_meta_tag %>
+
+  <%= yield %>
+
+
+	<br style="clear:both;height:0px;line-height:0px"/>
+
+	<div id="footer">
+		<div id="copyright">
+			&#169;Copyright <%= Time.new.year %>
+			<a href="http://www.rothsteinlab.com/"><u>Rodney Rothstein Lab</u></a>.
+	  </div>
+	</div>
+
+  </div>
+</div>
+	<div class="menu2">
+		<div class="mainMenu">
+			<ul>
+				<li style="padding-bottom:0px;">
+					<%= link_to "Home", :root, :style=>"border-width: 0px; padding-bottom: 0px; padding-top: 0px;" %>
+				</li>
+				<li <%= controller_name=='screen_mill' ? "class='current'" : '' %> onmouseover="handleOver(this);" onmouseout="handleOut(this);" id="screenMillMenu">
+					<span>ScreenMill Suite</span>
+				</li>
+				<%if permit?(:experiments, :list) %>
+				<li <%= controller_name =='experiments' ? "class='current'" : '' %> onmouseover="handleOver(this);" onmouseout="handleOut(this);" id="experimentsMenu">
+					<span>Rothstein Experiments</span>
+				</li>
+				<%end%>
+				<li <%= controller_name =='apps' ? "class='current'" : '' %> onmouseover="handleOver(this);" onmouseout="handleOut(this);" id="appsMenu">
+					<span>Other Tools</span>
+				</li>
+				<li <% if action_name =='feature_requests'%>class="current"<% end %> id="feature_request" onmouseover="handleOver(this);" onmouseout="handleOut(this);" style="padding-bottom:0px;"><%= link_to "Feature Request" , new_feature_request_path, :style=>"border-width: 0px; padding-bottom: 0px; padding-top: 0px;" %></li>
+				<li onmouseover="handleOver(this);" onmouseout="handleOut(this);" style="padding-bottom:0px;" id="email"><a style="border-width: 0px; padding-bottom: 0px; padding-top: 0px;" id="mail" href="mailto:jcd2133@columbia.edu">Email Administrator</a></li>
+			</ul>
+		</div>
+		<div class="subMenus">
+			<div id="screenMillMenuSub" onmouseover="handleSubOver(this);" onmouseout="handleSubOut(this);">
+				<ul>
+					<li><%= link_to raw("<b>C</b>olony <b>M</b>easurement Engine"), screen_mill_cm_engine_path %></li>
+					<li><%= link_to raw("<b>D</b>ata <b>R</b>eview Engine"), screen_mill_dr_engine_setup_path %></li>
+					<li><%= link_to raw("<b>S</b>creen <b>V</b>isulization Engine"), screen_mill_sv_engine_setup_path %></li>
+				</ul>
+			</div>
+			<%if permit?(:experiments, :list) %>
+			<div id="experimentsMenuSub" onmouseover="handleSubOver(this);" onmouseout="handleSubOut(this);">
+				<ul>
+					<li><%= link_to "View all Rothstein lab experiments", experiments_path %></li>
+					<li><%= link_to "View your Rothstein lab experiments", experiments_my_experiments_path %></li>
+					<li><%= link_to "Upload DR Engine ouput file", experiments_dr_engine_file_upload_path %></li>
+					<li><%= link_to "Upload ScreenMill log file", new_experiment_raw_dataset_path %></li>
+					<li><%= link_to "Associate experiments w/ raw data", experiments_associate_experiment_with_colony_data_path %></li>
+					<li><%= link_to "View raw datasets", experiment_raw_datasets_path %></li>
+				</ul>
+			</div>
+			<%end%>
+			<div id="appsMenuSub" onmouseover="handleSubOver(this);" onmouseout="handleSubOut(this);">
+				<ul>
+					<li><%= link_to raw("<strong>C</strong>utoff <strong>L</strong>inked to <strong>I</strong>nteraction <strong>K</strong>nowledge"), clik_index_path %></li>
+					<li><%= link_to raw("<em>S. cerevisiae</em> Gene ID Converter"), apps_orf_converter_path %></li>
+					<li><%= link_to raw("<em>ScreenTroll</em>"), screenTroll_path %></li>
+					<li><%= link_to raw("<em>S. cerevisiae Dissection Reader</em>"), apps_dissection_reader_path %></li>
+					<li><%= link_to "Site Directed Mutagenesis / RFLP Calculator", apps_aa_mutator_path %></li>
+					<li><%= link_to "Data Intersection Tool", apps_data_intersection_path %></li>
+					<li><%= link_to "Cumulative Hypergeometric Distribution Calculator", apps_hyper_geometric_calculator_path %></li>
+					<li><%= link_to "CDF Plot Generator", apps_generate_CDF_path %></li>
+					<li><%= link_to "Custom key file generator", apps_pull_gene_names_path %></li>
+					<% if permit?(:cbio, :scores) %><li><%= link_to "Query Cbio portal scores", cbio_scores_path %></li><%end%>
+					<% if permit?(:cbio, :mutual_exclusion) %><li><%= link_to "Query Cbio for mutual exclusion", cbio_mutual_exclusion_path %></li><%end%>
+					<li><%= link_to raw("Search for <em>S. cerevisiae</em> to Human Orthologs"), scerevisiae_hsapien_orthologs_search_path %></li>
+					<li><%= link_to raw("List <em>S. cerevisiae</em> to Human Orthologs"), scerevisiae_hsapien_orthologs_path %></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+
+<%= javascript_include_tag 'topMenuJQ' %>
+<noscript><meta http-equiv="refresh" content="0; URL=/no_js.html" /></noscript>
+</body>
+
+</html>

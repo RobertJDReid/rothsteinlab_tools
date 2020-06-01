@@ -1,0 +1,33 @@
+<%= form_for(@excluded_colony) do |f| %>
+  <% if @excluded_colony.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@excluded_colony.errors.count, "error") %> prohibited this excluded_colony from being saved:</h2>
+
+      <ul>
+      <% @excluded_colony.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :experiment %><br>
+    <%= f.text_field :experiment %>
+  </div>
+  <div class="field">
+    <%= f.label :experiment_raw_dataset %><br>
+    <%= f.text_field :experiment_raw_dataset %>
+  </div>
+  <div class="field">
+    <%= f.label :row %><br>
+    <%= f.number_field :row %>
+  </div>
+  <div class="field">
+    <%= f.label :column %><br>
+    <%= f.text_field :column %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

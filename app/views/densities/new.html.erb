@@ -1,0 +1,21 @@
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		$("#theForm").validate({ignoreTitle: true});
+	});
+</script>
+<%= render partial: "layouts/top" %>
+
+<%= errors_for_helper(@density) %>
+
+<%= form_for @density, html: {style:"padding:0px;", id:"theForm"} do |f| %>
+  <label for="density" class="required">Density Value:</label>
+  <%= f.text_field :density, {:class=>"formInputText required number", :size=>30} %>
+  <br/>
+	<%= submit_tag 'Create!', :class=>"commit" %>
+<% end %>
+<br/>
+<%= link_to 'Back', :action => 'list' %><br/>
+
+

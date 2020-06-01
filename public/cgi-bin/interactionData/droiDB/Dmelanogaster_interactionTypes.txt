@@ -1,0 +1,10 @@
+Physical:Human Interologs
+Physical:Finley yeast two-hybid
+Physical:Hybrigenics yeast two-hybrid
+Physical:Drosophila Protein Interaction Mapping (DPIM) project, co-affinity purification (co-AP)/MS
+Physical:Other Physical interactions
+Physical:Yeast Interologs
+Physical:Perrimon co-affinity purification (co-AP)/MS
+Physical:Worm (C. elegans) Interologs
+Physical:Curagen yeast two-hybid
+Genetic:Genetic interactions from FlyBase

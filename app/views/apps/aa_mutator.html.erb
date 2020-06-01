@@ -1,0 +1,103 @@
+<%= stylesheet_link_tag 'field_hints' %>
+<%= stylesheet_link_tag 'validation' %>
+
+<script type="text/javascript" charset="utf-8">
+
+	function validate_form(){
+		clear_results();
+		// remove all whitespace from nt entry
+		$('#the_seq').val($('#the_seq').val().replace(/\s+/g,''));
+		if($('#the_seq').val().length != 15){	alert("You must enter 15 nucleotides.");		}
+		else{
+			submitAjax({
+				'strURL':'<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/changeAA1.cgi',
+				'formName':'setup1',
+				'whatToUpdate' :'result1',
+				'loader': 'loading',
+				'method':'POST'
+			});
+		}
+	}
+
+	function clear_results(){
+		$("#result1, #result2").html("");
+	}
+</script>
+
+<style type="text/css">
+div fieldset{float:left;}
+legend{letter-spacing:0.03em;}
+#spinner{border-width:0px;}
+.resultDiv{clear:left;margin-left:20px;}
+
+.loading{
+	font-size:1.3em;
+	margin-left:15px;
+	float:left;
+}
+
+#error{
+	width: auto;
+	float:left;
+  margin-top: 10px;
+	font-size:1.3em;
+	font-weight:bold;
+}
+
+.commit{	float:left;	}
+
+fieldset{
+	border: 3px solid #AAAAAA;
+	height:auto;
+	margin-right:30px;
+	padding:5px;
+	float:left;
+}
+legend{
+	color: black;
+	font-weight: bold;
+	font-size:2em;
+	font-variant: small-caps;
+	padding: 2px 8px;
+}
+
+label,table td{
+	font-weight:bold;
+	font-size:1.2em;
+}
+table td em{
+	color:blue;
+}
+table{margin-top:15px;}
+</style>
+
+
+<%= render :partial => "layouts/top" %>
+
+<div class="notes" style="float:left;margin-left:20px;width:auto;">
+	<h4>Notes</h4>
+	<p>The yeast mutation calculator allows you to change a codon to introduce a single amino acid change and then see all the sequence permutations in the 15 nucleotides surrounding that change.  A list of restriction sites is generated for each sequence permutation to help define useful restriction polymorphisms for the mutated sequence.  In addition, the product of the codon frequencies for the sequence are listed for comparison to the wild-type sequence.<br/><br/>The sequence should be 15 nt in length and be in frame so that the middle codon is the mutated codon.</p>
+	<br/>
+</div>
+<br style="clear:both;height:0px;line-height:0px"/>
+<div style="float:left;margin-left:20px;margin-bottom:15px;">
+	<strong>Example:</strong>
+	<table>
+		<tr><td>CTG</td><td>GGC</td><td style="color:red;font-weight:bold;">ACT</td><td>TCC</td><td>AAA</td><td>translates to:</td></tr>
+		<tr align=center><td>L</td><td>G</td><td style="color:red;font-weight:bold;">T</td><td>S</td><td>K</td></tr>
+		<tr><td colspan=7>where T is the amino acid to be mutated.</td></tr>
+	</table>
+	<form name="setup1" id="setup1">
+		<label for="sequence">15nt sequence:</label>
+		<input type="text" name="sequence" size="30" class="formInputText validate-nucleotide" id="the_seq" title="15nt sequence" /><br>
+		<input type="button" value="Submit" id="subSeq" onclick='validate_form();' class="commit">
+		<input type="reset" class="reset" value="Clear" style="float:left;margin-left:15px;" />
+		<div id="loading" class="loading" style="display:none;">
+			<%=image_tag "spinner-big.gif", :alt=> "spinner", :id=>"spinner", :name=>"spinner"%><div style="padding:5px;float
+			:left;">Loading...</div>
+		</div>
+	</form>
+</div>
+<div id="result1" class="resultDiv"></div>
+<div id="result2" class="resultDiv"></div>
+<br/><br/></div>

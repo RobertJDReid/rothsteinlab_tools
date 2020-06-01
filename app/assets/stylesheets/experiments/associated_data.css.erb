@@ -1,0 +1,45 @@
+#main span{font-size: 12px;}
+#experiments_wrapper .fg-toolbar, #data,.no-title .ui-dialog-titlebar{display:none;}
+div.curvy{
+	-moz-border-radius: 10px; /* Firefox */
+	-webkit-border-radius: 10px; /* Webkit */
+	border-radius: 10px;
+}
+#progressBar {
+	width: 350px;
+	height: 22px;
+	border: 1px solid #111;
+	box-shadow: 0 0 5px #333;
+	background: rgba(214, 214, 214, 0.1) url(<%= asset_path 'animated-overlay.gif' %>) top right;
+	/*opacity: .10;*/
+}
+#progressBar div {
+	height: 100%;
+	color: #fff;
+	text-align: right;
+	line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+	width: 0;
+	background-color: #0099ff;
+}
+.tiny-green {
+  position: relative;
+  padding: 1px;
+	-moz-border-radius: 5px; /* Firefox */
+	-webkit-border-radius: 5px; /* Webkit */
+	border-radius: 5px;
+}
+.tiny-green div {
+	font-family: arial;
+	color: white;
+	text-align: right;
+	text-shadow: 0px 0px 2px #000;
+	overflow: hidden;
+	-moz-border-radius: 5px; /* Firefox */
+	-webkit-border-radius: 5px; /* Webkit */
+	border-radius: 5px;
+}
+#loading-message{
+	padding: 10px;
+	text-align: center;
+}
+#empty-message{display:none;}

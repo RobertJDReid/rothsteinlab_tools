@@ -1,0 +1,51 @@
+<style type="text/css">
+ li{
+	color:#0C0AAF;
+	margin:5px 5px 10px 5px;
+	font-weight:bold;
+}
+
+</style>
+<%= render partial: "layouts/top" %>
+
+<fieldset style="width:90%;border:1px solid grey;"><br/>
+<strong><u>Download:</u></strong>
+
+<ul>
+	<li>The <i>Dissection Reader</i> software is GPL licensed and available on SourceForge <a href='http://dissectionread.sourceforge.net' class="ext_link" title="SourceForge" >here.</a></li>
+</ul>
+<strong><u>Instructions for use:</u></strong>
+<ol>
+<li>Open <a href="http://rsbweb.nih.gov/ij/" />ImageJ</a>.</li>
+<li>Install the dissection reader into ImageJ as a macro by selecting <code>Plugins → Macros → Install</code> and then selecting the downloaded <code>dissection_reader.txt</code> file.
+<br/><%=image_tag "dissection_reader/step1.png" %>
+</li>
+<li>Open the image you intend to analyze in ImageJ.</li>
+<li>If necessary, rotate the image so that the colonies lie in a straight line.</li>
+<li>Place a selection box around the colonies you wish to measure.
+<br/><%=image_tag "dissection_reader/step3.png" %>
+</li>
+<li>Run dissection reader by selecting <code>Plugins → Macros → Measure Colonies[m]</code> from the file menu
+<br/><%=image_tag "dissection_reader/step4.png" %>
+</li>
+<li>Compare the 2 images that appear and follow the instructions provided in the pop-up window. If the colonies you intend to measure are not appropriately highlighted in red, click "No" to manually adjust the threshold. In the example here, some of the smaller colonies are not highlighted in red, so manually adjusting the threshold is required.
+<br/><%=image_tag "dissection_reader/step5.png" %>
+</li>
+<li>
+Adjust the sliders in the threshold window until all colonies are appropriately highlighted in red. If the background is red and the colonies are not click the "Dark Background" check box.
+<br/><%=image_tag "dissection_reader/step6.png" %>
+</li>
+<li>When you are satisfied with the threshold filter settings, click the "Apply" button and then click "Ok" to continue processing the image.</li>
+<li>Enter the appropriate number of columns and rows of colonies in your image and click "Ok".
+<br/><%=image_tag "dissection_reader/step7.png" %>
+<br/><%=image_tag "dissection_reader/step8.png" %>
+</li>
+<li>After entering the number of rows, ImageJ will measure the colony areas. This will result in the creation of 2 log windows ("Colony Size Results - Table Format" and "Colony Size Results - Single Column Format"). The results in these windows are identical, they are just formatted differently. You may export the results of the log windows to a text file using the file menu.
+<br/><%=image_tag "dissection_reader/step9.png" %>
+</ol>
+</fieldset>
+
+
+
+
+

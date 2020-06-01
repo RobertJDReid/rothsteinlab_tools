@@ -1,0 +1,27 @@
+<%= javascript_include_tag 'common' %>
+<style type="text/css">
+tr.odd{
+	background-color:#CFDCFF;
+}
+th{
+	background-image:url();
+	background-color:#AFC5FF;
+	border-right:1px solid;
+}
+td{border-top:1px solid; border-right:1px solid;padding:5px;}
+td.c{text-align:center;}
+</style>
+<%= render partial: "layouts/top" %>
+
+<table style="border:1px solid;border-right:0px solid;margin-bottom:20px;" cellspacing="0">
+	<tr><th>#</th><th>Name</th><th>Source</th></tr>
+	<%i=1%>
+<% @dataList.sort.each do |key,value| %>
+	<% if i%2 == 0 %><tr class="odd"><%else%><tr><%end%>
+		<td class="c"><%=i%></td>
+		<td><%=key%></td>
+		<td><a href= "http://www.ncbi.nlm.nih.gov/pubmed/<%=value[1]%>" class="ext_link" title="Pubmed"><%=value[0]%></a></td>
+	</tr>
+	<%i+=1%>
+<%end%>
+</table></div>

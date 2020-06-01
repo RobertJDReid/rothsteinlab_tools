@@ -1,0 +1,73 @@
+<%= stylesheet_link_tag 'show', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller', "data-turbolinks-track" => true  %>
+
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<%= render :partial => "layouts/top" %>
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function(){
+	$('#loading').remove();
+	$('#orthoContainer').fadeIn();
+var oTable = $("#orthologs").dataTable({
+							"sPaginationType": "full_numbers",
+			        "bFilter": true,
+			        "bSort": true,
+			        "bInfo": true, 
+			        "bAutoWidth": true,
+			        "bJQueryUI": true,
+			        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+			        "iDisplayLength" : 50,
+			        "oLanguage": { "sSearch": "Filter (all columns):"	}
+						});
+});
+
+</script>
+<div id='loading'>Loading...<br/><%=image_tag "ajax-loader.gif", :alt=> "loading",:name=>"loading",:id=>"processing1" %></div>
+<div id="orthoContainer" style="display:none;">
+
+<%auth = false %>
+<%if permit? :scerevisiae_hsapien_orthologs, :edit %>
+	<%auth = true %>
+<%end%>
+<%if permit? :scerevisiae_hsapien_orthologs, :new  %>
+	<%= link_to 'Create a new ortholog pair', new_scerevisiae_hsapien_ortholog_path, 'id'=>'createLink' %>
+<%elsif permit? :scerevisiae_hsapien_orthologs, :submit %>
+	<%=link_to "Submit a new ortholog pair", scerevisiae_hsapien_ortholog_submit_path, 'id'=>'submitLink' %>
+<%end%>
+<br/>
+<br/>
+<table id="orthologs">
+	<thead>
+	  <tr>
+	    <th>Human Gene Name</th>
+			<th>Yeast ORF</th>
+			<th>Yeast Gene Name</th>
+			<th>Homology Type</th>
+			<th>Source</th>
+	  </tr>
+ 	</thead>
+ 	<TBODY>
+<% for ortholog in @scerevisiaeHumanOrthologs %>
+	<% next if !ortholog.approved %>
+  <tr>
+		<td style="text-align: left;">
+			<%if auth %><%= link_to "#{ortholog.humanGeneName} (edit)", :action => 'edit', :id => ortholog %>
+			<%else%><%=ortholog.humanGeneName%>
+			<%end%>
+		</td>
+		<td><%=ortholog.yeastOrf%></td>
+		<td><%=ortholog.scerevisiae_gene.gene %></td>
+		<td><%=ortholog.homologyType%></td>
+		<td><%=ortholog.source%></td>
+  </tr>
+<% end %>
+</TBODY>
+</table>
+<br/>
+<%if permit? :scerevisiae_hsapien_orthologs, :new  %>
+	<%= link_to 'Create a new ortholog pair', new_scerevisiae_hsapien_ortholog_path, 'id'=>'createLink1' %>
+<%elsif permit? :scerevisiae_hsapien_orthologs, :submit %>
+	<%=link_to "Submit a new ortholog pair", scerevisiae_hsapien_ortholog_submit_path, 'id'=>'submitLink1' %>
+<%end%>
+</div>
+</div

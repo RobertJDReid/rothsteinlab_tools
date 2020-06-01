@@ -1,0 +1,26 @@
+/* Field-Hint with focus */
+form .field-hint {
+	position:absolute;
+	width: 300px;
+	z-index: 50;
+	background-image: url(<%= asset_path 'css/hint_left_border1.gif' %>);
+	background-repeat: no-repeat;
+	background-position: left top;
+	padding: 0px 0px 0px 16px;
+	margin:  -1px 0px 0px 5px;
+	color: #000;
+	font-size: 12px;
+}
+form .field-hint div {
+	background-color: #fffbb8;
+	border-top: 2px solid #ffc20d;
+	border-right: 2px solid #ffc20d;
+	border-bottom: 2px solid #ffc20d;
+	padding: 4px;
+	/*font-weight:bold;*/
+}
+/* Field-Hint without focus */
+form .field-hint-inactive {
+	visibility: hidden;
+	position: absolute;
+}

@@ -1,0 +1,161 @@
+label{
+  margin-bottom:3px;
+  font-size:120%;
+}
+.one50px{width:150px;}
+.submitDiv{margin:0px 0px 30px 0px;}
+.uploadBox{display:inline;}
+#main span{font-size: 12px;}
+.ui-dialog .ui-state-error { padding: .3em; }
+.validateTips { border: 1px solid transparent; padding: 0.3em; }
+.ui-dialog fieldset { padding:0; border:0; }
+.ui-dialog textarea { width:100%; height:200px; }
+.ui-dialog p, .ui-dialog label { margin:0px;}
+#progress-success, #progress-errors,.no-title .ui-dialog-titlebar {
+  display: none;
+  padding:5px;
+  -moz-border-radius: 5px; /* Firefox */
+  -webkit-border-radius: 5px; /* Webkit */
+  border-radius: 5px;
+}
+#progress-success{
+  background-color: rgb(158, 255, 197);
+  margin-bottom: 5px;
+}
+#progress-errors{background-color: rgb(255, 237, 237);}
+div.curvy{
+  -moz-border-radius: 10px; /* Firefox */
+  -webkit-border-radius: 10px; /* Webkit */
+  border-radius: 10px;
+}
+#main .success{background-color: rgb(158, 255, 197);}
+#progressBar {
+  width: 350px;
+  height: 22px;
+  border: 1px solid #111;
+  box-shadow: 0 0 5px #333;
+  background: rgba(214, 214, 214, 0.1) url(<%= asset_path 'animated-overlay.gif' %>) top right;
+  /*opacity: .10;*/
+}
+#progressBar div {
+  height: 100%;
+  color: #fff;
+  text-align: right;
+  line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+  width: 0;
+  background-color: #0099ff;
+}
+.tiny-green {
+  position: relative;
+  padding: 1px;
+  -moz-border-radius: 5px; /* Firefox */
+  -webkit-border-radius: 5px; /* Webkit */
+  border-radius: 5px;
+}
+.tiny-green div {
+  font-family: arial;
+  color: white;
+  text-align: right;
+  text-shadow: 0px 0px 2px #000;
+  overflow: hidden;
+  -moz-border-radius: 5px; /* Firefox */
+  -webkit-border-radius: 5px; /* Webkit */
+  border-radius: 5px;
+}
+#loading-message{
+  padding: 10px;
+  text-align: center;
+}
+
+.toggleRowDiv, #loading-dialog{display:none;}
+.toggleLink{
+  text-decoration: underline;
+  font-style: italic;
+  cursor: pointer;
+}
+#content{float:left;}
+.allData{display:none;}
+
+/*#results{ display:none;}*/
+
+#spinner{border-width:0px;float:left;}
+
+.loading{
+  font-size:1.3em;
+  margin-left:15px;
+  float:left;
+}
+
+.commit{float:left;}
+
+#drop_zone {
+  border: 2px dashed #BBB;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding: 25px;
+  text-align: center;
+  font: 20pt bold,"Vollkorn";
+  color: #BBB;
+}
+
+#drop_zone small{font-size:50%;}
+
+#drop_zone.hover{ border: 4px dashed black;}
+
+#fileErrors{
+  float:left;
+  border: 2px dashed;
+  border-color: lightPink;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding:5px;
+  height: 140px;
+  overflow-y: auto;
+  background-color: #FC7373;
+  visibility:hidden;
+  margin-left: 520px; /*Set left margin to LeftColumnWidth*/
+}
+
+#rightColumn{
+  float: left;
+  width: 100%;
+}
+
+#leftcolumn{
+  float: left;
+  width: 500px; /*Width of left column*/
+  margin-left: -100%;
+}
+
+.hundred{width:100%;}
+
+.nowrap{white-space: nowrap;}
+
+#progress_bar, #progress_bar2 {
+  margin: 5px;
+  padding: 3px;
+  border: 1px solid #000;
+  font-size: 14px;
+  opacity: 0;
+  -moz-transition: opacity 1s linear;
+  -o-transition: opacity 1s linear;
+  -webkit-transition: opacity 1s linear;
+  float:left;
+  width:300px;
+  white-space: nowrap;
+}
+
+#progress_bar.fileLoading,#progress_bar2.fileLoading {  opacity: 1.0;}
+
+#percent, #percent2{
+  background-color: #99ccff;
+  height: auto;
+  width: 0;
+}
+
+#goodFiles, #badFiles, #dupQueryConditions{ display:none;}
+h3{margin:3px;}
+
+.hidden{display:none;}

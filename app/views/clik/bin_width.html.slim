@@ -1,0 +1,24 @@
+= stylesheet_link_tag 'bootstrap-min'
+= javascript_include_tag 'bootstrap.min', async: true
+= render partial: "layouts/top"
+
+.explanation
+	p.lead CLIK scatter plots are created by placing the rank order list of genes from a single screen on the x-axis and the same rank order on the y-axis. A point is plotted for each interaction between genes on the axes (Figure 1).
+ 	div[style="float:left;width:600px;margin-right:10px;"]
+		=image_tag "clik/clik_plotting.png"
+		.legend
+			b Figure 1.
+			| CLIK scatter plot explanation. Yellow lines in the plot are examples of how points are plotted on the graph, given 2 interacting genes on the axes.
+	p.lead Figure 1 serves as an example of how CLIK scatter plots are generated. The first step in creating these plots is to place the rank order list of genes from a single screen on the x and y axes of a graph. Example genes are indicated by circles on the axes of Figure 1. A point is then plotted for each interaction between the genes on the axes (circles in plot area of graph).
+	p.lead
+		| It is expected that a screen will organize related (and interacting) groups of genes (blue points along axes) high
+		sup 1
+		|  in the rank order and that interaction density among these genes will be higher then in other areas of the plot (green shaded area).
+	p.lead
+		' Once plotted a density value is assigned to each point on the graph. To derive this value, a virtual square bin is centered over each point and it's density is calculated by dividing the number of points (i.e. interactions) that fall within the bounds of the bin by the area. The calculated densities for each point are then compared to one another and points with sufficiently high density are colored (see&nbsp;
+	 	=link_to "\"CLIK Scoring\"", clik_scoring_path, title: "CLIK scoring explanation"
+	 	' ).
+	p.lead By default, bin sizes are automatically calculated by moving a window of various sizes across the rank list entered into CLIK. For each window a score is calculated by dividing the number of interactions within the window by the window size. The window size with the greatest score is then used as the x and y dimension of the virtual bin that CLIK uses to calculate point density. Manual entry of bin sizes is also allowed to aid in the comparison of multiple screens (to normalize across analyses).
+hr
+ol
+	li "High" meaning at the top or in the beginning of the list

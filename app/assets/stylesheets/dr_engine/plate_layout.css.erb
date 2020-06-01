@@ -1,0 +1,251 @@
+/* plate_layout */
+
+iframe.plateReview{
+	border:0;
+	width:100%;
+}
+div #header{
+	float:left;
+	width:auto;
+}
+
+div #key{
+	clear:left;
+	float:left;
+	margin:25px 0px 25px 0px;
+	white-space:nowrap;
+	text-align:center;
+}
+
+div #key .keys{
+	display:inline;
+	padding:7px;
+	border:1px solid black;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+div #menuContainer{
+	position:absolute;
+	padding:3px;
+	border:1px solid black;
+	right:10px;
+	top:200px;
+}
+
+th.plateTitle{
+	padding-left:0px;
+	padding-right:0px;
+	margin:0px;
+}
+
+/* plate title left, middle and right divs */
+div .plateTitle .left, div .plateTitle .middle{
+	position:relative;
+	float:left;
+	width:33%;
+	padding:1px;
+}
+
+div .plateTitle .right, div .plateTitle .left{
+	text-decoration:underline;
+	display:inline;
+	position:relative;
+	float:left;
+	text-align:right;
+	margin-right:-1px;
+	cursor:pointer;
+	color:#00008B;
+	top:5px;
+	padding:0px;
+	width:33%;
+}
+
+div .plateTitle .left{
+	text-align:left;
+	margin-left:5px;
+	margin-right:0px;
+}
+
+td.colHeader{
+	text-align:center;
+	border-left:1px solid black;
+	border-top:1px solid black;
+	border-bottom:1px solid black;
+}
+
+td.fourReps, td.reps{
+	padding:2px;
+	border-left:1px solid black;
+	border-top:1px solid black;
+	border-right:1px solid black;
+}
+
+td.a1536{
+	padding:0px;
+	border-top:1px solid black;
+	font-size:0.8em;
+	text-align:center;
+}
+
+td.other{	border-top:1px solid black;}
+
+td.blankCellRight{border-left:1px solid black;}
+
+td.blankCellBottom{border-top:1px solid black;}
+
+td.colSubHead{
+	text-align:center;
+	font-size:0.8em;
+	border-left:1px solid black;
+}
+td.small{font-size:0.7em;}
+
+td span{display:none;}
+
+/* PART OF td:hover span is IN PROGRAM ITSELF!!! */
+td:hover span{
+	display: inline;
+	vertical-align: top;
+	color: black;
+	background-color: #F4F4F4;
+	font-weight: bold;
+	position: absolute;
+	border: 1px solid #BCBCBC;
+	padding: 5px;
+}
+
+.excludedPlateContainer{
+	background-image:url(<%=asset_path "css/black_check.png" %>);
+}
+
+.excludedPlate {
+	margin:auto;
+	height:150px;
+	width:90%;
+	opacity:0.95;
+	background:#CF8174 url(<%=asset_path "exclamation.png"%>);
+  background-repeat: no-repeat;
+	background-position: 1% 12%;
+}
+.excludedPlate H2{
+	padding: 5px 5px 5px 0px;
+  border-width: 0 0 1px 0;
+	border-style: solid;
+  border-color: #666666;
+	background-color:#CF8174;
+	margin-left:27px;
+}
+
+body #yeast_datascreen_data_analysis {
+	position:absolute;
+	margin:0px;
+	padding:0px;
+	top:0px;
+	width:100%;
+}
+
+strong.strongGraph{
+	height: 2.0em;
+	line-height: 2.0em;
+	position:relative;
+	float:left;
+	padding: 3px;
+	text-align:center;
+}
+
+#floatdiv{
+	position:absolute;
+  width:225px;
+	height:360px;
+	top:0px;
+	right:0px;
+  padding:16px;
+	margin-top:180px;
+  border: 1px solid #666666;
+	background-color: #ffffe1;
+  opacity: 0.85;
+	color: #666666;
+	overflow:auto;
+}
+
+#exclusionTableWrapper{
+  width:225px;
+	height:368px;
+	right:20px;
+  padding:5px 16px;
+  border: 1px solid #666666;
+	background-color: #ffffe1;
+  opacity: 0.85;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+
+#exclusionTableWrapper .title{	font-size:1.2em; }
+
+#floatdiv #exclusionList, #exclusionTableWrapper #exclusionList{
+	background:transparent url(<%=asset_path "css/icon_info.gif" %>);
+  background-repeat: no-repeat;
+  background-position: top left;
+  padding: 0px 0px 3px 27px;
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: black;
+  color: black;
+  font-size: 1.4em;
+	margin-bottom:10px;
+}
+
+#floatdiv .colonies, #exclusionTableWrapper .colonies{
+	overflow:auto;
+	margin:2px 0px 0px 0px
+}
+
+#floatdiv .plates, #exclusionTableWrapper .plates{
+	height:100px;
+	overflow:auto;
+}
+
+#floatdiv .list li,#exclusionTableWrapper .list li{
+	list-style-type:none;
+	color:#00008B;
+}
+
+#floatdiv .list li.showUL,#exclusionTableWrapper .list li div.showUL{background-position: 0px 4px;}
+
+#floatdiv .list li,#exclusionTableWrapper .list li div{
+	background: url(<%=asset_path "showHide/plusMinus.png" %>) no-repeat;
+	background-position: 0px -55px;
+	padding:0 0 0 12px;
+	cursor:pointer;
+}
+
+#floatdiv .list li ul li,#exclusionTableWrapper .list ul li{
+	list-style-image: url(<%= asset_path "css/arrow-bullet.png"%>);
+	color:black;
+}
+
+#floatdiv .rowHead,#exclusionTableWrapper .rowHead, #floatdiv .rowSubHead, #exclusionTableWrapper .rowSubHead{color:black;}
+/* nice blue: #8FA3FF; */
+.plate tr.highlight, .plate tr td.highlight, .plate tr td.columnExcluded, .plate tr td.rowExcluded{background-color:#0DDF3D;}
+.plate tr td{text-align: center;}
+.plate tr td.bl{border-left:1px solid black;}
+.plate tr td.bt{border-top:1px solid black;}
+.plate tr td.low{background-color:#feff49;}
+.plate tr td.eSingle{background-color:red;}
+.plate tr td.ce{background-color:#DF7D7D;}
+.plate tr td.excludedRow, .plate tr td.excludedCol{background-color:red;}
+.plate tr td:hover{background-color:blue;}
+.plate tr td.rowSubHead:hover, .plate tr td.rowHead:hover, .plate tr td.colHeader:hover, .plate tr td.colSubHead:hover{background-color:#0DDF3D; cursor:pointer;}
+.plate tr td.blankCellRight:hover, .plate tr td.blankCellBottom:hover, .plate tr td.blankCellBottom,.plate tr td.blankCellRight{background-color:white;}
+.displayNone{display:none;}
+.plate{
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}

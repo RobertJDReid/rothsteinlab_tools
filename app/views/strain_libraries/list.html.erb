@@ -1,0 +1,64 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<%= render partial: "layouts/top" %>
+
+<script type="text/javascript" charset="utf-8">
+
+$(document).ready(function(){
+	var oTable = $("#strains").dataTable({
+							"sPaginationType": "full_numbers",
+			        "bFilter": true,
+			        "bSort": true,
+			        "bInfo": true, 
+			        "bAutoWidth": true,
+			        "bJQueryUI": true,
+			        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+			        "iDisplayLength" : 50,
+			        "oLanguage": { "sSearch": "Filter (all columns):"	}
+						});
+});
+
+</script>
+
+<%= link_to 'Create New Strain Library', new_strain_library_path %><br/><br/>
+<table class=borders id="strains">
+<thead>
+  <tr>
+    <th>Name</th>
+		<th>Mating Type</th>
+		<th>Selectable Marker</th>
+		<th>Background</th>
+		<th>Key File Location</th>
+		<th>Last Updated By</th>
+		<th>Updated On</th>
+		<th>Created By</th>
+  </tr>
+ </thead>
+ <tbody>
+<% for library in @libraries %>
+  <tr>
+		<td style="text-align: left;">
+			<%= link_to "#{library.name} (edit)", :action => 'edit', :id => library %>
+		</td>
+		<td><%=library.mating_type%></td>
+		<td><%=library.selectable_marker%></td>
+		<td><%=library.background%></td>
+		<td>
+		<%if library.key_file_location=~/^http/ %>
+			<a href="<%=library.key_file_location%>" class="ext_link" >Click to download</a>
+		<%else%>
+			na
+		<%end%>
+		</td>
+		<td><%=library.updated_by %></td>
+		<td><%=library.updated_at %></td>
+		<td><%=library.created_by%></td>
+  </tr>
+<% end %>
+</tbody>
+</table><br/>
+<%= link_to 'Create New Strain Library', new_strain_library_path %>
+<br/>
+</div>

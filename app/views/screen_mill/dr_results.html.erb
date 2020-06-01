@@ -1,0 +1,33 @@
+<%= stylesheet_link_tag 'dr_engine/results' %>
+<%= render partial: "layouts/top" %>
+
+<div class="screenResultsContainer">
+	<div class="notes">
+		<h4>Notes</h4>
+		<p>Click on any of the links in the "<u>Download Data</u>" box to download the associated data.</p>
+	</div>
+	<% if @stats && @stats.downcase().include?("<td>") %>
+	<fieldset><legend style="font-size:150%;">Stats</legend>
+		<%=raw(@stats)%>
+	</fieldset>
+	<%end%>
+	<% if !@GO_enrich.downcase().include?(">no enrichment</td>") %>
+	<fieldset><legend style="font-size:150%;">GO <a href="http://www.geneontology.org/GO.slims.shtml">Slim</a> Enrichment (only significant results displayed)</legend>
+		<%=raw(@GO_enrich)%>
+	</fieldset>
+	<%end%>
+	<fieldset><legend style="font-size:150%;">Download Data</legend>
+		<table>
+			<tr><th>Click on the files below to download them</th></tr>
+			<tr>
+				<td>
+				<a href="download/<%=@sessionID%>?f=<%=@date%>-ScreenMillStats-auxiliary_information.txt&mod=dr">  Click here for auxiliary statistical information</a>
+				</td>
+			</tr>
+			<tr><td><a href="download/<%=@sessionID%>?f=<%=@date%>-ScreenMillStats-all.txt&mod=dr">  Click here for all results</a></td></tr>
+			<tr><td><a href="download/<%=@sessionID%>?f=<%=@date%>-ScreenMillStats-positive-hits.txt&mod=dr">  Click here for only significant positive hit results (growth better on comparer then experimental).</a></td></tr>
+			<tr><td><a href="download/<%=@sessionID%>?f=<%=@date%>-ScreenMillStats-suppressors.txt&mod=dr">  Click here for only suppressor results</a></td></tr>
+		</table>
+	</fieldset><br/>
+</div>
+<div id="error" style="display:none;"></div>

@@ -1,0 +1,1143 @@
+// *************  to fix *************
+// → colors of nodes need to be stored somewhere so that they are consistent with their labels in the right side panel
+// → sizing of node should occur before layout is final (perhaps impossible with the radial layout?) and should be stay
+//   when the layout is toggled between force and radial.
+// → interaction filtering is broken
+
+
+
+// $(document).ready(function(){
+//   // $('#zeroDegreeNodes').html("<ul><li>"+orphanNodes.join('</li><li>')+"</li></ul>");
+//   $('#informationPane .toggle').click(function(){
+//     console.debug(this);
+//   }
+// });
+
+
+// Help with the placement of nodes
+var RadialPlacement = function() {
+  var center, current, increment, place, placement, radialLocation, radius, setKeys, start, values;
+  values = d3.map(); // stores the key -> location values
+  increment = 20; // how much to separate each location by
+  radius = 200; // how large to make the layout
+  center = {"x": 0,"y": 0}; // where the center of the layout should be
+  start = 180; // what angle to start at
+  current = start;
+
+  // Given an center point, angle, and radius length,
+  // return a radial position for that angle
+  radialLocation = function(center, angle, radius) {
+    var x = center.x + radius * Math.cos(angle * Math.PI / 180);
+    var y = center.y + radius * Math.sin(angle * Math.PI / 180);
+    return {"x": x,"y": y};
+  };
+
+  // Main entry point for RadialPlacement
+  // Returns location for a particular key, creating a new location if necessary.
+  placement = function(key) {
+    var value = values.get(key);
+    if (!values.has(key)) {  value = place(key);  }
+    return value;
+  };
+
+  // Gets a new location for input key
+  place = function(key) {
+    var value = radialLocation(center, current, radius);
+    //console.debug('key = '+key+' value =' +value.x+", "+value.y);
+    //if(key == 'undefined84'){value.x=340;value.y=550;}
+    values.set(key, value);
+    current += increment;
+    return value;
+  };
+
+  // Given a set of keys, perform some magic to create a two ringed radial layout.
+  // Expects radius, increment, and center to be set.
+  // If there are a small number of keys, just make one circle.
+  setKeys = function(keys) {
+    values = d3.map(); // start with an empty values
+    var firstCircleCount = 360 / increment; // number of keys to go in first circle
+
+    // if we don't have enough keys, modify increment so that they all fit in one circle
+    if (keys.length < firstCircleCount) {  increment = 360 / keys.length; }
+
+    // set locations for inner circle
+    var firstCircleKeys = keys.slice(0, firstCircleCount);
+    //console.debug(firstCircleKeys.length);
+    firstCircleKeys.forEach(function(k) { return place(k);  });
+
+    // set locations for outer circle
+    var secondCircleKeys = keys.slice(firstCircleCount);
+    //console.debug(secondCircleKeys.length);
+    // setup outer circle
+    radius = radius + radius / 1.8;
+    increment = 360 / secondCircleKeys.length;
+    return secondCircleKeys.forEach(function(k) {  return place(k); });
+  };
+
+  placement.keys = function(_) {
+    if (!arguments.length) {  return d3.keys(values); }
+    setKeys(_);
+    return placement;
+  };
+
+  placement.center = function(_) {
+    if (!arguments.length) {  return center;  }
+    center = _;
+    return placement;
+  };
+  placement.radius = function(_) {
+    if (!arguments.length) {  return radius;  }
+    radius = _;
+    return placement;
+  };
+  placement.start = function(_) {
+    if (!arguments.length) {  return start; }
+    start = _;
+    current = start;
+    return placement;
+  };
+  placement.increment = function(_) {
+    if (!arguments.length) {  return increment;}
+    increment = _;
+    return placement;
+  };
+
+  return placement;
+};
+
+Network = function() {
+  // variables we want to access in multiple places of Network
+  var allData, charge, curLinksData, curNodesData, filter, filterDisconnectedLinks, filterNodes, force, forceTick, groupCenters, height, hideDetails,
+  layout, link, linkedByIndex, linksG, mapNodes, moveToRadialLayout, neighboring, network, node, nodeColors, nodeCounts, nodesG, radialTick,
+  setFilter, setLayout, setSort, setFeature, setupData, showDetails, sort, sortedFeatures, strokeFor, tooltip, update, updateCenters,
+  updateLinks, updateNodes, width,radius,filterValue,interactionsDisplayed,removeLinkHighlighting, filterLinks, setInteractions,
+  adjustInteractionTypes, highlightSpecificInteractions,removeLinkHighlighting,currentFeature,featureData,loadFeatureData;
+  width = 960;
+  height = 700;
+  radius=2;
+  allData = []; // allData will store the unfiltered data
+  curLinksData = [];
+  curNodesData = [];
+  linkedByIndex = {};
+  featureData = {};
+  // these will hold the svg groups for accessing the nodes and links display
+  nodesG = null;
+  linksG = null;
+
+  // these will point to the circles and lines of the nodes and links
+  node = null;
+  link = null;
+
+  // variables to reflect the current settings of the visualization
+  layout = "radial";
+  filter = "all";
+  interactionsDisplayed=["all"]; // interactionsDisplayed is an array
+  filterValue = 1;
+  sort = 'nodeCount'; // for radial layout, value to initialize sort by
+  currentFeature = 'na'; // feature to color nodes by and to cluster on in the radial layout
+
+  // groupCenters will store our radial layout for the group by feature layout.
+  groupCenters = null;
+
+  force = d3.layout.force(); // the force directed layout
+  nodeColors = d3.scale.category20(); // color function used to color nodes
+  tooltip = Tooltip("vis-tooltip", 230); // tooltip used to display details
+
+  // charge used in radial layout
+  charge = function(node) { console.debug(node.radius);return -Math.pow(node.radius, 2.0) / 2; };
+
+  // Starting point for network visualization
+  // Initializes visualization and starts force layout
+  network = function(selection, data) {
+    allData = setupData(data); // format the data
+    // create our svg and groups
+    if(!allData){return false;}
+    var vis = d3.select(selection).append("svg").attr("width", width).attr("height", height);
+    linksG = vis.append("g").attr("id", "links");
+    nodesG = vis.append("g").attr("id", "nodes");
+    force.size([width, height]); // setup the size of the force environment
+    setLayout(layout); // initialize force layout
+    setFilter(filter);
+    update(); // perform rendering and start force layout
+
+  };
+
+  // The update() function performs the bulk of the work to setup our visualization based on the
+  // current layout/sort/filter.
+  //
+  // update() is called every time a parameter changes and the network needs to be reset.
+  update = function() {
+    // filter data to show based on current filter settings.
+
+    curNodesData = filterNodes(allData.nodes);
+    if(curNodesData.length > 0){  curLinksData = filterLinks(allData.edges, curNodesData);  }
+    else{ curLinksData=[];}
+    // sort nodes based on current sort and update centers for radial layout
+    // the order of sorted features will dictate neighboring groups of nodes
+    // in the radial layout.
+    if (layout === "radial") {
+      // first check nodes and make sure a the feature is actually exists for all of them.
+      // if it does not, assign them to their own, unique feature group
+      var undefinedCount = 0;
+      curNodesData.forEach(function(n) {
+        if(!n.hasFeature || n.hasFeature===undefined){
+          n.feature='undefined'+undefinedCount;
+          n.hasFeature=false;
+          n.color=nodeColors();
+          undefinedCount++;
+        }
+        else{n.color=nodeColors(n.feature);n.hasFeature=true;}
+      });
+      //console.debug(curNodesData);
+      var features = sortedFeatures(curNodesData, curLinksData);
+      //console.debug(features);
+      updateCenters(features);
+    }
+
+    force.nodes(curNodesData); // reset nodes in force layout
+    updateNodes(); // enter / exit for nodes
+
+    if (layout === "force") {
+      // always show links in force layout
+      force.links(curLinksData);
+      updateLinks();
+    }
+    else {
+      // reset links so they do not interfere with other layouts.
+      // updateLinks() will be called when force is done animating.
+      force.links([]);
+      // if present, remove them from svg
+      if (link) {
+        link.data([]).exit().remove();
+        link = null;
+      }
+    }
+    force.start(); // start me up --> call TICK, calculate weights based on connected links
+    if(layout!=="radial"){node.attr("r", function(d) {  return 5; });}
+    else{force.alpha(.1);}
+
+  };
+
+  network.updateStuff = function(){  return update();  }
+  network.getNodes = function(){  return curNodesData;  }
+  network.printNodes = function(){  console.debug(curNodesData.length);console.debug(curNodesData);  }
+  network.printLinks = function(){  console.debug(curLinksData.length);console.debug(curLinksData);  }
+
+
+
+  // Public function to switch between layouts
+  network.toggleLayout = function(newLayout) {
+    force.stop();
+    setLayout(newLayout);
+    return update();
+  };
+
+  // Public function to switch between filter options
+  network.toggleFilter = function(newFilter) {
+    if(setFilter(newFilter)){
+      // filters links based on selected interactions (if that is the current filter)
+      if(filter==='selectedInteractions'){
+        // adjustInteractionTypes will make an ajax call and the call updateData to
+        // update the graph with the proper interaction data
+        var interactions = setInteractions();
+        if(interactions){
+          var nodeIds = curNodesData.map(function(e){return e.id});
+          // console.debug(nodeIds.length);
+          // console.debug(nodeIds);
+          return adjustInteractionTypes(this, nodeIds,interactions);
+        }
+      }
+      else{
+        force.stop();
+        return update();
+      }
+    }
+  };
+
+  // Public function to switch between sort options
+  network.toggleSort = function(newSort) {
+    force.stop();
+    setSort(newSort);
+    return update();
+  };
+
+  // Public function to switch between feature options
+  network.toggleFeature = function(newFeature) {
+    // if the data for this feature is not defined we need to pull it in
+    if(featureData[newFeature] === undefined){
+      var nodeIds = curNodesData.map(function(e){ return e.id;  });
+      loadFeatureData(this, nodeIds, newFeature);
+      return false;
+    }
+    // set the feature
+    setFeature(newFeature,curNodesData);
+    // create some html to display the features to the user
+    var html = '<ul>';
+    var currentFeatureHash = {};
+    for (var i = 0; i < featureData[currentFeature].length; i++) {
+      html+='<li title="'+featureData[currentFeature][i].name+'" style="color:'+nodeColors(featureData[currentFeature][i].name)+';" data-pval="'+featureData[currentFeature][i]["p-value"]+'">'+featureData[currentFeature][i].name+'  ('+featureData[currentFeature][i]["p-value"]+')</li>';
+      for (var j = 0; j < featureData[currentFeature][i]['genes'].length; j++) {
+        currentFeatureHash[featureData[currentFeature][i]['genes'][j]] = {
+          'name':featureData[currentFeature][i].name,
+          'pval' : featureData[currentFeature][i]["p-value"]
+        }
+      };
+    };
+    html += '</ul>';
+
+    // apply feature to nodes, update node color based on feature membership.
+    node = nodesG.selectAll("circle.node").data(curNodesData, function(d) {
+      if(currentFeatureHash[d.id]){
+        d.feature = currentFeatureHash[d.id]['name'];
+        d.hasFeature = true;
+        d.pvalue = currentFeatureHash[d.id]['pval'];
+        d.color = nodeColors(d.feature);
+      }
+      else{
+        d.hasFeature = false;
+        d.color = nodeColors();
+      }
+      return d.id;
+    }).style("fill", function(d) { return nodeColors(d.color);  });
+
+
+    var callback = function(){
+      $('#informationPane .currentFeatureContainer').html(html);
+      $('#currentFeature span').html(newFeature);
+      toggleAccordian(document.getElementById('currentFeature'));
+      activateInformationPaneMouseOver();
+      force.stop();
+      return update();
+    }
+
+    if($('#currentFeature').hasClass('active')){  toggleAccordian(document.getElementById('currentFeature'),callback);  }
+    else{ callback(); }
+    return 1;
+  };
+
+  network.updateFeatureData = function(featureName,data){
+    featureData[featureName] = data;
+    // process data p-values
+    for (var i = 0; i < featureData[featureName].length; i++) {
+      if(featureData[featureName][i]["p-value"] < 0.001){
+        featureData[featureName][i]["p-value"] = featureData[featureName][i]["p-value"].toExponential(2);
+      } //output 2e+2)
+      else if(featureData[featureName][i]["p-value"] < 0.05){featureData[featureName][i]["p-value"] = featureData[featureName][i]["p-value"].toFixed(3);}
+      else{featureData[featureName][i]["p-value"] = featureData[featureName][i]["p-value"].toFixed(2);}
+    }
+    return 1;
+  }
+
+  network.highlightSpecificInteractions = function(iType){  return highlightSpecificInteractions(iType);  }
+  network.removeLinkHighlighting = function(iType){  return removeLinkHighlighting(iType);  }
+
+  // Public function to update highlighted nodes from search
+  network.updateSearch = function(searchTerm) {
+    var searchRegEx = new RegExp(searchTerm.toLowerCase());
+    return node.each(function(d) {
+      var element = d3.select(this);
+      var match = d.name.toLowerCase().search(searchRegEx);
+      if (searchTerm.length > 0 && match >= 0) {
+        element.style("fill", "black").style("stroke-width", 2.0).style("stroke", "#555");
+        return d.searched = true;
+      }
+      else {
+        d.searched = false;
+        return element.style("fill", function(d) {
+          return nodeColors(d.color);
+        }).style("stroke-width", 1.0);
+      }
+    });
+  };
+
+  // reCreate the network with new data
+  network.updateData = function(newData) {
+    allData = setupData(newData);
+    if(!allData){return false;}
+    if(link){link.remove();}
+    if(node){node.remove();}
+    return update();
+  };
+
+  // called once to clean up raw data and switch links to point to node instances
+  // Returns modified data
+  setupData = function(data) {
+    // for setting up node radius
+    //var countExtent = d3.extent(data.nodes, function(d) { return d.playcount; });
+    //var circleRadius = d3.scale.sqrt().range([3, 12]).domain(countExtent);
+    if(!data || !data.nodes){return false;}
+    data.nodes.forEach(function(n) {
+      var randomnumber;
+      // set initial x/y to values within the width / height
+      // of the visualization
+      n.x = randomnumber = Math.floor(Math.random() * width);
+      n.y = randomnumber = Math.floor(Math.random() * height);
+
+      // add radius to the node so we can use it later
+      return n.radius = radius;
+    });
+
+    // convert node id's -> node objects
+    var nodesMap = mapNodes(data.nodes);
+
+    // switch links to point to node objects instead of id's
+    linkedByIndex={};
+
+    data.edges.forEach(function(l) {
+      l.source = nodesMap.get(l.source);
+      l.target = nodesMap.get(l.target);
+      // provide default interaction value
+      if(!l.iType){ l.iType = [];}
+      // linkedByIndex is used for link sorting
+      return linkedByIndex[l.source.id + "," + l.target.id] = 1;
+    });
+    return data;
+  };
+
+  // Helper function to map node id's to node objects.
+  // Returns d3.map of ids -> nodes
+  mapNodes = function(nodes) {
+    var nodesMap = d3.map();
+    nodes.forEach(function(n) {  return nodesMap.set(n.id, n);  });
+    return nodesMap;
+  };
+
+  // Helper function that returns an associative array
+  // with counts of unique attr in nodes
+  // attr is value stored in node, like 'GO category'
+  nodeCounts = function(nodes, attr) {
+    var counts = {};
+    nodes.forEach(function(d) {
+      var _name, _ref;
+      if ((_ref = counts[_name = d[attr]]) == null) { counts[_name] = 0;  }
+      return counts[d[attr]] += 1;
+    });
+    return counts;
+  };
+
+  // Given two nodes a and b, returns true if there is a link between them.
+  // Uses linkedByIndex initialized in setupData
+  neighboring = function(a, b) {
+    return linkedByIndex[a.id + "," + b.id] || linkedByIndex[b.id + "," + a.id];
+  };
+
+  // Removes nodes from input array based on current filter setting.
+  // Returns array of nodes
+  filterNodes = function(allNodes) {
+    //console.debug("filter = "+filter);
+    if(allNodes === undefined){return [];}
+    var filteredNodes = allNodes;
+    // only consider nodes with a degree greater than X
+    if(filter === "degreeGreater"){
+      filteredNodes = allNodes.filter(function(n) { return (n.weight < filterValue); });
+    }
+    // only consider nodes with a degree less than X
+    else if(filter === "degreeLesser"){
+      filteredNodes = allNodes.filter(function(n) { return (n.weight > filterValue);  });
+    }
+    return filteredNodes;
+  };
+
+  // Returns array of features sorted based on current sorting method.
+  // e.g. for a given feature (such as a GO term), sort by either the number of nodes that share that feature
+  //  OR by the number of edges emanating from the nodes that share that feature
+  sortedFeatures = function(nodes, links) {
+    var features = [];
+    var counts = {};
+    // sort by number of links emanating from nodes that share membership in a given feature key
+    if (sort === "edgeCount") {
+      links.forEach(function(l) {
+        var name = l.source["feature"];
+        if(counts[name]==null){counts[name]=0;}
+        counts[name]+=1;
+        name = l.target["feature"];
+        if(counts[name]==null){counts[name]=0;}
+        counts[name]+=1;
+      });
+      // add any missing nodes that don't have any links
+      nodes.forEach(function(n) {
+        var name = n["feature"];
+        //if(counts[name]==null){counts[name]=0;console.debug("new name = "+name);}
+      });
+    }
+    else if(sort === "pvalue") {
+      $('.currentFeatureContainer li').each(function(){
+        // append a negative the pval so they are sorted correctly
+        counts[$(this).attr('title')] = '-'+$(this).attr('data-pval');
+      });
+      // sort based on counts
+      features = d3.entries(counts).sort(function(a, b) {  return b.value - a.value;});
+      // get just names
+      features = features.map(function(v) {return v.key;});
+    }
+    else{
+      // sort by number of nodes with membership a given feature key
+      counts = nodeCounts(nodes, "feature");
+    }
+    // sort based on counts
+    features = d3.entries(counts).sort(function(a, b) {  return b.value - a.value;});
+
+    // need to make sure that every node feature attribute has a key in "features"
+    curNodesData.forEach(function(n) {
+      if(counts[n.feature]===undefined){
+        features.push({'key':n.feature,'value':0});
+      }
+    });
+
+    // return just names
+    features = features.map(function(v) {return v.key;});
+
+    return features;
+  };
+
+  updateCenters = function(features) {
+    //  call RadialPlacement which will calculate a location for all features
+    //  and stores them until we want to position our nodes in radialTick.
+    //  In RadialTick nodes will be placed on the layout based on feature membership.
+
+    return groupCenters = RadialPlacement().center({
+      "x": width / 2, "y": height / 2 - 100
+    }).radius(300).increment(18).keys(features);
+  };
+
+  // runs filterDisconnected Links
+  filterLinks = function(allLinks, curNodes){
+    return filterDisconnectedLinks(allLinks,curNodes);
+  };
+
+  // Removes links from allLinks whose source or target is not present in curNodes
+  // Returns array of links
+  filterDisconnectedLinks = function(allLinks, curNodes) {
+    curNodes = mapNodes(curNodes);
+    return allLinks.filter(function(l) {
+      return curNodes.get(l.source.id) && curNodes.get(l.target.id);
+    });
+  };
+
+  // enter / exit display for nodes
+  updateNodes = function() {
+    node = nodesG.selectAll("circle.node").data(curNodesData, function(d) {  return d.id; });
+    // add appropriate attributes to those nodes entering the plot
+    node.enter().append("circle").attr("class", "node")
+      .attr("cx", function(d) { return d.x;  })
+      .attr("cy", function(d) {  return d.y;  })
+      .attr("r", function(d) {  return d.radius;  })
+      .style("stroke", function(d) {  return strokeFor(d);  })
+      .style("stroke-width", 1.0)
+      .style("fill", function(d) {return nodeColors(d.color); });
+
+    // enable dragging only on the force layout
+    if(layout === 'force'){  node.call(force.drag); }
+    else{ node.on('mousedown.drag', null);  }
+    node.on("mouseover", showDetails).on("mouseout", hideDetails);
+    // remove nodes with no data
+    return node.exit().remove();
+  };
+
+  // enter/exit display for links
+  updateLinks = function() {
+    link = linksG.selectAll("line.link").data(curLinksData, function(d) {
+      return d.source.id + "_" + d.target.id;
+    });
+    link.enter().append("line").attr("class", "link").attr("stroke", "#ddd").attr("x1", function(d) {
+      return d.source.x;
+    }).attr("y1", function(d) {
+      return d.source.y;
+    }).attr("x2", function(d) {
+      return d.target.x;
+    }).attr("y2", function(d) {
+      return d.target.y;
+    });
+    return link.exit().remove();
+  };
+
+  // switches force to new layout parameters
+  setLayout = function(newLayout) {
+    layout = newLayout;
+    if (layout === "force") { return force.on("tick", forceTick).charge(-200).linkDistance(50);}
+    else if (layout === "radial") { return force.on("tick", radialTick).charge(charge);}
+  };
+
+  // switches filter option to new filter
+  // if the current filter options are already set then return false.
+  setFilter = function(newFilter) {
+    var tempFilterValue = null;
+    // only change filter (and return a non-false value) if the filter values actually change...
+    if($("#"+newFilter+"Value").length>0){tempFilterValue = $("#"+newFilter+"Value").html();}
+    if(tempFilterValue !== filterValue || filter !== newFilter || newFilter == 'selectedInteractions'){
+      filterValue = tempFilterValue;
+      return filter = newFilter;
+    }
+    else{return false;}
+  };
+
+  // switches current feature option to new feature
+  setFeature = function(newFeature) {  return currentFeature = newFeature;  };
+
+  loadFeatureData = function(obj,nodeIds,feature){
+    var genes = $.param({'genes[]': nodeIds});
+    // build network off of a interaction type (or group)
+    // first send ajax request to get the relevant interactions
+    $.ajax({
+        type    : 'POST',
+        url     : 'getNodeFeatureData',
+        data    : "feature="+feature+"&"+genes + "&organism=scerevisiae",
+        dataType: 'json',
+        beforeSend: function(){
+          disableElement('.control');
+          maskElement('#graph');
+        },
+        success : function(data){
+          if(!data){}
+          else if(data.error){}
+          else{
+            obj.updateFeatureData(feature,data);
+            return obj.toggleFeature(feature);
+          }
+        },
+        complete : function(data){
+          hideMask();
+          removeInvisibleMasks();
+        },
+        error:function(data, e, er){
+          alert("Database Error");
+        }
+    });
+
+    return false;
+  }
+
+  // switches interaction filter to the currently selected interaction types
+  // if the currently selected interaction match the value in interactionsDisplayed, (i.e. no change) return false
+  // else return an array of the new interaction types
+  setInteractions = function(){
+    // get an array of the currently selected interaction types
+    var interactionArray = $('#interactions input:checkbox:checked').map(function () {  return this.value;}).get();
+    if (interactionsDisplayed.compare(interactionArray) === true){  return false;  }
+    return interactionArray;
+  }
+
+  adjustInteractionTypes = function(obj, nodeIds, interactions) {
+    var genes = $.param({'genes[]': nodeIds});
+    var iTypes = $.param({'interactions[]': interactions});
+    if(!iTypes || iTypes === ''){iTypes = 'interactions[]';}
+    // build network off of a interaction type (or group)
+    // first send ajax request to get the relevant interactions
+    $.ajax({
+        type    : 'POST',
+        url     : 'buildNetwork',
+        data    : iTypes+"&"+genes + "&organism=scerevisiae",
+        dataType: 'json',
+        beforeSend: function(){
+          disableElement('.control');
+          maskElement('#graph');
+        },
+        success : function(data){
+          if(!data){}
+          else if(data.error){}
+          else{ return obj.updateData(data);  }
+        },
+        complete : function(data){
+          hideMask();
+          removeInvisibleMasks();
+        },
+        error:function(data, e, er){
+          alert("Database Error");
+        }
+    });
+
+    return false;
+  }
+
+  // switches sort option to new sort
+  setSort = function(newSort) {return sort = newSort;};
+
+  // tick function for force directed layout
+  forceTick = function(e) {
+    // prevent nodes from leaving space
+    node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y));});
+    return link.attr("x1", function(d) {  return d.source.x; })
+               .attr("y1", function(d) {  return d.source.y; })
+               .attr("x2", function(d) {  return d.target.x; })
+               .attr("y2", function(d) {  return d.target.y; });
+  };
+
+  // tick function for radial layout
+  radialTick = function(e) {
+    node.each(moveToRadialLayout(e.alpha));
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+    // once alpha is sufficiently low (i.e. node positions are stabilized and not moving rapidly)
+    // stop the animation and update the links
+    if (e.alpha < 0.03) {
+      force.stop();
+      updateLinks();
+      // need to manually update the weight of each node. This is usually done on force.start.
+      // However in this layout no links are present at this point so all weight values are zero.
+      link.each(function(l){
+        l.source.weight+=1;
+        l.target.weight+=1;
+      });
+      node.attr("r", function(d) {  var rad = Math.max(radius,radius+2*Math.log(d.weight)); d.radius=rad; return rad; });
+      return 1;
+    }
+  };
+
+  // Adjusts x/y for each node to push them towards appropriate location.
+  // Uses alpha to dampen effect over time.
+  moveToRadialLayout = function(alpha) {
+    var k = alpha * 0.1;
+    return function(d) {
+      var centerNode = groupCenters(d["feature"]);
+      d.x += (centerNode.x - d.x) * k;
+      return d.y += (centerNode.y - d.y) * k;
+    };
+  };
+
+  // Helper function that returns stroke color for particular node.
+  strokeFor = function(d) {
+    return d3.rgb(nodeColors(d.color)).darker().toString();
+  };
+
+  // Mouseover tooltip function
+  // d == current node, i == node index, i think
+  showDetails = function(d, i) {
+    var content = '<p class="main">' + d.id + '</span></p>';
+    var txt = 'na';
+    //if(!d.feature.match(/undefined/)){
+    txt = d.feature;
+    //}
+
+    content += '<hr class="tooltip-hr">';
+    content += '<p class="main">' + txt + '</span></p>';
+
+    //
+    tooltip.showTooltip(content, d3.event);
+    // higlight connected links
+    if (link) {
+      link.style("stroke", function(l) {
+        if (l.source === d || l.target === d) { return "#555";  }
+        else {  return "#ddd";  }
+      }).style("stroke-width", function(l) {
+        if (l.source === d || l.target === d) { return 2.0; }
+        else {  return 1.0;}
+      }).style("stroke-opacity", function(l) {
+        if (l.source === d || l.target === d)  { return 1.0; }
+        else {  return 0.5;}
+      });
+    }
+    // highlight neighboring nodes
+    // don't mess with node if search is currently matching
+    node.style("stroke", function(n) {
+      if (n.searched || neighboring(d, n)) {  return "#555";  }
+      else {  return strokeFor(n);  }
+    }).style("stroke-width", function(n) {
+      if (n.searched || neighboring(d, n)) {  return 2.0; }
+      else {  return 1.0; }
+    });
+    // highlight the node being moused over
+    return d3.select(this).style("stroke", "black").style("stroke-width", 5.0);
+  };
+
+  // Mouseout function
+  hideDetails = function(d, i) {
+    tooltip.hideTooltip();
+    //  - don't mess with node if search is currently matching
+    node.style("stroke", function(n) {
+      if (!n.searched) {  return strokeFor(n);  }
+      else { return "#555"; }
+    }).style("stroke-width", function(n) {
+      if (!n.searched) {  return 1.0;}
+      else {  return 2.0; }
+    }).style("stroke-opacity", function(n) {
+      return 1.0;
+    });
+    if (link) {  return link.style("stroke", "#ddd").style("stroke-width",1.0); }
+  };
+
+  // given a specific interaction, this function searched all links and highlights those with that
+  // interaction attribute
+  highlightSpecificInteractions = function(interactionType){
+    if (link) {
+      link.style("stroke", function(l) {
+        if (l.iType === interactionType) {return "#555";  }
+        //else {  return "#ddd";  }
+      }).style("stroke-opacity", function(l) {
+        if (l.iType === interactionType) { return 1.0; }
+        else {  return 0.5;};
+      });
+    }
+  };
+
+  removeLinkHighlighting = function(){
+    if (link) {
+      link.style("stroke", function(l) {  return "#ddd";  })
+          .style("stroke-opacity", function(l) { return 1.0;});
+          // .style("stroke-width", function(l) {  return 1.0;})
+    }
+  };
+  highlightSpecificNodes = function(id,attribute){
+    if(node){
+      return node.each(function(d) {
+        if (d[attribute] === id) {
+          var element = d3.select(this);
+          return element.style("fill", "black").style("stroke-width", 2.0);
+        }
+      });
+    }
+  }
+  removeNodeHighlighting = function(){
+    if (node) {
+      return node.each(function(d) {
+        var element = d3.select(this);
+        return element.style("fill", nodeColors(d.color)).style("stroke-width", 1.0);
+      });
+    }
+  }
+  // Final act of Network() function is to return the inner 'network()' function.
+  return network;
+};
+
+// Activate selector button
+// given a elem find parent li of 'elem' and activate that element if it has the class 'controlItem'
+// if it does we have a vanilla menu item and can easily proceed. If not then we have a drop-down and
+// need to perform additional operations.
+// Either way at the end disable all other elements within elems 'group', activate the current one
+// and return the appropriate id.
+activate = function(group, elem) {
+  // deactivate all menu group items
+  d3.selectAll("#" + group + " .controlItem").classed("active", false);
+  //  remove active class from all other menu items
+  d3.selectAll("#" + group + " .dropdown-menu li").classed("active", false);
+  d3.selectAll("#" + group + " .valueDisplay").text("-");
+
+  // if this is a vanilla menu item just set it as active and return it's id
+  if($(elem).parent('li').hasClass('controlItem')){
+    $(elem).parent('li').addClass("active");
+    return $(elem).parent().attr('id');
+  }
+  else{
+    // otherwise get the closest ul and check if it is a drop-down list
+    // if so figure out what the drop-down list is trying to control via it's id
+    // also update the "value" element to reflect what was just selected.
+    var temp = $(elem).closest('ul');
+    if(temp.hasClass('dropdown-menu')){
+      if(temp.parent().hasClass('controlItem')){
+        //  activate the entire menu
+        temp.parent('li').addClass("active");
+
+        // id is the id of the attribute we are trying to change, parentID is the id of the menu we selected from
+        // these may we the same or different
+        var id, parentID;
+        // if the id of this item is defined, then that is all we need
+        // if it is not defined, then the control item has 2 values that are needed:
+        // the value selected in the select menu, and the menu ID itself.
+        // therefore if the id is not defined, get the id of the parent select menu
+        // and return that (the 2nd value is the HTML of the currently selected element and
+        // is stored in $("#"+id+"Value") for both display and for later retrieval)
+        if(elem.attr('id') !== undefined){
+          id = elem.attr('id');
+          parentID = temp.parent().attr('id');
+          id = $(elem).html();
+        }
+        else{
+          id = temp.parent();
+          parentID = id.attr('id');
+        }
+        if($("#"+parentID+"Value").length > 0){
+
+          $("#"+parentID+"Value").html($(elem).html());
+          // add active to this menu item
+          $(elem).parent('li').addClass("active");
+          return id;
+        }
+      }
+    }
+  }
+  return false;
+};
+
+var myNetwork;
+function startGraph() {
+  myNetwork = Network();
+
+  d3.selectAll("#layouts .selectable").on("click", function(d) {
+    //myNetwork.printNodes();
+    var newLayout = activate("layouts", $(this));
+    if(newLayout){
+      if(newLayout==='radial'){
+        $('#sorts').css("opacity",0.0).effect("slide", {  "direction" : "right",  "mode" : "show"},500).animate({opacity:1.0}, 500);
+      }
+      else{
+        $('#sorts').animate({opacity:0.0},500).effect("slide", {  "direction" : "left",  "mode" : "hide"},500);
+      }
+      return myNetwork.toggleLayout(newLayout);
+    }
+    return false;
+  });
+
+  d3.selectAll("#filters .selectable").on("click", function(d) {
+    var newFilter = activate("filters", $(this));
+    if(newFilter){  return myNetwork.toggleFilter(newFilter);  }
+    return false;
+  });
+
+  // note that sorts is only visible if we are in a radial layout.
+  d3.selectAll("#sorts .selectable").on("click", function(d) {
+    var newSort = activate("sorts", $(this));
+    if(newSort){  return myNetwork.toggleSort(newSort);  }
+    return false;
+  });
+
+  d3.selectAll("#features .selectable").on("click", function(d) {
+    var newFeature = activate("features", $(this));
+    if(newFeature){  return myNetwork.toggleFeature(newFeature);  }
+    return false;
+  });
+
+  d3.selectAll("#features #addFeature").on("click", function(d) {
+    alert("this doesn't work yet");
+  });
+
+
+  d3.selectAll("#interactions .interactionType")
+    .on("mouseover", function(d) {
+      return myNetwork.highlightSpecificInteractions(d3.select(this).attr("title"));})
+    .on("mouseout", function(d) {
+      return myNetwork.removeLinkHighlighting();})
+    .on("change", function(d) {
+      if(d3.selectAll("#selectedInteractions").classed("active")){
+        d3.selectAll("#selectedInteractions").classed("active", false);
+      }
+  });
+
+  $("#search").keyup(function() {
+    var searchTerm = $(this).val();
+    return myNetwork.updateSearch(searchTerm);
+  });
+
+  // get network cannot be in this file because it is stored in a rails variable
+  var network = getNetwork();
+  if(network){
+   myNetwork("#graph", network);
+   return true;
+  }
+  return false;
+  //});
+};
+
+
+// // determine if a value is a number
+// function isNumeric(n) { return !isNaN(parseFloat(n)) && isFinite(n);  }
+
+// get the interaction types stored in the database
+function getInteractionTypes(){
+  $.ajax({
+      type    : 'GET',
+      url     : 'updateInteractions',
+      data    : {  organism:"Scerevisiae" },
+      dataType: 'json',
+      beforeSend: function(){
+        disableElement('.control'); // disable control elements
+        maskElement('window',true); // show loading window
+      },
+      success : function(data){
+        var html = '';
+        var columns = 2;
+        var totalInteractionTypes=0;
+        jQuery.each(data, function(iClass, iClassArray) {
+          html+= '<fieldset class="'+iClass+' iFieldset">';
+          html+= '<label class="title">'+iClass+'<span class="controller selected" onclick="toggleSelected(this, \''+iClass+'\')">';
+          html+= ' (Select All / None)</span> </label>';
+          html+='<div style="float:left;">';
+          var count=0;
+          var remaining = iClassArray.length;
+          var limit =(remaining / columns + 0.99999999);
+          for (var i = 0; i < iClassArray.length; i++) {
+            totalInteractionTypes+=1;
+            if (count >=limit){
+              html+='</div><div style="float:left;">';
+              columns -= 1;
+              limit =(remaining / columns + 0.99999999);
+              count=0;
+            }
+            html+='<label class="checkbox interactionType" title="'+iClassArray[i]+'"> <input type="checkbox" class="'+iClass+'" name="interactions" ';
+            html+='value="'+iClassArray[i]+'" checked="checked" /> '+iClassArray[i]+' </label>';
+            count+=1;
+            remaining-=1;
+            iClassArray[i]
+          }
+          html+='</div></fieldset><br style="clear:both;height:0px;line-height:0px"/>';
+        });
+        if(totalInteractionTypes>0){
+          html+='<button onclick="adjustInteractionTypes()">Update Graph!</button>'
+        }
+        $('#informationPane .interactionsContainer').html(html);
+        if( startGraph() ){
+          removeAllMasks();
+        }
+        else{
+          $('#maskLoadStatus').html("An error occurred loading the nodes and edges, it's possible that no data was sent to the graph.");
+          $('#maskLoadStatus').prop('class', 'alert alert-danger');
+          setElementToMiddle($('#maskLoadStatus'), $(window));
+        }
+      },
+      error:function(data, e, er){
+        removeAllMasks();
+        $('#interactions .interactionsContainer').html("Database Error");
+      },
+      complete:function(){
+
+      }
+  });
+}
+
+function removeAllMasks(){
+  hideMask();
+  removeInvisibleMasks();
+}
+
+// toggles the checked status of all checkboxes matching the given class
+// current class is given by elem. This function mask ALL checkboxes of the given
+// class checked or unchecked. Thus, if the current state of being checked is heterogeneous
+// (i.e. some of the elements are checked and some are unchecked), after running this
+// function they will all be the same state (i.e. homogeneously checked or unchecked)
+// based on the current state of "elem"
+function toggleSelected(elem,checkboxClass){
+  if($(elem).hasClass('selected')){$('.'+checkboxClass).attr('checked',false);}
+  else{$('.'+checkboxClass).attr('checked',true);}
+  $(elem).toggleClass('selected');
+}
+
+getInteractionTypes();
+
+// attach the .compare method to Array's prototype to call it on any array
+Array.prototype.compare = function (array) {
+  // if the other array is a falsy value, return
+  if (!array){return false;}
+  // compare lengths - can save a lot of time
+  if (this.length != array.length){return false;}
+  for (var i = 0; i < this.length; i++) {
+    // Check if we have nested arrays
+    if (this[i] instanceof Array && array[i] instanceof Array) {
+      // recurse into the nested arrays
+      if (!this[i].compare(array[i])){  return false; }
+    }
+    else if (this[i] != array[i]) {
+      // Warning - two different object instances will never be equal: {x:20} != {x:20}
+      return false;
+    }
+  }
+  return true;
+}
+
+// creates a modal window over a given element (or the entire window) with a
+// loading indicator
+function maskElement(element,entireWindow){
+  var elem, maskTopLeft, maskHeight, maskWidth;
+  if(entireWindow){
+    maskTopLeft={};
+    elem = $(window);
+    maskTopLeft.top=0;
+    maskTopLeft.left=0;
+    maskHeight = $(document).height();
+    maskWidth = $(document).width();
+  }
+  else{
+    elem = $(element);
+    maskTopLeft = elem.offset();
+    //Set the popup window to center
+    maskHeight = elem.outerHeight();
+    maskWidth = elem.outerWidth();
+  }
+
+  if($('#mask').length < 1){
+    $('body').append('<div id="mask"></div>');
+    $('body').append('<div id="maskLoadStatus" style="position:absolute;display:none;"><img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/indicator_verybig.gif" width="128" height="128"/></div>')
+  }
+
+  //Set height and width to mask to fill up the whole screen
+  $('#mask').css({'width':maskWidth,'height':maskHeight, 'top':maskTopLeft.top, 'left':maskTopLeft.left});
+  //transition effect
+  $('#mask, #maskLoadStatus').show();
+
+  setElementToMiddle($('#maskLoadStatus'), elem);
+  $('#mask, #maskLoadStatus').hide().fadeIn(500);
+}
+// removes all masks created by the function "maskElement"
+function hideMask(){
+  $('#maskLoadStatus').fadeOut(500);
+  $('#mask').fadeOut(500);
+}
+function setElementToMiddle($elem_to_center, $container){
+  //Set the popup window to center
+  var maskHeight = $container.outerHeight();
+  var maskWidth = $container.outerWidth();
+  $elem_to_center.css('top',  maskHeight/2-$elem_to_center.height()/2);
+  $elem_to_center.css('left', maskWidth/2-$elem_to_center.width()/2);
+}
+// disables element by floating an invisible mask over it
+function disableElement(element){
+  var elem = $(element);
+  var html = '';
+  for (var i = 0; i < elem.length; i++) {
+    if($(elem[i]).is(":visible")){
+      var maskTopLeft = $(elem[i]).offset();
+      var maskHeight = $(elem[i]).outerHeight();
+      var maskWidth = $(elem[i]).outerWidth();
+      style = "width:"+maskWidth+"px; height:"+maskHeight+"px; top:"+maskTopLeft.top+"px; left:"+maskTopLeft.left+"px;";
+      html = html + '<div id="invisMask'+i+'" class="invisibleMask" style="'+style+'"></div>';
+    }
+  };
+  $('body').append(html);
+  return false;
+}
+// removes all invisible masks (works with disableElement function)
+function removeInvisibleMasks(){
+  $('.invisibleMask').each(function() {
+    $(this).remove();
+  });
+  return false;
+}
+
+function activateInformationPaneMouseOver(){
+  // remove any previous events - not sure if this is required
+  $("#informationPane .currentFeatureContainer li").unbind();
+  $("#informationPane .currentFeatureContainer li")
+    .on("mouseover", function(d) {
+      $(this).addClass('highlight');
+      return highlightSpecificNodes($(this).attr('title'),'feature');})
+    .on("mouseout", function(d) {
+      $(this).removeClass('highlight');
+      return removeNodeHighlighting();
+  });
+  return 1;
+}
+
+$(function() {
+  $( "#informationPane .heading" ).click(function(){
+    toggleAccordian(this);
+  });
+});
+
+function toggleAccordian(elem, after){
+  var oc = $(elem).siblings('.outerContainer');
+  var clicked = $(elem);
+  // if this item is visible, collapse it
+  if(clicked.hasClass("active")){
+    oc.animate({height: 0}, 1000,function(){
+      //after
+      clicked.removeClass("active");
+      if(after){
+        after();
+      }
+    });
+  }
+  else{
+    oc.css('height','auto'); // set height to auto
+    var autoHeight = oc.height();  // get that height
+    oc.height(0).animate({height: autoHeight}, 1000); // set height back to 0 and animate to auto height
+    clicked.addClass("active");
+  }
+}

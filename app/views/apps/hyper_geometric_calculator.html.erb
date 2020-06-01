@@ -1,0 +1,117 @@
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+
+<style type="text/css">
+div fieldset{float:left;}
+legend{letter-spacing:0.03em;}
+.formTable{padding-left:10px;}
+#spinner{border-width:0px;}
+#covert{margin-left:5px;}
+#covert, #spinner, #spinner1{float:left;}
+.resultDiv{
+	padding-top:10px;
+	clear:left;
+}
+
+.loading{
+	font-size:1.3em;
+	margin-left:15px;
+	float:left;
+}
+
+#error{
+	width: auto;
+	float:left;
+  margin-top: 10px;
+	font-size:1.3em;
+	font-weight:bold;
+}
+
+.commit{float:left;}
+
+fieldset{
+	border: 3px solid #AAAAAA;
+	height:auto;
+	margin-right:30px;
+	padding:5px;
+	float:left;
+}
+legend{
+	color: black;
+	font-weight: bold;
+	font-size:2em;
+	font-variant: small-caps;
+	padding: 2px 8px;
+}
+textarea{
+	font-size:1.5em;
+	font-family: 'Lucida Grande';
+}
+table tr td{text-align:center;}
+table tr td.left{text-align:left;}
+label{
+	font-weight:bold;
+	font-size:1.2em;
+}
+</style>
+<script type="text/javascript" charset="utf-8">
+
+function validate_form(){
+	$("#result").html("");
+	if($('form[name=hyperGeo]').valid()){
+		submitAjax({'strURL':'<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/calculateHyperGeo.cgi',
+								'formName':'hyperGeo',
+								'whatToUpdate' :'result',
+								'loader': 'loading',
+								'method':'POST'
+							});	;
+	}
+}
+
+function isNormalInteger(str) {
+  var n = ~~Number(str);
+  return String(n) === str && n >= 0;
+}
+
+jQuery.validator.addMethod("integer", function(value, element) {
+	var n = ~~Number(value);
+  return this.optional(element) || (String(n) === value && n >= 0);
+}, "Only positive integers are allowed");
+
+jQuery.validator.addClassRules(
+"posInteger", {
+	required: true,
+	integer: true,
+	min: 1
+});
+
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<form name="hyperGeo"  id="hyperGeo" style="float:left;" action=''>
+	<div style="float:left;clear:left;">
+		<label for="t"><strong>Population size:</strong></label>
+		<input class="formInputText posInteger" id="t" name="t" size="20" type="text">
+		<label for="tg"><strong>Number of successes in population:</strong></label>
+		<input class="formInputText posInteger" id="tg" name="tg" size="20" type="text">
+		<label for="tp" ><strong>Sample size:</strong></label>
+		<input class="formInputText posInteger" id="tp" name="tp" size="20" type="text">
+		<label for="gp" ><strong>Number of successes in sample:</strong></label>
+		<input class="formInputText posInteger" id="gp" name="gp" size="20" type="text">
+
+		<br style="clear:left" /><br/>
+		<input type="button" value="&raquo; Submit &laquo;" id="calcHG_submit" class="commit" onclick="validate_form('conversion');" />
+		<input type="reset" class="reset" value="&raquo; Reset &laquo;" style="float:left;margin-left:15px;"/>
+		<div id="loading" class="loading" style="display:none;">
+			<%=image_tag "spinner-big.gif", :alt=> "spinner", :id=>"spinner", :name=>"spinner"%>
+			<div style="padding:5px;float:left;">Loading...</div>
+		</div>
+	</div>
+</form>
+<br style="clear:left" />
+<div id="result" class="resultDiv" ></div>
+<br/><br/>
+
+</div>
+

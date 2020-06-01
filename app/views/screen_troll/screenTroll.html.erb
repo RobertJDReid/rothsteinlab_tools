@@ -1,0 +1,224 @@
+<%= javascript_include_tag 'jquery-deparam.min', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'screenTroll', "data-turbolinks-track" => true %>
+
+<script type="text/javascript" charset="utf-8">
+
+var styled_window_two;
+
+function downloadScreens(){
+	var cb = function(){
+		window.location=$('#screensDownloadLink').prop('href');
+	}
+	submitAjax({'strURL':'<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/screenTroll/screenTrollDownload.cgi',
+							'formName':'notAForm',
+							'whatToUpdate' :'downloadOutput',
+							'loader': 'spinner1',
+							'method':'POST',
+							'callback' : cb
+						});
+}
+
+function loadPage(){
+	$('#loading').hide();
+	if($("#autoSubmit").val() && $("#autoSubmit").val() == 'sgd'){
+		$('#results').slideDown(function(){
+			calcHeight();
+			calcHeight();
+			var cb = function(){openModal($('#sgdWelcomeDrag'), false)};
+			scrollToMe('#screenTrollForm',200, cb);
+		});
+	}
+	else{
+		$('#results').slideDown(function(){
+			calcHeight();
+			calcHeight();
+		});
+	}
+}
+
+function validate_form(formName){
+	$('#results').hide();
+	if($('#orfError')){$('#orfError').remove();$('#orfList').css('border', "0px solid red");}
+
+	if($('#orfs').val() == '' && $('#orfsFile').val() == '' ){
+		var error = '<div class="validation-advice" style="float:left;" id="orfError">';
+		error+="You must enter some data to analyze...</div>";
+		$('#orfList').append(error);
+		$('#orfList').effect('highlight',{},1000);
+		error =  true;
+		return false;
+	}
+	else{
+		$('#loading').show();
+		return true;
+	}
+
+	return false;
+}
+
+function scrollToMe(target, duration,callback){
+  target = $(target).length ? $(target) : $('#'+target);
+  duration = duration ? duration : 500;
+  callback = callback ? callback : function(){return 1;};
+  if (target.length) {
+    $('html,body').animate({
+      scrollTop: target.offset().top
+    }, duration, function() {callback();});
+    return false;
+  }
+}
+
+function openModal(div, submit){
+	div.css('left',($(window).width()/2-div.width()/2));
+	div.css('top',($(document).scrollTop() + $(window).height()/2-div.height()/2));
+	div.fadeIn(function(){
+		if(submit){	$("#screenTrollForm").submit();		}
+	});
+}
+
+function setupExample(){
+	var cb = function(){
+		openModal($('#modalExampleDrag'), true);
+		$("#autoSubmit").val("yes");
+		$('#orfs').val("YGR188C,YOR026W,YGL086W,YJL030W,YJL013C");
+		return 1;
+	};
+	scrollToMe('#screenTrollForm',200, cb);
+}
+
+function calcHeight(){
+	//find the height of the internal page & change the height of the iframe
+	$('#results').height($('#results')[0].contentWindow.document.body.scrollHeight);
+}
+
+$(document).ready(function(){
+	//styled examples use the window factory for a shared set of behavior
+	var window_factory = function(container,options){
+
+		var window_header = $("<div class='window_header'></div>");
+		var window_title = $("<div class='window_title'></div>");
+		var window_close = $("<div class='window_close'></div>").click(function(){$(this).parent().parent().hide();});
+		var window_contents = $("<div class='window_contents'></div>");
+
+		var windowContainer = $("<div class='window' style='display:none;' id='"+container.prop('id')+"Drag'></div>");
+		$('body').append(windowContainer);
+
+		window_contents.html(container.html());
+
+		window_header.append(window_close);
+		window_header.append(window_title);
+		window_title.html(container.prop('title'));
+
+		windowContainer.append(window_header);
+		windowContainer.append(window_contents);
+		if(options.handle){
+			options.handle = window_header;
+		}
+		var w = windowContainer.draggable(options);
+		windowContainer.css('position','absolute');
+	};
+	var styled_window_one = window_factory($('#modalExample'),{handle:true});
+	styled_window_two = window_factory($('#sgdWelcome'),{handle:false});
+
+	var uri =  location.href;
+	// deparam brought in by the jquery-deparam plug-in
+	params = $.deparam( uri.split('?')[1], true );
+
+	if(params.ORFs){
+		$('#orfs').val(params.ORFs);
+		$("#autoSubmit").val('sgd');
+		$("#screenTrollForm").submit();
+	}
+	else{
+		var referrer = document.referrer;
+		if(referrer.indexOf('http://www.yeastgenome.org/') == 0){
+			params = $.deparam( referrer.split('?')[1], true );
+			if(params.locus){
+				$('#orfs').val(params.locus);
+				$("#autoSubmit").val('sgd');
+				$("#screenTrollForm").submit();
+			}
+		}
+	}
+	// alert(document.referrer);
+	// location.href=location.href;
+});
+
+
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<div id="attribution">
+<h3>
+	For instructions for how to use <i>ScreenTroll</i> please see:<div style="padding:10px;"><a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3330810/" class="ext_link" >Thorpe PH, Dittmar JC, Rothstein R. "ScreenTroll: a searchable database to compare genome-wide yeast screens." Database. 2012.</a></div>This paper should also be referenced if you use any <i>ScreenTroll</i> results in a publication.</h3>
+</div>
+
+<ul class="linkList">
+	<li><%= link_to "Download the <em>ScreenTroll</em> Perl script".html_safe, "#{ENV['RAILS_RELATIVE_URL_ROOT']}/screen_troll/screenTroll.zip", id: "dlScript" %></li>
+	<li><a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3330810/" class="ext_link">PubMed link to <em>ScreenTroll</em> manuscript</a></li>
+	<li><%= link_to raw("Click here for information about how <em>ScreenTroll</em> calculates 'rank scores'."), screen_troll_stats_path, :class=>"ext_link", :title=>"ScreenTroll Stat Notes" %></li>
+	<li><%= link_to raw("Click here for instructions on <em>ScreenTroll</em> data submission/correction."), screen_troll_submission_path, :class=>"ext_link", :title=>"ScreenTroll Submission Instructions" %></li>
+	<li><%= link_to raw("View list of screens in <em>ScreenTroll</em>."), screen_troll_list_path, :class=>"ext_link", :title=>"ScreenTroll Screen Listing" %></li>
+	<li><span class="ajaxy" id='dlAllData' style="padding:0px;color:#1C2089;cursor:pointer;font-size:1.3em;float:none;" onclick="downloadScreens();">Download all data currently in the <em>ScreenTroll</em> database.</span><br style="clear:left" /><%=image_tag "spinner-big.gif", :alt=> "spinner1", :id=>"spinner1", :name=>"spinner1", :style=>"display:none;"%><div class="ajaxy" id="downloadOutput"></div><br style="clear:left" /><br/></li>
+	<li><%= link_to "Other useful tools", screen_troll_externalToolList_path, :class=>"ext_link", :title=>"Useful Tools" %><br style="clear:left" /><br/></li>
+	<li><a href="#" onclick="setupExample();" id='exampleLink' title="ScreenTroll Example Explanation">Click here to view an example of <em>ScreenTroll</em> (draggable window) </a></li>
+</ul>
+<form name="screenTrollForm"  id="screenTrollForm" style="float:left;clear:both;color:#00008B;margin-left:20px;padding-right:10px;" enctype="multipart/form-data" action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/screenTroll/screenTroll.cgi" method = "post" target="results" onsubmit="return validate_form();false;">
+	<div style="float:left;clear:left;">
+		<h2 style="padding:0px;margin:0px;">Type or Paste in your identifier list: </h2>
+		<em style="display:inline;">Identifiers may be ORFs, gene names or aliases. You may separate your identifiers with commas, spaces, or carriage returns.</em>
+		<br/>
+	</div>
+	<div style="float:left;clear:left;margin-bottom:10px;" id='orfList'>
+		<div style="float:left;clear:left;">
+			<textarea title="" name="orfs" id="orfs" rows="15" cols="30" ></textarea>
+			<br/><br/>
+		</div>
+		<div style="float:left;clear:left;">
+			<label for="orfsFile" style="display:inline;"><b>Or upload a file:</b></label>
+			<input type="file" name="orfsFile" id="orfsFile" class="field_associates" style="display:inline;"/><br/>
+
+		</div>
+		<br style="clear:left" />
+	</div>
+		<div style="float:left;clear:left;">
+	<em style="display:inline;font-color:black;">Max size: 10MB.<br/>Your file should be a plain text .txt file and should only contain a list of genes, no other information.<br/>Gene identifiers may be ORFs, gene names or aliases.<br/>You may separate your identifiers with commas, spaces, or carriage returns.
+		<a href="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/screen_troll/example.txt" style="font-color:blue;text-decoration:underline;">Click here for an example file.</a></em></br></br></br>
+	</div>
+	<div style="float:left;clear:left;">
+		<input type="checkbox" style="display:inline;margin-bottom:10px;" id="includeComp" name="includeComp" value="yes" />
+		<label for="includeComp" style="padding-left:5px;margin-top:-5px;display:inline;color:black;">Check this box to include competition based screens.</label>
+		<br/>
+		<input type="checkbox" style="display:inline;margin-bottom:10px;" id="includeCostanzo" name="includeCostanzo" value="yes" />
+		<label for="includeCostanzo" style="padding-left:5px;margin-top:-5px;display:inline;color:black;">Check this box to include data from Costanzo et. al. Science. 2010. SGA screens.</label>
+	</div>
+	<div style="float:left;clear:left;">
+		<label for="id1"><i>Optional:</i> Enter a name for this set of data (e.g. Kryptonite Sensitive Mutants):</label>
+		<input type="text" name="id1" id="id1" class="formInputText" />
+	</div>
+	<br style="clear:left" /><br/>
+	<input type="hidden" value="yes" name="iFrame" />
+	<input type="hidden" name="autoSubmit" id="autoSubmit" value="no" />
+	<input type="submit" value="&raquo; Submit &laquo;" class="commit"  onclick='$("autoSubmit").value="no";$("screenTrollForm").action = "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/screenTroll/screenTroll.cgi"' />
+	<input type="reset" class="reset" value="&raquo; Reset &laquo;" style="float:left;margin-left:15px;"/>
+	<div id="loading" class="loading" style="display:none;">
+		<%=image_tag "spinner-big.gif", :alt=> "spinner", :id=>"spinner", :name=>"spinner"%><div style="padding:5px;float
+		:left;">Loading...</div>
+	</div>
+</form>
+<br style="clear:left" />
+<br/>
+<iframe name="results" id="results" allowTransparency="true" frameborder="0" style="display:none;clear:left;border:0px;width:100%;" onload="loadPage();"></iframe>
+</div>
+
+<br/></div>
+
+<div id='modalExample' style="display:none;" title="ScreenTroll Example Explanation">
+	Here we illustrate example input and output for ScreenTroll. Five open reading frames (ORFs) are chosen, BUB1, BUB3 MAD1, MAD2 and MAD3 (YGR188C, YOR026W, YGL086W, YJL030W and YJL013C respectively). ScreenTroll will accept common gene names or systematic names. These five ORFs are critical components of the spindle assembly checkpoint (SAC), which plays an important role in delaying the cell cycle in the presence of DNA damage. The ORFs are compared against the ScreenTroll database excluding competition assays. Scroll down to view the results showing a list of screens that most closely match these five ORFs in order of closest match. Further down the page are more details of each overlapping set of ORFs.
+</div>
+
+<div id='sgdWelcome' style="display:none;" title="Welcome SGD User!">
+	Welcome to ScreenTroll from SGD. If you have arrived at this site from an ORF page in SGD, you will only see the ScreenTroll results that summarize the screens that identified this single ORF. The power of ScreenTroll comes from comparing multiple ORFs. Try entering more than a single ORF into ScreenTroll to view a list of published yeast screens that most closely match your set of genes.
+</div>

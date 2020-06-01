@@ -1,0 +1,146 @@
+function submitAjax(options) {
+	// available options strURL, method, formName, whatToUpdate, loader, callback
+
+	options.callback = options.callback ? options.callback : function(){return 1;};
+	options.method = (options.method && options.method == 'POST') ? options.method  : 'GET';
+	var sendData ='';
+	if(options.formName){
+		sendData = $('form[name='+options.formName+']').serialize();
+	}
+
+	$.ajax({
+		type		: options.method,
+		url			: options.strURL,
+		data		: sendData,
+		dataType: 'html',
+		beforeSend: function(){
+			if(options.loader){$('#'+options.loader).show();}
+			$('#'+options.whatToUpdate).html('')
+		},
+		success: function(data){
+			$('#'+options.whatToUpdate).html(data);
+			$('#'+options.whatToUpdate).slideDown();
+			options.callback();
+		},
+		error: function(){
+			var failText = '<div class="alert">Sorry, an error occurred. Please try again or contact the admin.</div>';
+			$('#'+options.whatToUpdate).html(failText);
+		},
+		complete: function(){	if(options.loader){$('#'+options.loader).hide();}	}
+	});
+ 	return false;
+}
+
+function killFlash(){
+	// if(!message){message="Loading...";}
+	// $("flashMessageBackground").style.display="none";
+	// $$('#flashTitle p').innerHTML=message;
+	// $('flashMessageContainer').className='flashGood';
+	$('#flashMessageBackground').remove();
+}
+
+function popup(mylink, windowname){
+	if (! window.focus) return true;
+	var href;
+	if (typeof(mylink) == 'string'){href=mylink;}
+	else{href=mylink.href;}
+	if(href && href != ''){window.open(href, windowname, 'width=1100,height=600,scrollbars=yes');}
+	return false;
+}
+
+function setupFlash(result, title, message){
+	if(result){
+		var background = $('#flashMessageBackground');
+		if(background.length < 1){
+			background = $('<div id="flashMessageBackground" style="display:none;"></div>').appendTo('body');
+		}
+		background.show();
+		if($(document).height()){background.height($(document).height()+'px');}
+
+		var container = $("#flashMessageContainer");
+		if(container.length < 1){
+			container = $('<div id="flashMessageContainer" class="flashGood"></div>');
+			background.append(container);
+		}
+		else{container.prop('class','flashGood');}
+
+		var titleDiv = $('#flashTitle');
+		if(titleDiv.length < 1){
+			titleDiv = $('<div id="flashTitle"></div>');
+			container.prepend(titleDiv);
+		}
+
+		var tText = $('#tText');
+		if(tText.length < 1){
+			tText = $('<p id="tText"></p>');
+			titleDiv.prepend(tText);
+		}
+		if(title.length < 1){title = 'Loading...';}
+		tText.html(title);
+
+		var flashClose = $('#closeFlash');
+		if(flashClose.length < 1){
+			titleDiv.prepend('<img src=<%=asset_path "css/close.png"%> onclick="killFlash(); return false;" alt="Close" id="closeFlash"/>');
+		}
+
+		var flashText = $('#flashMessageText');
+		if(flashText.length < 1){
+			flashText = $('<div id="flashMessageText"></div>');
+			container.append(flashText);
+		}
+		if(!message){message='';}
+		flashText.html(message);
+
+		// adjust dimensions of flash message to fit within bounds of current window
+		var dif =($(window).height()/2)-(container.height()/2)-30;
+		if(dif >0){container[0].style.top=dif+'px';}
+		window.scrollTo(0, 0);
+	}
+	if (typeof moveDisabled == 'function') {
+		setTimeout("moveDisabled('disabler','screeninfo')",50);
+	}
+	return 1;
+}
+
+function showFieldHint(formElement){
+	// get all elements with currently active field hints,
+	// hide them, then activate the one passed to this function
+	$('div.field-hint').prop('class','field-hint-inactive');
+	formElement = $(formElement);
+	var divToActivate=formElement.prev();
+	$(divToActivate).css('left', (formElement.offset().left+formElement.outerWidth()));
+	divToActivate.prop('class','field-hint');
+}
+
+function updateFlash(message, title, className){
+	var titleDiv = $('#tText');
+	var bodyDiv = $('#flashMessageText');
+	var containerDiv = $('#flashMessageContainer');
+	if(title){titleDiv.html(title);}
+	if(message && bodyDiv.length > 0){bodyDiv.html(message.replace(/[\r\n]+/g, ''));}
+	if(className){containerDiv.prop('class',className);}
+	// set container position (middle)
+	var dif =($(window).height()/2)-(containerDiv.height()/2)-30;
+	if(dif >0){containerDiv.css('top',dif+'px');}
+}
+
+function updateInteractive(continueBox, cancelBox, idName, continueMessage, continueHead, formName){
+	var buttonContainer = $('#flashMessageContainer .buttonContainer');
+	if($('#flashMessageContainer .buttonContainer').length<1 ){buttonContainer = $('<div class="buttonContainer"></div>');}
+	if(continueBox){
+		var temp = $('<div class="continueButton">Continue</div>');
+		temp.click(function(){	confirmContinue(idName,continueMessage,continueHead,formName);	});
+		buttonContainer.append(temp);
+	}
+	if(cancelBox){
+		buttonContainer.prepend('<div class="cancelButton" onclick=killFlash();>Cancel</div>');
+	}
+	$('#flashMessageText').append(buttonContainer);
+}
+
+function confirmContinue(idName,continueMessage,continueHead,formName){
+	$('#'+idName).val("true");
+	$("#flashMessageContainer .buttonContainer").remove();
+	$("form[name='"+formName+"']").submit();
+	updateFlash(continueMessage,continueHead,"flashGood");
+}

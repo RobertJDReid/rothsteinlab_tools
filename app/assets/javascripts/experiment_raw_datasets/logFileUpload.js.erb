@@ -1,0 +1,353 @@
+var script = '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/experiments/uploadLogFile.cgi';
+
+// check to see if value passed valid number
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function initializeQuery(queryData, info, oQuery, oCondition){
+	queryData = {};
+	return initializeCondition(queryData, info, oQuery, oCondition);
+}
+
+function initializeCondition(queryData, info, oQuery, oCondition){
+	queryData[info[2]] = {
+		'plates' : {},
+		'originalData' : {'query':oQuery, 'condition':oCondition}, // use original data to hold identifiers
+		'density' : 0
+	}; // initialize condition hash
+	queryData[info[2]]['plates'][info[1]] = initializePlate();
+	return queryData;
+}
+
+function initializePlate(){
+	return {'sizes':[],'circularities':[]}; // initialize plate colony values array
+}
+
+function logFileOnLoadHandler(evt,f,callback){
+	var r = commonFileProcessProcedures(evt,f);
+	var perceived_density=0;
+	trimFile(r);
+	var replace_regex = /"|'|\t/;
+	var replace_extension = /(tif|tiff|jpg|jpeg|gif|png|psd|bmp|fits|pgm|ppm|pbm|dic|dcm|dicom|pict|pic|pct|tga|ico|xbm|lsm|img|liff)$/i;
+	var current_plate='';
+	var info;
+	var plateCounter=0;
+	var density = false;
+	// will be a hash of hashes of hashes in the form == query-> condition -> 'plates' -> array of values
+	var allPlateData = {'meta':{}, 'fData':{}};
+
+	var i = 0; // i is the file line iterator, i.e. it is the current row number being processed
+
+	// chunck size == how many lines of the file to process at a time. The "for(var j=0;j<chunkSize;j++){"
+	// loop below is under the control of this variable
+	var chunkSize = calculateChunksize(r,callback);
+	if(chunkSize === false){return false;}
+	var timer;
+
+	{
+		var limit = 100;
+		var foundIt = false;
+		var start = 0;
+		while(!foundIt){
+			if(r.fileArr[start].match(/,/)){ //new filename encountered
+				foundIt=true;
+			}
+			start++;
+			if(start > limit){
+				var msg = '<li class="fileFail">Did not process '+r.fileName+'. There seems to be an issue with your log file. Could not find a line with a plate header (e.g. "query,plate#,condition.tiff").</li>';
+				r.fileErrors.append(msg);
+				return callback();
+			}
+		}
+	}
+	i = start-1;
+
+	// idea and rationalization for this loop found at:
+	// http://kryogenix.org/days/2009/07/03/not-blocking-the-ui-in-tight-javascript-loops
+	function doWork () {
+		if( (i+chunkSize > r.fileLength) ){chunkSize = r.fileLength-i;}
+		for(var j=0;j<chunkSize;j++){
+			if(r.fileArr[i].match(/,/)){ //new filename encountered
+				// if this is the first plate then density has not yet been initialized, set it here
+				if(!density){density = plateCounter;}
+				// else check if the density of the plate matches density - if not display error
+				else if(density != plateCounter){
+					var msg = '<li class="fileFail">Did not process '+r.fileName+'. There seems to be an issue with your log file. The density calculated for the first plate was '+density+', however the density calcluated for the current plate ('+current_plate+') was '+plateCounter+'. This program will only accept log files in which all plate densities are the same.</li>';
+					return appendFileErrorClearTimerCallBack(msg, r.fileErrors);
+				}
+
+				// remove any quotes or tabs in the string, remove the file extension...
+				r.fileArr[i] = r.fileArr[i].replace(replace_regex,"").trim().replace(replace_extension,"").replace(/\.$/,"");
+				current_plate = r.fileArr[i];
+				// if the current_plate contains the following illegal characters
+				if(current_plate.match(/(\.|\!|\@|\#|\$|\%|\^|\\|\/)/)){
+					if(current_plate.length > 50){current_plate = current_plate.substr(0,50)+"...";}
+					var msg = '<li class="fileFail">Did not process '+r.fileName+'. There seems to be an issue with your log file at line: '+(i+1)+' ('+current_plate+'). This program will not except data containing the following characters: <pre>!, @, #, \$, %, or /</pre>. In addition, it cannot contain more then 1 period.</li>';
+					return appendFileErrorClearTimerCallBack(msg, r.fileErrors);
+				}
+				// split line by commas, trim each of the fields
+				// index 0 should be the query, 1 = plate#, 2 = condition (if present)
+				info = $.map(r.fileArr[i].split(/,/), $.trim);
+				// if info is the wrong length...
+				if(info.length<2 || info.length>3){
+					var msg = '<li class="fileFail">Did not process '+r.fileName+'. There seems to be an issue with your log file at line: '+(i+1)+' ('+current_plate+'). Queries, plates numbers and conditions must be separated by commas and cannot contain commas themselves. For example, "query,plate1,condition1" is a valid plate identifier. "qu,ery,plate1,condition1" is not.</li>';
+					return appendFileErrorClearTimerCallBack(msg, r.fileErrors);
+				}
+				// index 2 is the condition, if it is not defined then set it to be blank (although the previous if statement should of taken care of this issue)
+				if(!info[2] && info[2] !== 0){ info[2]='';}
+				// setup data structure if it doesn't exist
+				var oQuery = info[0]; var oCondition = info[2];
+				info[2] = info[2].toLowerCase(); // force lowercase (condition)
+				info[0] = info[0].toLowerCase();	// force lowercase (query)
+				if(!allPlateData['fData'].hasOwnProperty(info[0])){
+					allPlateData['fData'][info[0]] = initializeQuery(allPlateData['fData'][info[0]], info, oQuery, oCondition);
+				}
+				else if(!allPlateData['fData'][info[0]].hasOwnProperty(info[2])){
+					allPlateData['fData'][info[0]] = initializeCondition(allPlateData['fData'][info[0]],info, oQuery, oCondition);
+				}
+				else if(!allPlateData['fData'][info[0]][info[2]]['plates'].hasOwnProperty(info[1])){
+					allPlateData['fData'][info[0]][info[2]]['plates'][info[1]] = initializePlate(); // initialize plate colony values array
+				}
+				plateCounter=0;
+			}
+			else{
+				// split by tabs, trim whitespace
+				var data = $.map(r.fileArr[i].split(/\t/), $.trim);
+				if(data[0] == undefined || !isNumber(data[0]) || data[0].match(/^-/) ){
+					dataError = (data[0].length > 20) ? data[0].substr(0,17)+'...' : data[0];
+					var msg = '<li class="fileFail">Did not process '+r.fileName+'. There seems to be an issue with your log file at line '+(i+1)+' (plate = '+current_plate+', data = '+dataError+').  Note that values must be positive numbers. If this is at the end of your log file the issue may be that you have extra blank lines. This program will only except positive numbers as data input.</li>';
+					return appendFileErrorClearTimerCallBack(msg, r.fileErrors);
+				}
+				if(data[1] != undefined){ // for log files with circularity measurements
+					// push circularity data into hash
+					allPlateData['fData'][info[0]][info[2]]['plates'][info[1]]['circularities'].push(data[1]);
+					circ_flag=1;
+				}
+				// add to "colony size" data
+				allPlateData['fData'][info[0]][info[2]]['plates'][info[1]]['sizes'].push(data[0]);
+				plateCounter++;
+			}
+			++i;
+		}
+		updateProgress(i, r.fileLength);
+		if(i<r.fileLength){
+			// setTimeout(doWork,1);
+		}
+		else{
+			// done iterating over file - clear file array and check for errors...
+			r.fileArr = [];
+			// if the calculated density is not an approved value then throw error
+			if($.inArray(density, densityPossibilities)<0){
+				var msg = '<li class="fileFail">Did not process '+r.fileName+'. The density found for this file was '+density+', however this program will only accept log files in which the plate density is one of the following values: "'+densityPossibilities.join('", "')+'".</li>';
+				return appendFileErrorClearTimerCallBack(msg, r.fileErrors);
+			}
+			clearInterval(timer);
+			allPlateData['meta']['fileName'] = r.fileName;
+			allPlateData['meta']['density'] = density;
+			allPlateData['meta']['batchDate'] = r.batchDate;
+			allPlateData['meta']['id'] = r.id;
+			allPlateData['meta']['lastMod'] = r.lastMod;
+			allPlateData['meta']['file_size'] = r.size;
+			processLogDataForDisplay(allPlateData,callback);
+		}
+	};
+
+	function appendFileErrorClearTimerCallBack(msg,elem){
+		clearInterval(timer);
+		elem.append(msg);
+		callback();
+		return false;
+	}
+	timer = setInterval(doWork,0);
+	return true;
+}
+
+function processLogDataForDisplay(allData,callback){
+	var density = allData['meta']['density'];
+	var fileName = allData['meta']['fileName'];
+	var batchDate = allData['meta']['batchDate'];
+
+	var baseHTML = '<tr class="goodRow"><td>'+fileName+'</td><td>';
+	var rowNum=$('#goodFileTable tr.goodRow').size()+1;
+	var rowCounter=0;
+	for(var query in allData['fData']){
+		for(var condition in allData['fData'][query]){
+			rowCounter++;
+			var eC = 'rowNum'+rowNum;
+			var numberPlates = 0;
+			for(var plate in allData['fData'][query][condition]['plates']){
+				numberPlates++;
+				if(allData['fData'][query][condition]['plates'][plate]['circularities'].length > 0 && (allData['fData'][query][condition]['plates'][plate]['sizes'].length != allData['fData'][query][condition]['plates'][plate]['circularities'].length)){
+					$('#badFileTable').append('<tr><td>'+fileName+'</td><td>The number of colony areas ('+allData['fData'][query][condition]['plates'][plate]['sizes'].length+') does not match the number of circularity measurements ('+allData['fData'][query][condition]['plates'][plate]['circularities'].length+') for query: "'+query+'", condition: "'+condition+'", plate: "'+plate+'".</td></tr>');
+					return false;
+				}
+			}
+			var c = guessConditionInfo(query,condition,fileName);
+			var html = '<td class="'+eC+'">'+rowNum+'</td><td class="'+eC+'">'+allData['fData'][query][condition]['originalData'].query+'</td>';
+			html += '<td id="condition'+rowNum+'" class="'+eC+'">'+c+'</td><td id="queryLookup'+rowNum+'" class="'+eC+'"></td>';
+			html += '<td id="date'+rowNum+'" class="'+eC+'"><span>'+batchDate+'</span> <input type="hidden" title="'+rowNum+'" id="datepicker'+rowNum+'" /> </td>';
+			html += '<td id="plates'+rowNum+'" class="'+eC+'">'+numberPlates+'</td><td id="density'+rowNum+'" class="'+eC+'">'+density+'</td>';
+			html += '<td id="existsInDB'+rowNum+'" class="'+eC+'"></td>';
+			html += '<input type="checkbox" name="controlData" value="'+rowNum+'"  style="display:inline;" /></td>';
+			html += '<td id="uploadTD'+rowNum+'" class="'+eC+'"></td>';
+
+			if($('#'+allData['meta']['id']).length>0){
+				insertedRow=$('<tr class="goodRow">'+html+'</tr>').appendTo("#goodFileTable");
+			}
+			else{
+				var newRow = '<tr class="goodRow"><td id="'+allData['meta']['id']+'" class="fileNameRow"  title="'+fileName+'" rowspan="1"><strong>'+fileName+'</strong>';
+				newRow += '<br/>Size:'+allData['meta']['file_size']+' KB - Last Modified: '+allData['meta']['lastMod']+'</td>'+html+'</tr>';
+				$(newRow).appendTo("#goodFileTable");
+			}
+
+			addDateSelect(rowNum);
+			validateQuery(query,c,rowNum, allData['fData'][query][condition]);
+			rowNum++;
+		}
+	}
+	if(rowCounter>0){$("#"+allData['meta']['id']).attr('rowspan',rowCounter);}
+	// generate table elements here....
+	callback();
+}
+
+function validateQuery(query, condition, rowNum, dataset){
+	var img ='<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/progress_small.gif" alt="spinner" name="spinner" />';
+	$.ajax({
+			type		: 'GET',
+			url			: '../experiments/verify_query',
+			data		: {  query: query, condition: condition },
+			dataType: 'json',
+			beforeSend: function(){	$('#queryLookup'+rowNum).html(img);	},
+			success	: function(data){
+				var pWJ = processQueryData(data,rowNum,'', function(){checkIfExistsInDatabase(condition, rowNum, dataset)});
+				if(pWJ){	checkIfExistsInDatabase(condition, rowNum, dataset);	}
+			},
+			error:function(data, e, er){
+				$('#queryLookup'+rowNum).html("Database Error");
+				$('#queryLookup'+rowNum).addClass('badData');
+				alert("Incurred an error while attempting to validate query: "+query+", condition: "+condition);
+			}
+	});
+}
+
+// checks if log file already exists in database
+function checkIfExistsInDatabase(condition, rowNum, dataset){
+	var newLog = {'condition':condition, 'pwj_number':$('#queryLookup'+rowNum+' .queryPWJ').html()};
+	newLog['d_density'] = $('#density'+rowNum).html();
+	newLog['number_of_plates'] = $('#plates'+rowNum).html();
+	newLog['rowNum'] = rowNum;
+	newLog['batch_date'] = $('#date'+rowNum+" span").html();
+	(function(rowNum,newLog,dataset){
+		var img ='<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/progress_small.gif" alt="spinner" name="spinner" />';
+		$.ajax({
+			type		: 'GET',
+			url			: 'check_if_log_data_exists',
+			data		: {  plasmid: newLog['pwj_number'], condition: newLog['condition'], density: newLog['d_density']},
+			dataType: 'json',
+			beforeSend: function(){$('#existsInDB'+rowNum).html(img); },
+			success	: function(data){
+				if(data.hasOwnProperty('comments') && data.comments.match(/not found/i)){
+					$('#existsInDB'+rowNum).html('<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/no.png"/>');
+					$('#uploadTD'+rowNum).html(uploadButton(rowNum)+'<textarea class="allData" id="dataset'+rowNum+'" name="dataset['+rowNum+']">'+JSON.stringify(dataset)+'</textarea>');
+					$('#uploadTD'+rowNum).removeClass('badData');
+				}
+				else{
+					$('#existsInDB'+rowNum).html('<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/yes.png"/>');
+					for (var i = 0; i < data.length; i++) {
+						var dupRowHTML = '';
+
+						dupRowHTML += compareOldToNewJSON('pwj_number', newLog, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('condition',newLog, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('d_density',newLog, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('number_of_plates',newLog, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('batch_date',newLog, data[i], rowNum);
+
+
+						// if the table exists, else create it
+						ec = ($('#dupTable'+rowNum+' tr').length % 2) == 0 ? '' : 'class="alt"';
+						if($('#dupTable'+rowNum).length>0){$('#dupTable'+rowNum+' tbody').append('<tr '+ec+'>'+dupRowHTML+'</tr>');}
+						else{
+							var temp = '<tr id="dupRow'+rowNum+'" class="toggleRow"><td class="toggleTD" colspan="10">';
+							temp += '<div class="toggleRowDiv" id="dupTable'+rowNum+'"><table class="ui-widget dupDataTable">';
+							temp +=	'<thead class="ui-widget-header">';
+							temp +=	'	<tr>';
+							temp += '		<th>Upload?</th>';
+							temp +=	'		<th>Plasmid</th>';
+							temp +=	'		<th>Condition</th>';
+							temp +=	'		<th>Density</th>';
+							temp +=	'		<th># Plates</th>';
+							temp +=	'		<th class="nowrap">';
+							temp +=	'			Batch Date';
+							temp +=	'			<span class="question" id="badBatchDate'+rowNum+'" title="This is the date that this screen was performed. For consistancy, it should corrispond to the date the mating was performed.">?</span>';
+							temp +=	'		</th>';
+							temp +=	'	</tr>';
+							temp +=	'</thead>';
+							temp +=	'<tbody class="ui-widget-content">';
+							temp += "<tr class='alt'><td rowspan='"+(data.length)+"'>Upload <div class='nowrap;'>Anyway? <input type='checkbox' name='uploadAnyway' value='"+rowNum+"' onchange='updateGoodTable(this, "+rowNum+");' style='display:inline;' /><br/><small class='toggleLink' onclick='toggleDupRows("+rowNum+");'><em>Hide</em></small></div></td>";
+							temp += dupRowHTML;
+							temp +=	'</tbody>';
+							temp +=	'</table></div></tr></td>';
+							$('#uploadTD'+rowNum).parent().after(temp);
+							// expand rowspan by one
+							$(function(){
+								var $temp = $('#uploadTD'+rowNum).parent();
+								while(!$temp.children(":first").hasClass('fileNameRow') && $temp.is("tr")){
+									$temp = $temp.prev();
+								}
+								// $temp should now contain the filename row (containing the rowspan)
+								$temp.children(":first").attr('rowspan',  parseInt($temp.children(":first").attr('rowspan'))+1);
+								//function(i, rs) { return rs + 1; });
+								// could have also done -->;
+							});
+
+							//  add tooltips to header rows...
+							$("#dupTable"+rowNum+" .question").each(function () {
+								var id = $(this).attr('id');
+								$('#'+id).tooltip({
+									track:true,
+									fade:250,
+									delay:0
+								});
+							});
+						}
+					}
+					$('#uploadTD'+rowNum).html('<span class="badData toggleLink">Dups - click to view</span><textarea id="dataset'+rowNum+'" name="dataset['+rowNum+']" class="allData">'+JSON.stringify(dataset)+'</textarea>');
+					$('#uploadTD'+rowNum).addClass('badData');
+					$("#uploadTD"+rowNum+" span").click(function(){	toggleDupRows(rowNum);	});
+				}
+			},
+			error:function(data, e, er){
+				$('#existsInDB'+rowNum).html("Database error looking for dups.");
+			}
+		});
+	}(rowNum,newLog,dataset));
+}
+
+function buildData(rowNum){
+	var counter = 1;
+	var inputH = function(num,name,value){return "<input type='hidden' name='"+name+"["+num+"]' value ='"+value+"'/>";}
+	var inputT = function(num,name,value){return "<textarea  name='"+name+"["+num+"]'>"+value+"</textarea>";}
+	var newForm = document.createElement("form");
+
+	var pwj_plasmid = $('#queryLookup'+rowNum+' .queryPWJ').html().trim();
+	var inputs = inputH(counter,'pwj_plasmid', pwj_plasmid);
+
+	var condition = $('#condition'+rowNum).html().trim();
+	inputs += inputH(counter,'condition', condition);
+	inputs += inputH(counter,'density',$('#density'+rowNum).html().trim());
+	inputs += inputH(counter,'date',$('#date'+rowNum+' span').html().trim());
+	inputs += inputH(counter,'rowNum',rowNum);
+	inputs += inputH(counter,'uploaded_by',currentUser);
+	inputs += inputT(counter,'dataset',$('#dataset'+rowNum).html());
+	$(newForm).append(inputs);
+	return {form:newForm, setInfo: pwj_plasmid+" - "+condition};
+}
+
+function findFirstPlate(r){
+
+}

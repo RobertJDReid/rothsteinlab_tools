@@ -1,0 +1,641 @@
+var script = '<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/experiments/uploadScreenMillFile.cgi';
+
+$(document).ready(function(){
+
+	$("#dataUpload").validate({
+		submitHandler: function(form) {
+			$(".submitDiv .loading").show();
+			$(".submitDiv .spinner").show();
+			$(form).submit();
+		}
+	});
+
+});
+
+// checks to see if all values in the needs array are in the headerToExamine array.
+// missing is used to track headers already checked - which ever header has the fewest number of missing
+// values is assumes to be the true header (others may be comment rows, etc.).
+function checkHeader(needs,headerToExamine,missing){
+	tempMissing=new Array();
+	var foundAll=1;
+	for(var i=0; i<needs.length;i++){
+		// if one of the column headers is not found in the header being currently examined, push it into the missing arrays
+		if($.inArray(needs[i],headerToExamine)<0){
+			tempMissing.push(needs[i]);
+			foundAll=false;
+		}
+	}
+	if(tempMissing.length < missing.length){	missing = tempMissing;	}
+	return missing;
+}
+
+// check to make sure every plate for the current query-condition comma contains the same number of rows
+// iterate over plates, plateNum == key of plates, numRows = value
+function validateQueryConditionPlates(plates, query, condition, fileName, densityPossibilities){
+	var errors = '';
+	var temp = {};
+	var plateCount=0;
+	$.each(plates, function(plateNum, numRows) {
+		count = numRows['counter'];
+		plateCount+=1;
+		if($.inArray(count, densityPossibilities)<0){
+			errors+="<tr><td>"+fileName+"</td><td>Error parsing this file - bad plate density ("+count+") found for Query:"+query+", Condition: "+condition+" on plate # "+plateNum;
+			errors+="</td></tr>";
+		}
+		temp[count]=1;
+	});
+	densities = Object.keys(temp);
+	if(densities.length > 1){
+		errors+="<tr><td>"+fileName+"</td><td>Error parsing this file - non-consistant plate density found - densities found: ";
+		errors+=densities.join(', ')+"</td></tr>";
+	}
+	return {errorMsg:errors, density:densities, number_of_plates:plateCount};
+}
+
+// builds the form and inputs for a given row
+function buildData(rowNum){
+	var counter = 1;
+	var inputH = function(num,name,value){return "<input type='hidden' name='"+name+"["+num+"]' value ='"+value+"'/>";}
+	var inputT = function(num,name,value){return "<textarea  name='"+name+"["+num+"]'>"+value+"</textarea>";}
+	var newForm = document.createElement("form");
+
+	var query = $('#query'+rowNum).html().trim();
+	var inputs = inputH(counter,'query', query);
+	var condition = $('#condition'+rowNum).html().trim();
+	inputs += inputH(counter,'condition', condition);
+	var reps = $('#replicates'+rowNum).html().trim();
+	inputs += inputH(counter,'replicates',reps);
+	inputs += inputH(counter,'density',($('#density'+rowNum).html().trim()*reps));
+	inputs += inputH(counter,'batch_date',$('#batch_date'+rowNum+' span').html().trim());
+	inputs += inputH(counter,'library',$('#library_used'+rowNum+' :selected').text().trim());
+	inputs += inputH(counter,'donor', $('#donorFor'+rowNum+' :selected').text().trim());
+	inputs += inputH(counter,'screen_purpose',$('#purpose'+rowNum+' :selected').text().trim());
+	inputs += inputT(counter,'comments',$('#comments'+rowNum).val().trim());
+	inputs += inputH(counter,'screenedBy',$('#user'+rowNum).html().trim());
+	if($('#mQueryLookup'+rowNum).length>0){
+		inputs += inputH(counter,'queryPWJ',$('#mQueryLookup'+rowNum+' :selected').text().trim());
+	}
+	else{
+		inputs += inputH(counter,'queryPWJ',$('#queryLookup'+rowNum+' .queryPWJ').html().trim());
+	}
+	// inputs += inputH(counter,'querySelection',$('#queryLookup'+rowNum+' .querySelection').html().trim());
+	// inputs += inputH(counter,'queryGene',$('#queryLookup'+rowNum+' .queryGene').html().trim());
+	// inputs += inputH(counter,'queryPromoter',$('#queryLookup'+rowNum+' .queryPromoter').html().trim());
+	inputs += inputH(counter,'comparerPWJ',$('#comparerUsed'+rowNum+' :selected').text().trim());
+	inputs += inputH(counter,'incubation_temperature',$('#incubationTemp'+rowNum+' :selected').val().trim());
+	inputs += inputH(counter,'rowNum',rowNum);
+	inputs += inputT(counter,'allData',$('#allData'+rowNum).html());
+	$(newForm).append(inputs);
+	return {form:newForm, setInfo: query+" - "+condition};
+}
+
+// checks to see if this experiment already exists in the database with an ajax call
+function checkIfExistsInDatabase(pWJ,rowNum,allData){
+	var newExp = {'condition':$('#condition'+rowNum).html(),'query':pWJ, 'plasmidData':$('#queryLookup'+rowNum).html()};
+	newExp['density'] = $('#density'+rowNum).html();
+	newExp['replicates'] = $('#replicates'+rowNum).html();
+	newExp['number_of_plates'] = $('#plates'+rowNum).html();
+	newExp['rowNum'] = rowNum;
+	newExp['batch_date'] = $('#batch_date'+rowNum+" span").html();
+	(function(rowNum,newExp,allData){
+		var img ='<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/progress_small.gif" alt="spinner" name="spinner" />';
+		$.ajax({
+			type		: 'GET',
+			url			: 'check_if_experiment_exists',
+			data		: {  query: newExp['query'], condition: newExp['condition'] },
+			dataType: 'json',
+			beforeSend: function(){$('#existsInDB'+rowNum).html(img); },
+			success	: function(data){
+				if(data.hasOwnProperty('comments') && data.comments.match(/not found/i)){
+					$('#existsInDB'+rowNum).html('<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/no.png"/>');
+					$('#uploadTD'+rowNum).html(uploadButton(rowNum)+'<textarea class="allData" id="allData'+rowNum+'" name="allData['+rowNum+']">'+JSON.stringify(allData)+'</textarea>');
+					$('#uploadTD'+rowNum).removeClass('badData');
+				}
+				else{
+					$('#existsInDB'+rowNum).html('<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/yes.png"/>');
+					for (var i = 0; i < data.length; i++) {
+						var dupRowHTML = compareOldToNewJSON('query',newExp, data[i], rowNum);
+						dupRowHTML += compareOldToNewJSON('condition',newExp, data[i], rowNum);
+
+						//  comparer related
+						var comp = data[i].comparer;
+						//  check if comparer is equal
+						eC = ($("#comparerUsed"+rowNum+" option:selected").text() == comp) ? 'match' : '';
+						dupRowHTML += "<td class='dupComparer"+rowNum+" "+eC+"'>"+comp+"</td>";
+						// done with comparer
+
+						var density = data[i].density / data[i].replicates;
+						eC = (density == newExp['density']) ? 'match' : '';
+						dupRowHTML += "<td class='dupDensity"+rowNum+" "+eC+"'>"+density+"</td>";
+
+						dupRowHTML += compareOldToNewJSON('replicates',newExp, data[i], rowNum);
+						dupRowHTML += compareOldToNewJSON('number_of_plates',newExp, data[i], rowNum);
+						dupRowHTML += compareOldToNewJSON('batch_date',{'batch_date' : $("#batch_date"+rowNum+" span").html()}, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('library_used', {'library_used' : $("#library_used"+rowNum+" option:selected").text()}, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('donor_strain_used', {'donor_strain_used' : $("#donorFor"+rowNum+" option:selected").text()}, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('screen_purpose', {'screen_purpose' : $("#purpose"+rowNum+" option:selected").text()}, data[i], rowNum);
+
+						dupRowHTML += compareOldToNewJSON('performed_by', {'performed_by' : $("#user"+rowNum).html()}, data[i], rowNum);
+
+						dupRowHTML += "<td>"+data[i]['comments']+"</td>";
+						dupRowHTML+="</tr>";
+						// if the table exists, else create it
+
+						ec = ($('#dupTable'+rowNum+' tr').length % 2) == 0 ? '' : 'class="alt"';
+						if($('#dupTable'+rowNum).length>0){$('#dupTable'+rowNum+' tbody').append('<tr '+ec+'>'+dupRowHTML);}
+						else{
+							var temp = '<tr id="dupRow'+rowNum+'" class="toggleRow"><td class="toggleTD" colspan="17">';
+							temp += '<div class="toggleRowDiv" id="dupTable'+rowNum+'"><table class="exp ui-widget dupDataTable">';
+							temp +=	'<thead class="ui-widget-header">';
+							temp +=	'	<tr>';
+							temp += '		<th>Upload?</th>';
+							temp +=	'		<th>Query</th>';
+							temp +=	'		<th>Condition</th>';
+							temp += '		<th>Comparer</th>'
+							temp +=	'		<th>Strains / Plates</th>';
+							temp +=	'		<th># Replicates</th>';
+							temp +=	'		<th># Plates</th>';
+							temp +=	'		<th class="nowrap">';
+							temp +=	'			Batch Date';
+							temp +=	'			<span class="question" id="badBatchDate'+rowNum+'" title="This is the date that this screen was performed. For consistancy, it should corrispond to the date the mating was performed.">?</span>';
+							temp +=	'		</th>';
+							temp +=	'		<th>Library Used</th>';
+							temp +=	'		<th>Donor Strain Used</th>';
+							temp +=	'		<th>Screen Purpose</th>';
+							temp +=	'		<th>Screened By</th>';
+							temp +=	'		<th>Comments</th>';
+							temp +=	'	</tr>';
+							temp +=	'</thead>';
+							temp +=	'<tbody class="ui-widget-content">';
+							temp += "<tr class='alt'><td rowspan='"+(data.length)+"'>Upload <div class='nowrap;'>Anyway? <input type='checkbox' name='uploadAnyway' value='"+rowNum+"' onchange='updateGoodTable(this, "+rowNum+");' style='display:inline;' /><br/><small class='toggleLink' onclick='toggleDupRows("+rowNum+");'><em>Hide</em></small></div></td>";
+							temp += dupRowHTML;
+							temp +=	'</tbody>';
+							temp +=	'</table></div></td></tr>';
+							$('#uploadTD'+rowNum).parent().after(temp);
+
+							// expand rowspan by one
+							$(function(){
+								var $temp = $('#uploadTD'+rowNum).parent();
+								while(!$temp.children(":first").hasClass('fileNameRow') && $temp.is("tr")){
+									$temp = $temp.prev();
+								}
+								// $temp should now contain the filename row (containing the rowspan)
+								$temp.children(":first").prop('rowspan',  parseInt($temp.children(":first").prop('rowspan'))+1);
+								//function(i, rs) { return rs + 1; });
+								// could have also done -->;
+							});
+
+							//  add tooltips to header rows...
+							$("#dupTable"+rowNum+" .question").each(function () {
+								var id = $(this).prop('id');
+								$('#'+id).tooltip({
+									track:true,
+									fade:250,
+									delay:0
+								});
+							});
+						}
+					}
+
+					$('#uploadTD'+rowNum).html('<span class="badData toggleLink">Dups - click to view</span><textarea id="allData'+rowNum+'" name="allData['+rowNum+']" class="allData">'+JSON.stringify(allData)+'</textarea>');
+					$('#uploadTD'+rowNum).addClass('badData');
+					$("#uploadTD"+rowNum+" span").click(function(){	toggleDupRows(rowNum);	});
+
+					// setup onchange event for this library
+					$("#library_used"+rowNum).change(function(){
+						var curSelection = $(this).find(":selected").text();
+						$(".duplibrary_used"+rowNum).each(function(index){
+							// always remove to prevent it from being added more than once...
+							$(this).removeClass('match');
+							if($(this).html() == curSelection){$(this).addClass('match');}
+						});
+					});
+					// setup onchange event for donor
+					$("#donorFor"+rowNum).change(function(){
+						var curSelection = $(this).find(":selected").text();
+						$(".dupdonor_strain_used"+rowNum).each(function(index){
+							// always remove to prevent it from being added more than once...
+							$(this).removeClass('match');
+							if($(this).html() == curSelection){$(this).addClass('match');}
+						});
+					});
+					// setup onchange event for this purpose
+					$("#purpose"+rowNum).change(function(){
+						var curSelection = $(this).find(":selected").text();
+						$(".dupscreen_purpose"+rowNum).each(function(index){
+							// always remove to prevent it from being added more than once...
+							$(this).removeClass('match');
+							if($(this).html() == curSelection){$(this).addClass('match');}
+						});
+					});
+					// setup onchange event for this comparer
+					$("#comparerUsed"+rowNum).change(function(){
+						var curSelection = $(this).find(":selected").text();
+						$(".dupComparer"+rowNum).each(function(index){
+							// always remove to prevent it from being added more than once...
+							$(this).removeClass('match');
+							if($(this).html() == curSelection){$(this).addClass('match');}
+						});
+					});
+
+				}
+			},
+			error:function(data, e, er){
+				$('#existsInDB'+rowNum).html("Database error looking for dups.");
+			}
+		});
+	}(rowNum,newExp,allData));
+}
+
+// triggered filereader onload handler
+// actually processes the file data
+function drFileOnLoadHandler(evt,f,callback) {
+
+	var r = commonFileProcessProcedures(evt,f);
+	r.comments = '';  // everything prior to the header is considered comment
+
+	// process each row and set to rows in a table
+	// this is a simplistic processing for csv and
+	// does not handle differences in csv format
+	var headerNeeds = ['plate #', 'row', 'column', 'id column', 'condition', 'query'];
+	var foundAll = false;
+	var maxFound = 0;
+	var missingStill = headerNeeds;
+	var allHeaders='';
+	var counter=0;
+	var headers = new Array();
+	var limit = 100 > r.fileArr.length ? r.fileArr.length-1 : 100;
+
+	while(!foundAll){
+		if(counter > limit){
+			r.fileErrors.append('<li class="fileFail">Did not process '+r.fileName+' - could not locate the following columns in this file:<ul><li>'+ missingStill.join("</li><li>")+'</li></ul></li>');
+			return callback();
+		}
+		headers = $.map(r.fileArr[counter].toLowerCase().split(/\t/), $.trim);
+		missingStill = checkHeader(headerNeeds,headers,missingStill);
+		if(missingStill.length < 1){foundAll=true;}
+		else{r.comments+=r.fileArr[counter]+"\n";}
+		if(!foundAll && !(typeof headers  === 'undefined') && headers.length < 1){	allHeaders = allHeaders+" "+r.fileArr[counter].trim+"\n";	}
+		counter++;
+	}
+	// build colindex, check for duplicate column headers
+	var colindex=[]; // all colindices
+	var everythingElse = []; // only colindices NOT in headerNeed, except id column
+	var extraCols = [];
+	for(var i=0; i<headers.length;i++){
+		colindex[headers[i]]=i;
+		if($.inArray(headers[i],headerNeeds) < 0 ){
+			extraCols.push(headers[i]); everythingElse.push(i);
+		}
+	}
+	everythingElse.push(colindex['id column']);
+	extraCols.push('id column');
+	var dupColHeads = [];
+	for(var j=0; j<headers.length; j++){
+		if($.inArray(headers[j],colindex)>=0){	dupColHeads.push(headers[j]);	}
+		else{	colindex[headers[j]] = j;	}
+	}
+	if(dupColHeads.length > 0){
+		r.fileErrors.append('<li class="fileFail">Did not process '+r.fileName+' - duplicate column headers found in ScreenMillStats-All data file:<ul><li>'+ dupColHeads.join("</li><li>")+'</li></ul></li>');
+		return callback();
+	}
+
+	// everything is good with the headers now... proceed
+	// first determine the number of replicates
+	var numberReplicates = 0;
+	var patt1=/normalized colony size/i;
+	for(col in colindex){if(patt1.test(col)){numberReplicates++;}	}
+	// make sure number of reps is valid
+	if($.inArray(numberReplicates,repPossibilities)<0){
+		r.fileErrors.append("<li class='fileFail'>Did not process "+r.fileName+" - unsupported number of replicates found ("+numberReplicates+"). Supported values are 1, 2, 4 and 16. The number of 'normalized colony size' columns is used to determine the number of replicates.</li>");
+		return callback();
+	}
+
+	// setup missing data message, only display it if data is indeed missing
+	var missingData='';
+
+	// check if the calculated log ratio column was found
+	var calcLogRatioCol='';
+	if(colindex['log growth ratio'] !== undefined){calcLogRatioCol = colindex['log growth ratio'];}
+	else if(colindex['calculated log ratio (comparer::exp)'] !== undefined){calcLogRatioCol = colindex['calculated log ratio (comparer::exp)'];}
+	else if(colindex['calculated log ratio (control::exp)'] !== undefined){calcLogRatioCol = colindex['calculated log ratio (control::exp)'];}
+	if(calcLogRatioCol ==''){
+		calcLogRatioCol = undefined;
+		missingData+="<li>Log Growth Ratio</li>";
+	}
+
+	// check if the growth ratio column was found
+	normGrowthRatioCol = undefined;
+	if(colindex['growth ratio (comparer / exp)'] !== undefined){normGrowthRatioCol = colindex['growth ratio (comparer / exp)'];}
+	else if(colindex['ratio'] !== undefined){normGrowthRatioCol = colindex['ratio'];}
+	if(normGrowthRatioCol === undefined || (normGrowthRatioCol <  0 && normGrowthRatioCol != calcLogRatioCol) ){
+		missingData+="<li>Growth Ratio (Comparer / Exp)</li>";
+	}
+
+	// check if the the normalized growth ratio column was found
+	normRatioCol = undefined;
+	if(colindex['normalized growth ratio (comparer::exp)'] !== undefined){normRatioCol = colindex['normalized growth ratio (comparer::exp)'];}
+	else if(colindex['normalized ratio (comparer::exp)'] !== undefined){normRatioCol = colindex['normalized ratio (comparer::exp)'];}
+	else if(colindex['normalized ratio (control::exp)'] !== undefined){normRatioCol = colindex['normalized ratio (control::exp)'];}
+	if(normRatioCol === undefined || normRatioCol < 0){missingData+="<li>Normalized Growth Ratio (Comparer::Exp)</li>";}
+
+	// check if the pvalue column was found
+	pValueCol = undefined;
+	if(colindex['p-value'] !== undefined){	pValueCol= colindex['p-value'];	}
+	else if(colindex['t-test p-value'] !== undefined){pValueCol = colindex['t-test p-value']; }
+	else if(colindex['mann-whitney probability'] !== undefined){pValueCol = colindex['mann-whitney probability']; }
+	else{	missingData+="<li>P-Value, T-Test P-Value or Mann-Whitney Probability</li>";	}
+
+	// check if the zscore column was found
+	zScoreCol = colindex['z-score'];
+	if(zScoreCol !== undefined || zScoreCol < 0){
+		// we only care if the z-score is missing for datasets that have p-value column defined (ie normal dist used)
+		if(colindex['t-test p-value'] !== undefined && colindex['mann-whitney probability'] !== undefined){	missingData+="<li>Z-Score</li>";}
+		else{zScoreCol = colindex.length*2;} // else set to a colindex that is pretty much guaranteed to not contain ANY data
+	}
+
+	// display warning message about missing data, if needed
+	if(missingData != ''){
+		missingData = "<li class='fileFail'>Did not process "+r.fileName+" - could not find the following column(s) in the file:<ul>"+missingData;
+		missingData+="</ul>";
+		r.fileErrors.append(missingData);
+		return callback();
+	}
+
+	// iterate over actual data
+	var fileData = {};
+	fileData.data = {};
+	// avoid blank lines at the end of the file
+	trimFile(r);
+
+	var i = counter; // counter should be where the data starts (i.e, not the header)
+	// adjust so chunk size is calculated correctly
+	r.fileLength = r.fileLength-counter;
+	var chunkSize = calculateChunksize(r,callback);
+	if(!chunkSize){return false;}
+	// adjust back to it's oroginal value
+	r.fileLength = r.fileLength+counter;
+
+	var timer;
+
+	function doWork(){
+		if( (i+chunkSize > r.fileLength) ){chunkSize = r.fileLength-i;}
+		for(var dummy=0;dummy<chunkSize;dummy++){
+
+			// split line by tabs, trim each of the fields
+			var line = $.map(r.fileArr[i].split(/\t/), $.trim);
+
+			// start required fields...
+			if(line[colindex['row']] === undefined || line[colindex['row']] == ''){
+				return appendFileErrorClearTimerCallBack("<tr><td>"+r.fileName+"</td><td>Could not find a valid 'row'  value on line #"+(i+1)+"</td></tr>",timer,callback);
+			}
+			var row = line[colindex['row']].toUpperCase(); // convert row letters to uppercase
+
+			if(line[colindex['column']] === undefined || line[colindex['column']] == ''){
+				return appendFileErrorClearTimerCallBack("<tr><td>"+r.fileName+"</td><td>Could not find a valid 'column'  value on line #"+(i+1)+"</td></tr>",timer,callback);
+			}
+			var col = line[colindex['column']];
+
+			if(line[colindex['plate #']] === undefined || line[colindex['plate #']] == ''){
+				return appendFileErrorClearTimerCallBack("<tr><td>"+r.fileName+"</td><td>Could not find a valid 'plate'  value on line #"+(i+1)+"</td></tr>",timer,callback);
+			}
+			var plate = line[colindex['plate #']].toUpperCase();
+
+			if(line[colindex['query']] === undefined || line[colindex['query']] == ''){
+				return appendFileErrorClearTimerCallBack("<tr><td>"+r.fileName+"</td><td>Could not find a valid 'query'  value on line #"+(i+1)+"</td></tr>",timer,callback);
+			}
+			var query = line[colindex['query']];
+
+			var condition = line[colindex['condition']];
+
+			if(!condition && condition !== 0){condition='';}
+
+			var tempArray = [];
+			// can't use i as a counter here since we are already in a loop that is using 'i'
+			for(var j=0; j<everythingElse.length; j++){	tempArray.push(line[everythingElse[j]]);}
+
+			// build data structure that will hold all data in current file
+			if(fileData.data[query] === undefined){
+				fileData.data[query] = {};
+				fileData.data[query][condition] = {};
+				fileData.data[query][condition]['fileName'] = r.fileName;
+				fileData.data[query][condition]['query'] = query;
+				fileData.data[query][condition]['condition'] = condition;
+				fileData.data[query][condition]['extraCols'] = extraCols;
+				fileData.data[query][condition]['plates'] = {};
+				fileData.data[query][condition]['plates'][plate] = {};
+				fileData.data[query][condition]['plates'][plate]['counter']=0;
+				fileData.data[query][condition]['plates'][plate]['rows'] = {};
+				fileData.data[query][condition]['plates'][plate]['rows'][row] = {};
+			}
+			else if(fileData.data[query][condition] === undefined){
+				fileData.data[query][condition] = {};
+				fileData.data[query][condition]['fileName'] = r.fileName;
+				fileData.data[query][condition]['query'] = query;
+				fileData.data[query][condition]['condition'] = condition;
+				fileData.data[query][condition]['extraCols'] = extraCols;
+				fileData.data[query][condition]['plates'] = {};
+				fileData.data[query][condition]['plates'][plate] = {};
+				fileData.data[query][condition]['plates'][plate]['counter']=0;
+				fileData.data[query][condition]['plates'][plate]['rows'] = {};
+				fileData.data[query][condition]['plates'][plate]['rows'][row] = {};
+			}
+			else if (fileData.data[query][condition]['plates'][plate] === undefined){
+				fileData.data[query][condition]['plates'][plate] = {};
+				fileData.data[query][condition]['plates'][plate]['counter']=0;
+				fileData.data[query][condition]['plates'][plate]['rows'] = {};
+				fileData.data[query][condition]['plates'][plate]['rows'][row] = {};
+			}
+			else if(fileData.data[query][condition]['plates'][plate]['rows'][row] === undefined){
+				fileData.data[query][condition]['plates'][plate]['rows'][row] = {};
+			}
+			fileData.data[query][condition]['plates'][plate]['counter']++;
+			fileData.data[query][condition]['plates'][plate]['rows'][row][col] = tempArray;
+			++i;
+		}
+		updateProgress(i, r.fileLength);
+		if(i>=r.fileLength){
+			clearInterval(timer);
+			// done iterating over file - clear file array and check for errors...
+			r.fileArr = [];
+			r.numberReplicates = numberReplicates;
+			processMillFileDataForDisplay(fileData, r, callback);
+		}
+	}
+	timer = setInterval(doWork,0);
+	return true;
+}
+
+function appendFileErrorClearTimerCallBack(msg,timer,callback){
+	clearInterval(timer);
+	$('#badFileTable').append(msg);
+	callback();
+	return false;
+}
+
+function processMillFileDataForDisplay(fileData, r, callback){
+	var rowArray = [];
+	var rowCounter = 1;
+	var startCount=$('#goodFileTable tr.goodRow').size();
+	//if(startCount<1){startCount+=1;}
+	var badTableFlag = false;
+	var queryArray = Object.keys(fileData.data);
+	queryArray.sort();
+	var errorMsg = '';
+	for(i = 0; i < queryArray.length; i++){
+		var conditionArray = Object.keys(fileData.data[queryArray[i]]);
+		conditionArray.sort(); // may not really need this
+		for(j = 0; j < conditionArray.length; j++){
+			var rowNum = (startCount+rowCounter); // assign a row number for this query condition combo
+			var eC = 'rowNum'+rowNum;
+			var row = '';
+			var c = guessConditionInfo(queryArray[i],conditionArray[j],r.fileName);
+			// last row gets bottomRow
+			if(i == queryArray.length-1 && j==conditionArray.length-1){eC+=' bottomRow';}
+			// start building table row
+			row += '<td class="'+eC+'">'+rowNum+'</td><td class="'+eC+'" id="query'+rowNum+'">'+queryArray[i]+'</td>';
+			row += c == false ? '<td class="badParam '+eC+'" id="condition'+rowNum+'">could not determine</td>' : '<td class="'+eC+'" id="condition'+rowNum+'">'+c+'</td>';
+
+			// validate that all plates have the same density values
+			var info = validateQueryConditionPlates(fileData.data[queryArray[i]][conditionArray[j]]['plates'], queryArray[i], c, r.fileName, densityPossibilities);
+			if(info.errorMsg !== ''){
+				$("#badFileTable").append(info.errorMsg);
+				rowCounter++;
+				row += '<td class="queryLookup badData" id="queryLookup'+rowNum+'">Error - see above</td>';
+				row += '<td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td>';
+				row += '<td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td>';
+				row += '<td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td><td class="badData">Error</td>';
+				if($('#'+r.id).length>0){
+					$('<tr class="goodRow">'+row+'</tr>').appendTo("#goodFileTable");
+				}
+				else{
+					var newRow = '<tr class="goodRow"><td id="'+r.id+'" class="fileNameRow '+eC+'"  title="'+r.fileName+'" rowspan="'+(rowCounter-1)+'"><strong>'+r.fileName+'</strong>';
+					newRow += '<br/>Size:'+r.size+' KB - Last Modified: '+r.lastMod+'</td>'+row+'</tr>';
+					$(newRow).appendTo("#goodFileTable");
+				}
+
+				//callback();
+				//return false;
+			}
+			else{
+				rowCounter++;
+				row += '<td class="queryLookup '+eC+'" id="queryLookup'+rowNum+'"></td>';
+				row += '<td class="comparerLookup '+eC+'" id="comparerLookup'+rowNum+'">';
+				row += '<select id = "comparerUsed'+rowNum+'" name="comparerUsed" class="hundred row'+rowNum+'Option">';
+				row += comparerOptions+'</select></td>';
+				row += '<td class="'+eC+'" id="density'+rowNum+'">'+info.density[0]+'</td>';
+				row+='<td class="'+eC+'" id="replicates'+rowNum+'">'+r.numberReplicates+'</td>';
+				row+='<td class="'+eC+'" id="plates'+rowNum+'">'+info.number_of_plates+'</td>';
+				row+= '<td class="'+eC+'" id="batch_date'+rowNum+'"><span>'+r.batchDate+'</span> <input type="hidden" title="'+rowNum+'" id="datepicker'+rowNum+'" /> </td>';
+				row+= '<td class="'+eC+'"><select id = "library_used'+rowNum+'" name="library_used" class="one50px row'+rowNum+'Option">';
+				row+= libraryOptions;
+				row+= '</select></td>';
+				row+='<td class="'+eC+'"><select id="incubationTemp'+rowNum+'" name="incubationTemp" class="row'+rowNum+'Option">';
+				row+='<option value="15">15&deg;C</option><option value="16">16&deg;C</option><option value="17">17&deg;C</option><option value="18">18&deg;C</option><option value="19">19&deg;C</option><option value="20">20&deg;C</option><option value="21">21&deg;C</option><option value="22">22&deg;C</option><option value="23">23&deg;C</option><option value="24">24&deg;C</option><option value="25">25&deg;C</option><option value="26">26&deg;C</option><option value="27">27&deg;C</option><option value="28">28&deg;C</option><option value="29">29&deg;C</option><option value="30" selected="selected">30&deg;C</option><option value="31">31&deg;C</option><option value="32">32&deg;C</option><option value="33">33&deg;C</option><option value="34">34&deg;C</option><option value="35">35&deg;C</option><option value="36">36&deg;C</option><option value="37">37&deg;C</option><option value="38">38&deg;C</option><option value="39">39&deg;C</option><option value="40">40&deg;C</option><option value="41">41&deg;C</option></select>';
+				row+='</td>';
+				row+= '<td class="'+eC+'"><select id = "donorFor'+rowNum+'" name="donor" class="row'+rowNum+'Option">';
+				row+= donorSelection;
+				row+= '</select></td>';
+				row+='<td class="'+eC+'"><select id="purpose'+rowNum+'" name="screen_purpose" class="row'+rowNum+'Option">';
+				row+=screenPurposeOptions;
+				row+='</select></td>';
+				row+='<td class="'+eC+'" id="commentsTD'+rowNum+'"><button class="modifyComment row'+rowNum+'Option" id="commentButton'+rowNum+'">Click me</button><textarea id="comments'+rowNum+'" class="hidden">'+r.comments+'</textarea></td>';
+				row+='<td class="'+eC+'" id="user'+rowNum+'">'+currentUser+'</td>';
+				row+='<td class="'+eC+'" id="existsInDB'+rowNum+'"></td>';
+				row+='<td class="'+eC+'" id="uploadTD'+rowNum+'"></td>';
+				// if row already exists, just append tds to it
+				if($('#'+r.id).length>0){	$('<tr class="goodRow">'+row+'</tr>').appendTo("#goodFileTable");}
+				// else create it
+				else{
+					var newRow = '<tr class="goodRow"><td id="'+r.id+'" class="fileNameRow '+eC+'"  title="'+r.fileName+'" rowspan="'+(rowCounter-1)+'"><strong>'+r.fileName+'</strong>';
+					newRow += '<br/>Size:'+r.size+' KB - Last Modified: '+r.lastMod+'</td>'+row+'</tr>';
+					$(newRow).appendTo("#goodFileTable");
+				}
+
+				// add event handler for module comment field
+				$('#commentButton'+rowNum).button().click(function() {
+					// open the dialog window, set 'opener' to the element containing the comments that
+					// was clicked on to trigger this event
+					$( "#comment-form" ).data('opener', $(this).next()).dialog( "open" );
+				});
+
+				addDateSelect(rowNum);
+
+				(function(rowNum, allData, query, condition){
+					var img ='<img src="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/assets/progress_small.gif" alt="spinner" name="spinner" />';
+					$.ajax({
+							type		: 'GET',
+							url			: 'verify_query',
+							data		: {  query: query, condition: condition },
+							dataType: 'json',
+							beforeSend: function(){	$('#queryLookup'+rowNum).html(img);	},
+							success	: function(data){
+								var callBack = function(){
+									var val = $('#mQueryLookup'+rowNum).find(":selected").val();
+									checkIfExistsInDatabase(val,rowNum,allData);
+								}
+								var pWJ = processQueryData(data,rowNum,allData, callBack);
+								if(pWJ){	checkIfExistsInDatabase(pWJ, rowNum,allData);	}
+							},
+							error:function(data, e, er){
+								$('#queryLookup'+rowNum).html("Database Error");
+								$('#queryLookup'+rowNum).addClass('badData');
+								alert("Incurred an error while attempting to validate query: "+query+", condition: "+condition);
+							}
+					});
+				}(rowNum, fileData.data[queryArray[i]][conditionArray[j]], queryArray[i], c ) );
+			} // end else info.errorMsg !== ''
+		} // end conditionArray.length
+	} // end queryArray.length
+
+	$('#percent').html('Loading Done! 100%');
+	setTimeout("$('#progress_bar').prop('class', '');", 1000);
+	if(rowCounter>0){$("#"+r.id).prop('rowspan',(rowCounter-1));}
+	if(errorMsg !== ''){	$("#badFileTable").append(errorMsg);	callback(); return false;}
+	callback();
+}
+// setup the comment-form dialog box
+$(function() {
+	tips = $( ".validateTips" );
+
+	$( "#comment-form" ).dialog({
+	  autoOpen: false,
+	  height: 400,
+	  width: 750,
+	  modal: true,
+	  position: { my: "center", at: "center", of: window },
+	  buttons: {
+	    "Update comments": function() {
+	      var bValid = true;
+	      el = $("#comments");
+	      el.removeClass( "ui-state-error" );
+	      bValid = bValid && checkLength( el, "comments", 3, 50000 );
+	      if ( bValid ) {
+	      	$('#comment-form').data('opener').val( el.val());
+	        $( this ).dialog( "close" );
+	      }
+	    },
+	    Cancel: function() {  $( this ).dialog( "close" );  }
+	  },
+	  close: function() {  $("#comments").val( "" ).removeClass( "ui-state-error" );  },
+	  open: function(event,ui){	$("#comments").val($("#comment-form").data('opener').val());  }
+	});
+	function checkLength( o, n, min, max ) {
+    if ( o.val().length > max || o.val().length < min ) {
+      o.addClass( "ui-state-error" );
+      updateTips( "Length of " + n + " must be between " + min + " and " + max + "." );
+      return false;
+    }
+    else {  return true;  }
+  }
+  function updateTips( t ) {
+    tips.text( t ).addClass( "ui-state-highlight" );
+    setTimeout(function() {
+      tips.removeClass( "ui-state-highlight", 1500 );
+    }, 500 );
+  }
+
+});

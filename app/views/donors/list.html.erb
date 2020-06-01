@@ -1,0 +1,55 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+
+<script type="text/javascript" charset="utf-8">
+
+$(document).ready(function(){
+	var oTable = $("#donors").dataTable({
+							"sPaginationType": "full_numbers",
+			        "bFilter": true,
+			        "bSort": true,
+			        "bInfo": true, 
+			        "bAutoWidth": true,
+			        "bJQueryUI": true,
+			        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+			        "iDisplayLength" : 50,
+			        "oLanguage": { "sSearch": "Filter (all columns):"	}
+						});
+});
+
+</script>
+
+
+<%= render partial: "layouts/top" %>
+<%= link_to 'Create New Donor Strain', new_donor_path %><br/><br/>
+<table class=borders id="donors">
+<thead>
+  <tr>
+    <th>Strain Number</th>
+		<th>Mating Type</th>
+		<th>Genotype</th>
+		<th>Notes</th>
+		<th>Made By</th>
+		<th>Created On</th>
+		<th>Updated On</th>
+  </tr>
+ </thead>
+ <tbody>
+<% for donor in @donors %>
+  <tr>
+			<td>
+				<%= link_to "#{donor.wNumber} (edit)", :action => 'edit', :id => donor %>
+			</td>
+			<td><%=donor.mating_type%></td>
+			<td><%=donor.genotype%></td>
+			<td><%=donor.notes%></td>
+			<td><%=donor.created_by%></td>
+			<td><%=donor.created_at %></td>
+			<td><%=donor.updated_at %></td>
+  </tr>
+<% end %>
+</tbody>
+</table>
+<br/>
+</div>

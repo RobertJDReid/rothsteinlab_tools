@@ -1,0 +1,153 @@
+
+<style>
+h3{margin-bottom:4px;}
+ul{margin:0px 0px 10px 15px;}
+li{margin-left:10px;}
+#sitemap{
+	font-size:1.3em;
+	font-weight:bold;
+	list-style-image: url(<%= "#{ENV['RAILS_RELATIVE_URL_ROOT']}/assets/css/arrow-bullet.png"%>);
+}
+#sitemap ul li{	font-size: 0.8em;}
+
+#sitemap b{	font-size:1.15em;}
+#sitemap li a{	color:#1B5EDF;}
+#sitemap li a:visited{	color:#008000;}
+#notice h3{padding-left:10px;}
+#notice ul{
+	padding-left:10px;
+	list-style-image: url(<%= "#{ENV['RAILS_RELATIVE_URL_ROOT']}/assets/css/arrow-bullet.png"%>);
+}
+</style>
+<%= render :partial => "layouts/top" %>
+<h3><i>Site Menu</i></h3>
+<ul id="sitemap">
+	<li style="margin-bottom:10px;"><%= link_to raw("<u>C</u>utoff <u>L</u>inked to <u>I</u>nteraction <u>K</u>nowledge"), clik_index_path %></li>
+	<li>ScreenMill Suite</li>
+	<ul>
+		<li><%= link_to raw("<b>C</b>olony <b>M</b>easurement Engine"), screen_mill_cm_engine_path %></li>
+		<li><%= link_to raw("<b>D</b>ata <b>R</b>eview Engine"), screen_mill_dr_engine_setup_path %></li>
+		<li><%= link_to raw("<b>S</b>creen <b>V</b>isulization Engine"), screen_mill_sv_engine_setup_path %></li>
+		<li><a href="http://www.ncbi.nlm.nih.gov/pubmed/20584323" class="ext_link" title="PubMed">PubMed link to ScreenMill manuscript</a></li>
+	</ul>
+	<%if permit?(:experiments, :list) %>
+	<ul>
+		<li><%= link_to "View all Rothstein lab experiments", experiments_path %></li>
+		<li><%= link_to "View your Rothstein lab experiments", experiments_my_experiments_path %></li>
+		<li><%= link_to "Upload DR Engine ouput file", experiments_dr_engine_file_upload_path %></li>
+		<li><%= link_to "Upload ScreenMill log file", new_experiment_raw_dataset_path %></li>
+		<li><%= link_to "Associate experiments w/ raw data", experiments_associate_experiment_with_colony_data_path %></li>
+		<li><%= link_to "View raw datasets", experiment_raw_datasets_path %></li>
+	</ul>
+	<%end%>
+	<li><em>S. cerevisiae</em> specific tools</li>
+	<ul>
+		<li><%= link_to raw("<em>ScreenTroll</em>"), screenTroll_path %></li>
+		<li><%= link_to raw("<em>S. cerevisiae</em> Gene ID Converter"), apps_orf_converter_path %></li>
+		<li><%= link_to raw("<em>S. cerevisiae</em> Dissection Reader"), apps_dissection_reader_path %></li>
+		<li><%= link_to "Site Directed Mutagenesis / RFLP Calculator", apps_aa_mutator_path %></li>
+	</ul>
+	<li>Ortholog Tools</li>
+	<ul>
+		<li><%= link_to raw("Search for <em>S. cerevisiae</em> to Human Orthologs"), scerevisiae_hsapien_orthologs_search_path %></li>
+		<li><%= link_to raw("List <em>S. cerevisiae</em> to Human Orthologs"), scerevisiae_hsapien_orthologs_path %></li>
+	</ul>
+	<li>Miscellaneous Calculators / tools</li>
+	<ul>
+		<li><%= link_to "Data Intersection Tool", apps_data_intersection_path %></li>
+		<li><%= link_to "Cumulative Hypergeometric Distribution Calculator", apps_hyper_geometric_calculator_path %></li>
+		<li><%= link_to "CDF Plot Generator", apps_generate_CDF_path %></li>
+		<li><%= link_to "Custom key file generator", apps_pull_gene_names_path %></li>
+	</ul>
+	<% if permit?(:cbio, :scores) || permit?(:cbio, :mutual_exclusion) %>
+	<li>Cbio Portal tools</li>
+		<ul>
+			<% if permit?(:cbio, :scores) %><li><%= link_to "Query CbioPortal portal scores", cbio_scores_path %></li><%end%>
+			<% if permit?(:cbio, :mutual_exclusion) %><li><%= link_to "Query CbioPortal for mutual exclusion", cbio_mutual_exclusion_path %></li><%end%>
+		</ul>
+	</li>
+	<% end -%>
+
+</ul>
+
+<!-- <br/>
+<div id="notice" style="border-width:1px;padding:10px 5px 10px 10px;background-image:none;">
+	<h2><em>Latests Updates:</em></h2>
+	<h3><i>May 30, 2012</i></h3>
+	<ul style=>
+		<li>Updated <em>CM Engine</em> to handle 2304 destiny plates (48 x 48 colonies)</li>
+		<li>Added Manual Fine cropping option to <em>CM Engine</em></li>
+		<li>Added additional error handling to <em>CM Engine</em> when fine cropping images. If the automatic algorithm fails, users are now given the option to manually crop an image, without exiting the program.</li>
+		<li>Significantly improved accuracy of "Background Subtracted" colony measurement mode in <em>CM Engine</em>.</li>
+		<li><em>CM Engine</em> now pings the Rothstein Lab server at startup to make sure users are using the latest version (no information is sent from users computers).</li>
+	</ul>
+
+	<h3><i>May 24, 2012</i></h3>
+	<ul>
+		<li>Updated <em>DR Engine</em> to handle 2304 destiny plates (48 x 48 colonies)</li>
+		<li>Fixed bugs relating to colony exclusion in <em>DR Engine</em></li>
+	</ul>
+
+	<h3><i>May 17, 2012</i></h3>
+	<ul>
+		<li>ScreenTroll is now linked on <a href="http://www.yeastgenome.org/" class="ext_link" onclick="return popup(this, 'SGD')">SGD</a> gene pages</li>
+		<li><em>S. cerevisiae</em> Gene ID Converter tool now allows users to maintain input order.</li>
+		<li>Improve session management across the entire website.</li>
+	</ul>
+	<h3><i>February 23, 2012</i></h3>
+	<ul>
+		<li>ScreenTroll now accepts input from a txt file.</li>
+		<li>Output from ScreenTroll now may be downloaded to a Microsoft Excel file.</li>
+	</ul>
+	<h3><i>January 3, 2012</i></h3>
+	<ul>
+		<li>Output from intersection tool now contains more information.</li>
+	</ul>
+	<h3><i>June 1, 2011</i></h3>
+	<ul>
+		<li>Improved border detection algorithm of <em>CM Engine</em>.</li>
+	</ul>
+	<h3><i>April 27, 2011</i></h3>
+	<ul>
+		<li>Fixed bug in <em>CM Engine</em> that caused colonies to be measured improperly in Background Subtracted mode when only a small about of contrast existed between colonies and background.</li>
+	</ul>
+	<h3><i>Older</i></h3>
+	<ul>
+		<li>Improved security and session management site-wide</li>
+		<li>
+			Edge colonies now normalized via the Collins et al method (see S. R. Collins, M. Schuldiner, N. J. Krogan, J. S. Weissman, Genome Biol 7, R63 (2006).)
+			<ul>
+				<li>In this method edge colony sizes are scaled to match the normalization method chosen for the entire plate (e.g. Plate Median, Designated Control).</li>
+			</ul>
+		</li>
+		<li>Interior colonies can now be normalized via the Collins et al method (see S. R. Collins, M. Schuldiner, N. J. Krogan, J. S. Weissman, Genome Biol 7, R63 (2006).)</li>
+		<li>Fixed duplicate column header bug in <em>DR</em> and <em>SV Engines</em></li>
+		<li>Fixed page numbering issue in <em>SV Engine</em></li>
+		<li>Fixed header order bug in Excel output of <em>SV Engine</em></li>
+		<li>Added 96 density support in <em>CM Engine</em></li>
+		<li>Fixed session storage issue in <em>DR Engine</em></li>
+		<li>Improved design and implementation of data intersection tool</li>
+		<li>Updated <em>ScreenTroll</em></li>
+		<li>Improved key file upload support in <em>DR Engine</em></li>
+		<li>Improved <em>DR Engine</em> error reporting</li>
+		<li>Added support for 2v and 2h replicate configurations in <i>ScreenMill - SV Engine</i>.</li>
+		<li>Improved rough crop algorithm in <i>ScreenMill - CM Engine</i>.</li>
+		<li>Improved output file format of <i>ScreenMill - DR Engine</i>.</li>
+		<li>Added ability to view distribution of raw data in <i>ScreenMill - DR Engine</i>.</li>
+		<li>Improved performance of global exclusion algorithm in <i>ScreenMill - DR Engine</i>.</li>
+		<li>Added the ability to apply Bonferroni correction to p-values calculated in <i>ScreenMill - DR Engine</i>.</li>
+		<li>Improved background subtracted mode performance in <i>ScreenMill - CM Engine</i>.</li>
+		<li>Improved error handling within <i>ScreenMill - DR Engine</i>.</li>
+		<li>ScreenTroll tool now available.</li>
+		<li>Improved performance of <i>ScreenMill</i>.</li>
+		<li>Fixed fine cropping issue in <i>ScreenMill - CM Engine</i>.</li>
+		<li>Improved rough cropping algorithm <i>ScreenMill - CM Engine</i>.</li>
+		<li>Added the ability to normalize data to designated controls in <i>DR Engine</i>.</li>
+		<li>Added the ability to calculate statistical significance using an unpaired t-test in <i>DR Engine</i>.</li>
+		<li><i>DR Engine</i> no longer requires a key file to be selected for analysis.</li>
+		<li>Added support for 16 replicates (4 x 4) to the <i>DR</i> and <i>SV Engines</i>.</li>
+		<li>Added the ability to exclude entire rows and columns of data in <i>DR Engine</i> via the UI.</li>
+	</ul>
+</div>
+ -->
+</div>

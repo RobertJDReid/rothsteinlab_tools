@@ -1,0 +1,133 @@
+<%= javascript_include_tag 'jquery-deparam.min', "data-turbolinks-track" => true %>
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+
+<style type="text/css">
+	div fieldset{float:left;}
+	legend{letter-spacing:0.03em;}
+	.formTable{padding-left:10px;}
+	#spinner{border-width:0px;}
+	#covert{margin-left:5px;}
+	#covert, #spinner, #spinner1{float:left;}
+	.resultDiv{clear:left;}
+
+	.loading{
+		font-size:1.3em;
+		margin-left:15px;
+		float:left;
+	}
+
+	.commit{float:left;}
+
+	fieldset{
+		border: 3px solid #AAAAAA;
+		height:auto;
+		margin-right:30px;
+		padding:5px;
+		float:left;
+		-webkit-border-radius: 4px;
+		-moz-border-radius: 4px;
+		border-radius: 4px;
+	}
+	legend{
+		color: black;
+		font-weight: bold;
+		font-size:2em;
+		font-variant: small-caps;
+		padding: 2px 8px;
+	}
+	textarea{
+		font-size:1.5em;
+		font-family: 'Lucida Grande';
+	}
+</style>
+<script type="text/javascript" charset="utf-8">
+
+function loadPage(){
+	$('#loading').hide();
+	$('#results').slideDown(function(){
+		calcHeight();
+		calcHeight();
+	});
+}
+
+function validate_form(formName){
+	$('#results').hide();
+	if($('#orfError')){$('#orfError').remove();$('#orfList').css('border', "0px solid red");}
+
+	if($('#orfs').val() == '' && $('#orfsFile').val() == '' ){
+		var error = '<div class="validation-advice" style="float:left;" id="orfError">';
+		error+="You must enter some data to analyze...</div>";
+		$('#orfList').append(error);
+		$('#orfList').effect('highlight',{},1000);
+		error =  true;
+		return false;
+	}
+	else{
+		$('#loading').show();
+		return true;
+	}
+
+	return false;
+}
+
+
+function calcHeight(){
+	//find the height of the internal page & change the height of the iframe
+	$('#results').height($('#results')[0].contentWindow.document.body.scrollHeight);
+}
+
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<form name="pullOrfsForm"  id="pullOrfsForm" style="float:left;clear:both;color:#00008B;margin-left:20px;padding-right:10px;" enctype="multipart/form-data" action="<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/pullOrfs.cgi" method = "post" target="results" onsubmit="return validate_form();false;">
+	<div style="float:left;clear:left;">
+		<h2 style="padding:0px;margin:0px;">Type or Paste in your identifier list: </h2>
+		<em style="display:inline;">Identifiers may be ORFs, gene names or aliases. You may separate your identifiers with commas, spaces, or carriage returns.</em>
+		<br/>
+	</div>
+	<div style="float:left;clear:left;margin-bottom:10px;" id='orfList'>
+		<div style="float:left;clear:left;">
+			<textarea title="" name="orfs" id="orfs" rows="15" cols="30" ></textarea>
+			<br/><br/>
+		</div>
+		<div style="float:left;clear:left;">
+			<label for="orfsFile" style="display:inline;"><b>Or upload a file:</b></label>
+			<input type="file" name="orfsFile" id="orfsFile" class="field_associates" style="display:inline;"/><br/>
+
+		</div>
+		<br style="clear:left" />
+	</div>
+	<div style="float:left;clear:left;">
+	<em style="display:inline;font-color:black;">Max size: 10MB.<br/>Your file should be a plain text .txt file and should only contain a list of genes, no other information.<br/>Gene identifiers may be ORFs, gene names or aliases.<br/>You may separate your identifiers with commas, spaces, or carriage returns.
+		<%=link_to 'Click here for an example file.', "#{ENV['RAILS_RELATIVE_URL_ROOT']}/screen_troll/example.txt", style: "font-color:blue;text-decoration:underline;" %></em></br></br></br>
+	</div>
+	<div style="float:left;clear:left;">
+		<h2 style="padding:0px;margin:0px;">Key file source: </h2>
+		<em style="display:inline;">Key file that you want to pull data from.</em>
+		<br/>
+	</div>
+	<div style="float:left;clear:left;">
+		<select class="required field_associates" id="keyFile" name="keyFile">
+			<%= raw(options_from_collection_for_select(@libraries, "id", "name", 3).gsub(/\n|\r/,'')) %>
+		</select>
+	</div>
+<!-- 	<div style="float:left;clear:left;">
+		<h2 style="padding:0px;margin:0px;">Number of blanks per plate: </h2>
+		<br/>
+	</div>
+	<div style="float:left;clear:left;">
+		<%= select_tag :numBlanks, (0..16) %>
+	</div> -->
+	<br style="clear:left" /><br/>
+	<input type="submit" value="&raquo; Submit &laquo;" class="commit" />
+	<input type="reset" class="reset" value="&raquo; Reset &laquo;" style="float:left;margin-left:15px;"/>
+	<div id="loading" class="loading" style="display:none;">
+		<%=image_tag "spinner-big.gif", :alt=> "spinner", :id=>"spinner", :name=>"spinner"%><div style="padding:5px;float
+		:left;">Loading...</div>
+	</div>
+</form>
+<br style="clear:left" />
+<br/>
+<iframe name="results" id="results" allowTransparency="true" frameborder="0" style="display:none;clear:left;border:0px;width:100%;" onload="loadPage();"></iframe>
+</div>

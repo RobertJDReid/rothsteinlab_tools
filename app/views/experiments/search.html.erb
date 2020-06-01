@@ -1,0 +1,130 @@
+<%= stylesheet_link_tag 'show' %>
+<%= stylesheet_link_tag 'jquery-dataTables_themeroller' %>
+<%= javascript_include_tag 'jquery-dataTables-min'%>
+<%= javascript_include_tag 'fixedHeader-min'%>
+
+<script type="text/javascript" charset="utf-8">
+
+$(document).ready(function(){
+	$("#search").submit(function(){
+		submitForm();
+		return false;
+	});
+
+	$(function() {
+	  $( "button, input[type=submit], input[type=reset]")
+	    .button()
+	    .click(function( event ) {
+	      event.preventDefault();
+	    });
+	});
+
+	var SUGGEST_URL='<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/cgi-bin/searchSuggest.cgi';
+	$('#query').autocomplete({
+		minLength: 3,
+		delay: 500,
+		source: function(request, response) {
+			$.ajax({
+				url: SUGGEST_URL,
+				dataType: "json",
+				type:"GET",
+				data: {term : request.term,organism : 'yeast'},
+				beforeSend:function(){
+					$("#empty-message").html("");
+					if(request.term.length >=16){showAutoCompleteError("");return false;}
+				},
+				success: function(data) {
+					if(!data){	showAutoCompleteError("Server error, please contain the admin.");	}
+					else if(data.length < 1 || !data[0].label){	showAutoCompleteError("No results found.");	}
+					else if(data[0].errorMsg){	showAutoCompleteError(data[0].errorMsg);	}
+					else{	response(data);}
+					$('#autoSpinner').hide();
+				},
+				error:function(xhr,status,exception){
+					showAutoCompleteError("Server error, please contain the admin. Status:"+status+", Exception:"+exception+".");
+				}
+				//complete:function(data){$('#query').removeAttr('disabled');}
+			});
+		},
+		response: function( event, ui ){
+			// ui.content is the array that's about to be sent to the response callback.
+			$("#empty-message").hide();
+		},
+		select: function(event, ui) {
+			//console.debug(ui.item)
+			// Triggered when an item is selected from the menu.
+			//$(this).val(ui.item.value);
+			//$('#searchform').submit()
+		},
+		search: function(event,ui){
+			$("#empty-message").hide();
+			$('#autoSpinner').show();
+		},
+		error:function(xhr,status,exception){
+			showAutoCompleteError("Server error, please contain the admin. Status:"+status+", Exception:"+exception+".");
+		},
+		complete:function(){$('#autoSpinner').hide();}
+	});
+
+function showAutoCompleteError(msg){
+	if(msg && msg != ""){	$("#empty-message").text(msg);	}
+	$("#empty-message").show();
+	$('#autoSpinner').hide();
+}
+
+
+});
+
+
+function submitForm(){
+	$.ajax({
+		url: 'deletion_search',
+		dataType: "json",
+		type:"POST",
+		data: {query : $('#query').val()},
+		beforeSend:function(){
+			$('#spinner').fadeIn();
+			$('#alerts').html("");
+			$('#results').html("");
+		},
+		success: function(data) {},
+		error:function(xhr,status,exception){
+			$('#alerts').html("Server error, please contain the admin. Status:"+status+", Exception:"+exception+".");
+		},
+		complete:function(){
+			$('#resultsContainer').fadeIn();
+			$('#spinner').fadeOut();
+		}
+	});
+	return false;
+}
+</script>
+<style type="text/css">
+	#main span{font-size: 12px;}
+	.submitButtons{clear:both;margin-top: 20px}
+	input[type=reset].ui-state-default{
+		background-color:rgba(250, 51, 51, 0.47);
+		background-image: none;
+	}
+	label, input{font-size: 1.2em;}
+</style>
+<%= render partial: "layouts/top" %>
+
+<form  id='search'>
+	<label for="query">
+		<strong>Gene:</strong>
+		<%=image_tag "spinner.gif", :alt=> "spinner", :style=>"display:none;border:0px solid black;", :id=>"autoSpinner" %>
+	</label>
+	<input type="text" name="query" id="query" class="text ui-widget-content ui-corner-all" />
+	<div id="empty-message" style="display:none;"></div>
+	<div class="submitButtons">
+		<input type="submit" value="Submit" id="submitForm" class="">
+		<input type="reset" class="" id="resetForm" value="Clear" style="margin-left:15px;" />
+		<%=image_tag "ajax-loader.gif", :alt=> "spinner", :style=>"display:none;padding-top:6px;margin-left:10px;border:0px solid black;", :id=>"spinner", :name=>"spinner"%>
+	</div>
+</form>
+
+<fieldset id="resultsContainer" style="clear:left;float:left;display:none;">
+	<div id="alerts" class="error"></div>
+	<div id="results"></div>
+</div>

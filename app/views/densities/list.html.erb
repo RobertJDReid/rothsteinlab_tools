@@ -1,0 +1,22 @@
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= render partial: "layouts/top" %>
+<%= link_to 'Create New Density Value', new_density_path %><br/><br/>
+<table class=borders>
+  <tr>
+    <th>#</th>
+		<th>Density</th>
+  </tr>
+<%counter=1%>
+<% for density in @densities %>
+  <tr>
+  		<td><%=counter%></td>
+  		<%counter+=1%>
+			<td style="text-align: left;">
+				<%=density.density%>
+			</td>
+  </tr>
+<% end %>
+</table>
+<br/>
+</div>

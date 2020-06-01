@@ -1,0 +1,31 @@
+<%= stylesheet_link_tag 'validation', "data-turbolinks-track" => true %>
+<%= javascript_include_tag 'validationJQ', "data-turbolinks-track" => true  %>
+<%= stylesheet_link_tag 'show' %>
+<%= render partial: "layouts/top" %>
+
+
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		$("#theForm").validate({
+			rules:{
+				'strain_library[selectable_marker]':{minlength:3,maxlength:20},
+				'strain_library[key_file_location]':{minlength:7,maxlength:200,url:true}
+			},
+			ignoreTitle: true
+		});
+
+		// alias required to cMinlength with new message
+		$.validator.addMethod("cMaxlength", $.validator.methods.maxlength,
+		$.format("This field cannot be greater than {0} characters"));
+		// alias minlength, too
+		$.validator.addMethod("cMinlength", $.validator.methods.minlength, 
+		// leverage parameter replacement for minlength, {0} gets replaced with value
+		$.format("This field must have at least {0} characters"));
+		jQuery.validator.addClassRules({
+			minMaxClass: {
+				cMinlength:5,
+				cMaxlength:100
+			}
+		});
+	});
+</script>

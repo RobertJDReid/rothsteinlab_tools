@@ -1,0 +1,26 @@
+<%= errors_for_helper(@strain_library) %>
+<%= form_for @strain_library, html: {style:"padding:0px;", id:"theForm"} do |f| %>
+<label for="strain_library_name" class="required" >Library Name:</label>
+<%= f.text_field :name, {:class=>"formInputText minMaxClass required",:size => 100, :title => "A descriptive name for this library", :style=>"width:auto;"} %>
+
+<label for="mating_type" class="required">Mating Type:</label>
+<%= f.select :mating_type, options_for_select([ ['MATa', 'a'],['MATalpha', 'alpha'],['Diploid', 'diploid'] ],selected: @strain_library.mating_type),{},{:class=>"required formSelect"} %>
+
+<label for="selectableMarker" class="required">Selectable Marker:</label>
+<%= f.text_field :selectable_marker, {:class=>"formInputText required",:size => 50} %>
+
+<label for="background" class="required">Strain Background:</label>
+<%= f.text_field :background, {:class=>"formInputText required",:size => 50} %>
+
+<label for="key_file_location" class="required ">Key File Location (url, starting with http):</label>
+<%= f.text_field :key_file_location, {:class=>"formInputText required",:size => 100, :style=>"width:auto;"} %>
+
+<label for="created_by" class="required">Made By:</label>
+<% selected = @strain_library.created_by ? @strain_library.created_by : current_user.login %>
+<%= select "strain_library", "created_by",  @users.map {|u| [u.login,u.login]}, {:selected=>selected}, {:class=>"required formSelect" }%>
+
+<label for="updated_by" class="required">Updated By:</label>
+<%=current_user.login%><br/><br/>
+
+<%= submit_tag @buttonLabel, :class=>"commit"  %><br/>
+<%end%>

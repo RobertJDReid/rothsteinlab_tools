@@ -1,0 +1,230 @@
+fieldset{
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+/* START CLIK COLORs */
+.key{
+	width:70px;
+	height:30px;
+	float:left;
+}
+.key:after{
+	content: attr(title);
+	line-height: 30px;
+	position: relative;
+	left: -26px;
+}
+.key.last{
+	-webkit-border-radius: 0px 8px 8px 0px;
+	-moz-border-radius: 0px 8px 8px 0px;
+	border-radius: 0px 8px 8px 0px;
+}
+.key.first{
+	-webkit-border-radius: 8px 0px 0px 8px;
+	-moz-border-radius: 8px 0px 0px 8px;
+	border-radius: 8px 0px 0px 8px;
+}
+.key.first:after{	left: 0px;	}
+.lightGray{
+	background-color:#CFCFCF;
+	padding:0px 5px;
+}
+.chartreuse {
+	background-color:#66CD00;
+	padding:0px 5px;
+}
+.aquamarine {
+	background-color:#60CC93;
+	padding:0px 5px;
+}
+.darkturquoise {
+	background-color:#00C5CD;
+	padding:0px 5px;
+}
+.dodgerblue {
+	background-color:#1E90FF;
+	padding:0px 5px;
+	color:white;
+}
+.blue {
+	background-color:blue;
+	padding:0px 5px;
+	color:white;
+}
+.blueviolet {
+	background-color:#8A2BE2;
+	padding:0px 5px;
+	color:white;
+}
+.magenta {
+	background-color:#FF00FF;
+	padding:0px 5px;
+	color:white;
+}
+.mediumvioletred {
+	background-color:#C71585;
+	padding:0px 5px;
+	color:white;
+}
+.red {
+	background-color:red;
+	padding:0px 5px;
+	color:white;
+}
+.firebrick {
+	background-color:#B22222;
+	padding:0px 5px;
+	color:white;
+}
+.darkred {
+	background-color:#8B0000;
+	padding:0px 5px;
+	color:white;
+}
+.black {
+	background-color:black;
+	padding:0px 5px;
+	color:white;
+}
+.gray {
+	color:white;
+	background-color:gray;
+	padding:0px 5px;
+}
+/* END CLIK COLORs */
+
+.sprite-minus,.sprite-plus{
+	padding:0 0 0 12px;
+	background: url(<%= asset_path "showHide/plusMinus.png"%>) no-repeat;
+}
+
+.sprite-minus { background-position: 0px 2px; }
+.sprite-plus { background-position: 0px -56px; }
+
+.clikGroup{
+	clear:left;
+	float:left;
+	border:2px solid blue;
+	padding:15px;
+	margin-bottom:25px;
+	width:95%;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+}
+
+#clikGraph{
+	position:relative;
+	margin:0px;
+	padding:0px;
+}
+
+img.magnifier-large{position:absolute;}
+
+
+#clikGraph .clik span{
+	width:100%;
+	margin-left:-2px;
+	position:relative;
+	float:left;
+	text-decoration:none;
+}
+
+li.clik div{
+	display:none;
+	background-color:white;
+	border:1px solid;
+	padding:3px;
+	text-decoration:underline;
+}
+
+li.clik:hover div{display:inline;}
+
+#clikContainer, #generalClikInfoContainer, #generalClikInfo{
+	width:99%;
+	float:left;
+}
+
+#generalClikInfoContainer div.orderedRandomStats, #generalClikInfo{
+	float: left;
+	width: 49%;
+	margin-left: 1%;
+	margin-bottom: 10px;
+	padding: 10px;
+	border: 1px solid;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	background-color: rgb(245, 245, 245);
+	border-color: rgb(211, 211, 211);
+	box-sizing: border-box;
+}
+#generalClikInfo{width: 99%;}
+
+/*#zoomAxisContainer{
+	color:black;
+	margin-top:25px;
+}
+*/
+/*#clikGraph ul, #clikGraph ul li.clik, #zoomAxis ul, #zoomAxis ul li.zt{margin:0px;}
+
+#clikGraph ul li, #zoomAxis ul li{list-style-type:none;}
+
+#clikGraph .clik, #zoomAxis .zt{position:absolute;width:12px;}*/
+
+/*.zt{
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+	white-space:nowrap;
+}*/
+#zoomContainer{
+	/*display:none;*/
+	border:2px solid;
+	overflow:hidden;
+	position:absolute;
+	background-color:white;
+}
+/*note -- for zoom to work properly the width and height attributes MUST be set in #zoom, not #zoomContainer */
+#zoom{
+	position: relative;
+	width:400px;
+	height:400px;
+	overflow:hidden;
+	padding:0;
+}
+
+#mousePos{
+	position:absolute;
+	background-color:rgba(255,255,255,0.5);
+	z-index:99999;
+}
+
+#followMouseX{
+	position:absolute;
+	height:1px;
+	border-top:1px dotted blue;
+	z-index:99999;
+}
+
+#followMouseY{
+	position:absolute;
+	width:1px;
+	border-left:1px dotted blue;
+	z-index:99999;
+}
+
+.notice{
+	background: #f8fafc url(<%= asset_path "css/information.png"%>) center no-repeat;
+	background-position: 15px 50%;
+	text-align: left;
+	padding: 5px 20px 5px 45px;
+	border-top: 2px solid #b5d4fe;
+	border-bottom: 2px solid #b5d4fe;
+	width:600px;
+	margin:0px 0px 15px 0px;
+	font-size:12pt;
+	font-weight:bold;
+}

@@ -1,0 +1,41 @@
+<label for="scerevisiae_hsapien_ortholog_humanGeneName" class="required" >Human Gene Name (in Ensembl):</label>
+<%= f.text_field :humanGeneName, {:class=>"formInputText required",:size => 100} %>
+
+<label for="humanEnsemblID" class="required">
+	Human Ensembl ID (auto look-up):
+	<%=image_tag "ajax-loader.gif", :alt=> "loading",:name=>"loading",:id=>"processing",:style=>"display:none;" %>
+</label>
+<%= f.text_field :humanEnsemblID, {:class=>"formInputText required disabled",:size => 100, :readonly=>"readonly"} %>
+<div style="display:inline;" id="ensemblLookupMsg" ></div>
+
+<label for="yeastOrf" class="required"><em>S. cerevisiae</em> Gene or ORF:</label>
+<input class="required formInputText" style="display:inline" id="tempYeast" name="tempYeast" size="50" type="text" value="<%= @scerevisiaeHumanOrtholog.yeastOrf %>" />
+<span id="validYeastGene" style='display:none;color: rgb(1, 141, 1);font-size:inherit;'>Valid</span>
+<input type="hidden" id="yeastOrf" name="scerevisiae_hsapien_ortholog[yeastOrf]" value=""/>
+
+<label for="homologyType" class="required ">Homology Type (e.g., functional, orthology):</label>
+<%= f.text_field :homologyType, {:class=>"formInputText required",:size => 100} %>
+
+<label for="source" class="required ">Source (e.g., Ensembl, InParanoid, or a specific PMID):</label>
+<%= f.text_field :source, {:class=>"formInputText required",:size => 100} %>
+
+<label for="percentIdentityWithRespectToQueryGene" class="required">% Identity with respect to query gene (optional):</label>
+<%= f.text_field :percentIdentityWithRespectToQueryGene, {:class=>"formInputText number",:size => 100} %>
+
+<label for="percentIdentityWithRespectToYeastGene" class="required ">% Identity with respect to yeast gene (optional):</label>
+<%= f.text_field :percentIdentityWithRespectToYeastGene, {:class=>"formInputText number",:size => 100} %>
+
+<% byLabel = 'Annotated' %>
+
+<% if action_name == 'submit' || action_name == 'new_pair_submission' %>
+	<label for="human_test"><strong>Human Test:</strong></label>
+	<%= recaptcha_tags %><br/>
+	<% byLabel = 'Submitted' %>
+<% end %>
+
+<label for="updated_by" class="required"><%=byLabel%> by:</label>
+<%=current_user.login%>
+
+<br/><br/>
+<% @buttonName = (@buttonName) ? @buttonName : "Submit" %>
+<input class="commit" type="submit" id='submitButton' value="<%=@buttonName%>" />

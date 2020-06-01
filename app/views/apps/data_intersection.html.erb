@@ -1,0 +1,173 @@
+<style type="text/css">
+.commit{float:left;}
+.formElements, .submitButtons, #summary{
+	padding:0px 0px 5px 5px;
+	clear:left;
+	float:left;
+}
+.error{
+	width: auto;
+	float:left;
+	color:white;
+	background-color:red;
+  margin: 10px 0px 20px 0px;
+	padding:5px;
+	font-size:1.3em;
+	font-weight:bold;
+}
+#intro{padding:5px;}
+#summaryFieldset{
+	margin-top:-11px;
+	border:1px solid #3E79D5;
+	margin-left:10px;
+	padding:5px;
+	float:left;
+	height:186px;
+	width:321px;
+}
+#summaryFieldsetLegend{font-size:1.2em;}
+.fieldSetContainer{
+	overflow:auto;
+	height:135px;
+	width:215px;
+	margin:0 auto;
+}
+.fieldsetHeader{
+	margin:-7px 0px 3px 0px;
+	padding-bottom:3px;
+	border-bottom:1px solid black;
+}
+#comparisonResultsContainer {
+	padding:5px 20px 5px 5px;
+}
+#comparisonResultsContainer legend{font-size:1.3em;}
+td{border:1px solid;}
+fieldset{border-radius: 4px;}
+</style>
+
+<script type="text/javascript" charset="utf-8">
+function splitDataSets(str){	return compactData(str.split(/\r|\n|\r\n/));	}
+function splitGenes (str) { return compactData(str.split(/\r|,|\n|,\s+|\s+|\|/));}
+
+function compactData(theArray){
+ 	return theArray.filter( function(value){return (value==undefined || value== "") ? 0 : 1;} ) ;
+}
+
+function checkData(data){
+	$('.error').remove();
+
+	var dataSets=splitDataSets(data);
+
+	if(dataSets.length>=50){
+		$('#intro').append("<div class='error'>You have entered more then 50 datasets. This program will not compare more then 50 datasets.</div>");
+		return false;
+	}
+	var summary=[];
+	$('#summaryFieldsetLegend').html(dataSets.length+" datasets found");
+
+	for(i=0;i<dataSets.length;i++){
+		if($('#datasetInfo'+i).length < 1){
+			// console.debug('#datasetInfo'+i);
+			$('#titles').append('<div class="dataset" id="datasetInfo'+i+'">Dataset #'+(i+1)+' ('+splitGenes(dataSets[i]).length+' elements detected)');
+			$('#titles').append('<input name="datasetID['+i+']" class="datasetID formInputText" id="datasetID'+i+'" value="Dataset '+(i+1)+'" onfocus="checkValueIn(this);" onblur="checkValueOut(this);" />');
+		}
+		else{
+			$('#datasetInfo'+i).html('Dataset #'+(i+1)+' ('+splitGenes(dataSets[i]).length+' elements detected)');
+		}
+	}
+	// delete extra title fields, if they exist
+	i = dataSets.length;
+	while($('#datasetInfo'+i).length>0){
+		$('#datasetInfo'+i+', #datasetID'+i).remove();
+		i++;
+	}
+}
+function validate(){
+	// event.preventDefault();
+	$('.error').remove();
+	var dataSets=splitDataSets($('#area1').val());
+	errors = [];
+	if(dataSets.length<=1){
+		errors.push('You MUST have at least 2 datasets entered for comparison.');
+	}
+	else if(dataSets.length>=50){
+		errors.push('You have entered more then 50 datasets. This program will not compare more then 50 datasets.');
+	}
+	if ($('.datasetID').length < 2 ){
+		errors.push('Must enter labels for the datasets you are comparing in the "Datasets Found" area.');
+	}
+	if (errors.length > 0){
+		$('#intro').append("<div class='error'>"+errors.join('</br>')+"</div>");
+		$('#comparisonResultsContainer').hide();
+		return false;
+	}
+
+	var cb = function(){$('#comparisonResultsContainer').slideDown();}
+	// note, this form must be submitted via POST to allow for the submission of larger datasets
+	submitAjax({'strURL':'calculate_intersection',
+							'formName':'dataComparisonForm',
+							'whatToUpdate' :'comparisonResults',
+							'loader': 'spinner',
+							'method':'POST',
+							'callback':cb
+						});
+	return false;
+}
+function checkValueIn(element){
+	var value=$(element).val().trim();
+	var endNumber = element.id.match(/\d+$/);
+	// console.debug(endNumber);
+	if(value == "Dataset "+endNumber){	$(element).val("");	}
+}
+function checkValueOut(element){
+	var value=$(element).val().trim();
+	var endNumber = element.id.match(/\d+$/);
+	//console.debug(endNumber);
+	if(!$(element).val() || value.empty()){
+		$(element).val("Dataset "+endNumber);
+	}
+}
+
+$(document).ready(function() {
+	$('#submitData').click(function(e){
+		e.preventDefault();
+		validate();
+	})
+});
+</script>
+
+<%= render partial: "layouts/top" %>
+
+<div id="intro">
+	You may compare up to 50 datasets at a time.<br/>
+	Separate datasets with carriage returns.<br/>
+	Separate data within sets with commas, spaces or bars ('|').<br/>
+</div>
+<form name="dataComparisonForm" id="dataComparisonForm">
+
+<input type='hidden' name='remote' value="true" />
+<input type='hidden' name='authenticity_token' value="<%= form_authenticity_token %>" />
+	<div class="formElements">
+		<div id="elements1" style="display: inline;"></div>
+		<textarea id="area1" name="area1" onkeyup="checkData(this.value);" wrap="off" rows="12" cols="50"></textarea>
+	</div>
+	<fieldset id="summaryFieldset">
+		<legend id="summaryFieldsetLegend"></legend>
+		<div class="fieldsetHeader">You may enter titles for your datasets in this area (optional).</div>
+		<div class="fieldSetContainer">
+			<div id="titles"></div>
+		</div>
+	</fieldset>
+	<div class="submitButtons">
+		<input type="submit" value="Submit" id="submitData" class="commit">
+		<input type="reset" class="reset" value="Clear" onclick="checkData('');" style="float:left;margin-left:15px;" />
+		<%=image_tag "spinner.gif", :alt=> "spinner", :style=>"display:none; border:0px solid black;", :id=>"spinner", :name=>"spinner"%>
+	</div>
+</form>
+</div>
+<fieldset id="comparisonResultsContainer" style="clear:left;float:left;display:none;">
+	<div id="comparisonResults" style="float:left;width:100%">
+	</div>
+</fieldset>
+
+<script type="text/javascript" charset="utf-8">	checkData($('#area1').val());</script>

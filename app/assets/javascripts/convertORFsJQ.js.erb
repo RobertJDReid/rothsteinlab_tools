@@ -1,0 +1,64 @@
+
+var yeastData = '';
+var tty = '<%=Rails.public_path%>';
+
+function getData(callBack,param1, param2){
+	$.getJSON( "<%=ENV['RAILS_RELATIVE_URL_ROOT']%>/yeastData/yeastData.jsonp", function(data) {
+		yeastData = data;callBack(param1, param2);
+	});
+
+}
+
+function orfsToGeneNames(){
+	if(yeastData == ''){getData(orfsToGeneNames);}
+	else if(yeastData.converted){return true;}
+	else{
+		$(".orf").each(function(index){
+			if(yeastData[$(this).html()]){	$(this).html(yeastData[$(this).html()]);}
+		});
+		yeastData.converted = true; // prevent data from being converted a 2nd time
+	}
+
+}
+
+function orfsToGeneNamesFromDataTable(tableID,orfColNum){
+	if(yeastData == ''){getData(orfsToGeneNamesFromDataTable,tableID,orfColNum);}
+	else if(yeastData.converted){return true;} // prevent data from being converted a 2nd time
+	else{
+		var cells = [];
+		var table = $("#"+tableID).dataTable();
+		// copy original datatable settings
+		var settings = table.fnSettings().oInit;
+		// destroy the datatable
+		table.fnDestroy();
+		orfsToGeneNames();
+
+  //   var rows = table.fnGetNodes();
+  //   var finder = "td:eq("+orfColNum+")";
+  //   for(var i=0;i<rows.length;i++)
+  //   {
+  //     var orf = $(rows[i]).find(finder).html();
+		// 	if(yeastData[orf]){	$(rows[i]).find(finder).html(yeastData[orf]);}
+		// 	// this took too long
+		// 	// table.fnUpdate(yeastData[orf],i,orfColNum,false);
+  //   }
+  //   // destroy the datatable
+  //   table.fnDestroy();
+    $("#"+tableID).css("width","");
+    $("#"+tableID).removeClass("dataTable");
+    $("#"+tableID).dataTable(settings);
+
+    // $("#"+tableID).dataTable({
+    // 			"sPaginationType": "full_numbers",
+    //       "bFilter": true,
+    //       "bSort": true,
+    //       "bInfo": true,
+    //       "bAutoWidth": true,
+    //       "bJQueryUI": true,
+    //       "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+    //       "iDisplayLength" : 50,
+    //       "oLanguage": { "sSearch": "Filter (all columns):"	}
+    // 	});
+		yeastData.converted = true;
+	}
+}

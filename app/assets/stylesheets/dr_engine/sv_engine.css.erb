@@ -1,0 +1,263 @@
+select option.reviewed{
+	background:url(<%=asset_path "css/done.png"%>) no-repeat 100% 50%;
+}
+
+ul#toc {
+	margin:30px 0px 0px 0px;
+	list-style: none;
+	float:left;
+	position:relative;
+	z-index:99;
+	height:2.1em;
+}
+
+#plates{
+	clear:both;
+	float:left;
+	background-color:#fff;
+	margin:-1px 0px 0px 20px;
+	padding:5px 5px 0px 5px;
+	border:1px solid black;
+}
+
+ul#toc li {
+	background: #bdf;
+	float: left;
+	margin: 0px 2px 0px 0px;
+	cursor:pointer;
+	border:1px solid #bbb;
+	border-bottom-color:black;
+}
+
+ul#toc span {
+	color: #7F7777;
+	display: block;
+	float: left;
+	line-height: 2em;
+	padding:0px 10px;
+	text-decoration: none;
+}
+
+
+ul#toc li.current {
+	background-color: #fff;
+	background-position: 0 -60px;
+	cursor:default;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-bottom: 1px solid #fff;
+}
+
+ul#toc li.current span {
+	color:#008;
+	position:relative;
+	font-weight: bold;
+	z-index:5;
+}
+
+.pthresh{
+	color:#008;
+	font-weight: bold;
+	padding:0px 0px 5px 5px;
+}
+
+ul#toc li:hover, ul#toc li span:hover{
+	color: #008;
+	background-color: #fff;
+}
+
+.highlight {
+  visibility: visible;
+	/*display: block;*/
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.highlight li {
+  visibility: visible;
+  list-style-type: none;
+  position: absolute;
+  background: transparent;
+  /*border: 1px solid black;*/
+  font-family: sans-serif;
+  font-size: small;
+  color: #000;
+  padding: 1px;
+  line-height: 1.3em;
+ /* z-index:4;*/
+}
+.highlight b.ex,.highlight em.ex,.highlight b.bl,.highlight em.bl{
+	  background-color: green;
+		opacity: 0.5;
+		-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+		filter: alpha(opacity=50);
+}
+.highlight b.de,.highlight em.de{
+		background-color: #FF7200;
+		opacity: 0.5;
+		-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+		filter: alpha(opacity=50);
+}
+.highlight b.sig,.highlight em.sig{
+		background-color: red;
+		opacity: 0.5;
+		-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+		filter: alpha(opacity=50);
+}
+.highlight b.ok,.highlight em.ok{
+		background-color: transparent;
+		opacity: 0.5;
+		-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+		filter: alpha(opacity=50);
+}
+.highlight li div{
+	display:none;
+}
+
+.highlight li:hover span {visibility: visible;border:2px solid yellow;}
+.highlight li:hover a {visibility: visible;border:2px solid yellow;}
+
+#plates table ul li div div{
+	border-width:0px;
+	position:relative;
+	float:left;
+	margin:0px;
+	padding:0px;
+}
+
+#plates table ul li div div label, #plates table ul li div div span{
+	position:relative;
+	padding:3px 0px 0px 3px;
+	display:block;
+	border-width:0px;
+	border-top:1px solid;
+	height:auto;
+	width:auto;
+}
+#plates table ul li br{
+	clear:both;
+}
+
+#PlateNumber{
+	position:fixed;
+	left:5px;
+	padding:4px;
+	top:10px;
+	border: 1px solid #666666;
+  background-color: #ffffe1;
+  z-index:99;
+}
+
+.TopRightDiv{
+ 	position:fixed;
+	width:225px;
+	height:300px;
+	right:5px;
+	padding:16px;
+	margin-top:0px;
+	top:85px;
+	border: 1px solid #666666;
+	background-color: #ffffe1;
+	opacity: 0.95;
+	color: #666666;
+	overflow:auto;
+	z-index:6;
+}
+
+.TopRightDiv .TopRightDivHead{
+	background-image: url(<%=asset_path "css/icon_info.gif"%>);
+	background-repeat: no-repeat;
+	background-position: top left;
+	padding: 0px 0px 3px 27px;
+	border-width: 0 0 1px 0;
+	border-style: solid;
+	border-color: #666666;
+	color: black;
+	font-size: 1.15em;
+	clear:both;
+}
+
+.sv_links{
+	position:fixed;
+	top:0px;
+	right: 5px;
+	padding:4px;
+	border:1px solid #666666;
+	background-color: #ffffe1;
+	color: blue;
+	overflow:auto;
+	z-index:1;
+}
+.sv_links ul li{
+	text-decoration:underline;
+	cursor:pointer;
+}
+
+.sv_close{
+	position:relative;
+	background:url(<%=asset_path "css/close2.png"%>) no-repeat 100% 50%;
+	top:0px;
+	float:right;
+	margin:-16px -14px;
+	padding:2px;
+	cursor:pointer;
+	width:17px;
+	height:17px;
+}
+
+#pthreshDiv li{
+	text-transform:capitalize;
+	white-space:nowrap;
+}
+
+.warning{
+	background-image: url(<%= asset_path "exclamation.png"%>);
+  background-repeat: no-repeat;
+  background-position: 0.5% 50%;
+	padding: 5px 5px 5px 25px;
+	margin-top:20px;
+  width: 700px;
+  border: 2px solid red;
+	text-align: left;
+  font-weight: bold;
+  font-size: 14px;
+	background-color: #FF8F8F;
+}
+
+
+/* plate_layout */
+
+select option.reviewed{
+	background:transparent url(<%= asset_path 'css/done.png'%>) no-repeat 1px 50%;
+	padding-left:15px;
+}
+
+iframe.plateReview{
+	border:0px;
+	overflow-y:hidden;
+}
+div #header{
+	float:left;
+	width:auto;
+}
+
+td{text-align:center;}
+td span{display:none;}
+
+/* PART OF td:hover span is IN PROGRAM ITSELF!!! */
+td:hover span{
+	display: inline;
+	vertical-align: top;
+	color: black;
+	background-color: #F4F4F4;
+	font-weight: bold;
+	position: absolute;
+	border: 1px solid #BCBCBC;
+	padding: 5px;
+	/*bottom: 100%;
+	width: 250%;
+	text-indent: 0;*/
+}
+

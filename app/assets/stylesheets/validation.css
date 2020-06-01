@@ -1,0 +1,27 @@
+input.validation-failed, textarea.validation-failed {
+	border: 1px solid #FF3300;
+	color : #FF3300;
+}
+
+label.error, .stickyError, div.error{
+	color : #FF3300;
+	font-weight: bold;
+	padding:5px;
+}
+
+.validation-advice {
+	margin: 4px 0;
+	padding: 3px;
+	background-color: #FF3300;
+	color : #FFF;
+	font-size:1.2em;
+	font-weight:bold;
+}
+
+.custom-advice {
+	margin: 2px 0;
+	padding: 2px;
+	background-color: #C8AA00;
+	color : #FFF;
+
+}
